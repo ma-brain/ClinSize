@@ -1,0 +1,6 @@
+{
+  "familyWiseAlpha": 0.05,
+  "numberOfComparisons": 5,
+  "adjustmentMethod": "holm",
+  "gatePosition": 3
+}

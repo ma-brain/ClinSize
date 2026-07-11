@@ -11,6 +11,7 @@
   let familyWiseAlpha = $state("0.05");
   let numberOfComparisons = $state("2");
   let adjustmentMethod = $state<MultiplicityMethod>("bonferroni");
+  let gatePosition = $state("1");
 
   let result = $state<MultiplicityResult | null>(null);
   let exportMarkdown = $state<string | null>(null);
@@ -21,13 +22,20 @@
       ? "Number of treatment arms (vs control)"
       : "Number of comparisons",
   );
+  const showGatePosition = $derived(adjustmentMethod === "holm");
 
   function buildInput(): MultiplicityInput {
-    return {
+    const input: MultiplicityInput = {
       familyWiseAlpha: Number(familyWiseAlpha),
       numberOfComparisons: Number(numberOfComparisons),
       adjustmentMethod,
     };
+
+    if (adjustmentMethod === "holm") {
+      input.gatePosition = Number(gatePosition);
+    }
+
+    return input;
   }
 
   async function calculate() {
@@ -86,8 +94,16 @@
           <option value="bonferroni">Bonferroni</option>
           <option value="sidak">Šidák (Sidak)</option>
           <option value="dunnett">Dunnett (arms vs control)</option>
+          <option value="holm">Holm gatekeeping</option>
         </select>
       </label>
+
+      {#if showGatePosition}
+        <label>
+          Gate position (1 = first hypothesis)
+          <input type="number" min="1" step="1" bind:value={gatePosition} />
+        </label>
+      {/if}
 
       <button onclick={calculate} disabled={calculating}>
         {calculating ? "Calculating…" : "Calculate"}
@@ -109,6 +125,10 @@
           <dd>{result.familyWiseAlpha.toFixed(4)}</dd>
           <dt>Number of comparisons</dt>
           <dd>{result.numberOfComparisons}</dd>
+          {#if result.gatePosition}
+            <dt>Gate position</dt>
+            <dd>{result.gatePosition}</dd>
+          {/if}
           <dt>Alpha reduction factor</dt>
           <dd>{result.alphaReductionFactor.toFixed(4)}</dd>
         </dl>

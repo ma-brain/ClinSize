@@ -84,6 +84,17 @@ pub fn validate_comparison_count(count: u32) -> Result<()> {
     }
 }
 
+pub fn validate_gate_position(gate_position: u32, number_of_comparisons: u32) -> Result<()> {
+    if gate_position >= 1 && gate_position <= number_of_comparisons {
+        Ok(())
+    } else {
+        Err(Error::InvalidInput {
+            field: "gate_position".into(),
+            message: format!("must be between 1 and {number_of_comparisons} inclusive"),
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -139,5 +150,13 @@ mod tests {
         assert!(validate_comparison_count(1).is_ok());
         assert!(validate_comparison_count(5).is_ok());
         assert!(validate_comparison_count(0).is_err());
+    }
+
+    #[test]
+    fn gate_position_must_be_within_family_size() {
+        assert!(validate_gate_position(1, 5).is_ok());
+        assert!(validate_gate_position(5, 5).is_ok());
+        assert!(validate_gate_position(0, 5).is_err());
+        assert!(validate_gate_position(6, 5).is_err());
     }
 }

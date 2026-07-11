@@ -566,14 +566,18 @@ pub fn multiplicity_markdown(
         format!("- **Adjustment method:** {:?}", input.adjustment_method),
         String::new(),
         "## Inputs".into(),
-        format!(
-            "- **Family-wise alpha:** {:.6}",
-            input.family_wise_alpha
-        ),
+        format!("- **Family-wise alpha:** {:.6}", input.family_wise_alpha),
         format!(
             "- **Number of comparisons:** {}",
             input.number_of_comparisons
         ),
+    ];
+
+    if let Some(gate_position) = input.gate_position {
+        lines.push(format!("- **Gate position:** {gate_position}"));
+    }
+
+    lines.extend([
         String::new(),
         "## Results".into(),
         format!(
@@ -587,14 +591,14 @@ pub fn multiplicity_markdown(
         String::new(),
         "## Usage".into(),
         "- Use the adjusted per-comparison alpha as the `alpha` input in endpoint sample size calculations.".into(),
-    ];
+    ]);
 
     append_warnings(&mut lines, &result.warnings);
     lines.push(String::new());
     lines.push("## Reproducibility".into());
     lines.push(format!("- **Engine version:** {engine_version}"));
     lines.push(
-        "- **Validation source:** Closed-form Bonferroni and Sidak formulas; Dunnett via equicorrelated MVN (R `mvtnorm` reference)".into(),
+        "- **Validation source:** Closed-form Bonferroni, Sidak, and Holm formulas; Dunnett via equicorrelated MVN (R `mvtnorm` reference)".into(),
     );
 
     lines.join("\n")

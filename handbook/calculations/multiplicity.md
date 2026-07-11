@@ -22,7 +22,8 @@ per-comparison alpha to use in downstream endpoint calculations.
 
 - `familyWiseAlpha`: Family-wise Type I error rate to control across all comparisons.
 - `numberOfComparisons`: Number of comparisons in the family (integer ≥ 1).
-- `adjustmentMethod`: `bonferroni`, `sidak`, or `dunnett`.
+- `adjustmentMethod`: `bonferroni`, `sidak`, `dunnett`, or `holm`.
+- `gatePosition`: Position in the gatekeeping sequence (1 = first), required for Holm.
 
 ## Outputs
 
@@ -71,17 +72,30 @@ alpha_adj = 2 * Phi(-c)
 Computed via the equicorrelated-normal integral representation and validated
 against R `mvtnorm::pmvnorm`.
 
+**Holm gatekeeping (fixed order)**
+
+For hypothesis `k` in a pre-specified family of `m` ordered comparisons, the
+local alpha used when gates `1..k-1` have passed is
+
+```text
+alpha_adj = alpha_family / (m - k + 1)
+```
+
+Gate `k = 1` matches Bonferroni (`alpha_family / m`). Gate `k = m` uses the
+full family-wise alpha. Holm step-down controls FWER under arbitrary dependence.
+
 ## Assumptions
 
 - Bonferroni: valid under arbitrary dependence; conservative with positive correlation.
 - Šidák: assumes independent comparisons.
 - Dunnett: equal per-group sample sizes; one control; two-sided contrasts.
+- Holm: fixed pre-specified testing order; planning assumes prior gates pass.
 
 ## Validation Rules
 
 - `familyWiseAlpha` must be in (0, 1).
 - `numberOfComparisons` must be at least 1.
-- Adjusted alpha must remain positive.
+- `gatePosition` must be between 1 and `numberOfComparisons` when using Holm.
 
 ## Rounding Policy
 
@@ -105,10 +119,13 @@ Validated against closed-form arithmetic reference values.
 | 0.05 | 2 | Dunnett | 0.026958 |
 | 0.05 | 3 | Dunnett | 0.018824 |
 | 0.05 | 5 | Dunnett | 0.012023 |
+| 0.05 | 5 | Holm (gate 1) | 0.01 |
+| 0.05 | 5 | Holm (gate 3) | 0.016667 |
+| 0.05 | 5 | Holm (gate 5) | 0.05 |
 
 ## Known Limitations
 
-- Holm, Hochberg, and gatekeeping procedures are not implemented.
+- Hochberg step-up and graphical gatekeeping are not implemented.
 - FDR methods are not implemented.
 - Does not automatically propagate adjusted alpha into endpoint methods; users
   apply the result manually.

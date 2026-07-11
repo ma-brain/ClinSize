@@ -18,6 +18,8 @@ pub enum MultiplicityMethod {
     Sidak,
     /// Dunnett adjustment for `m` treatment arms vs a common control (equal group sizes).
     Dunnett,
+    /// Holm step-down gatekeeping for a fixed-order hypothesis at position `k`.
+    Holm,
 }
 
 /// Inputs for a family-wise alpha adjustment.
@@ -29,6 +31,8 @@ pub struct MultiplicityInput {
     /// Number of comparisons in the family.
     pub number_of_comparisons: u32,
     pub adjustment_method: MultiplicityMethod,
+    /// Position in the gatekeeping sequence (1 = first), required for Holm.
+    pub gate_position: Option<u32>,
 }
 
 /// Results for a family-wise alpha adjustment.
@@ -39,6 +43,8 @@ pub struct MultiplicityResult {
     pub family_wise_alpha: f64,
     pub number_of_comparisons: u32,
     pub adjustment_method: MultiplicityMethod,
+    /// Gate position when Holm gatekeeping is used.
+    pub gate_position: Option<u32>,
     /// Ratio of adjusted alpha to the unadjusted per-comparison alpha if the
     /// family-wise rate were split naively without adjustment logic.
     pub alpha_reduction_factor: f64,
@@ -47,7 +53,22 @@ pub struct MultiplicityResult {
 
 pub fn validate(input: &MultiplicityInput) -> Result<()> {
     validation::validate_alpha(input.family_wise_alpha)?;
-    validation::validate_comparison_count(input.number_of_comparisons)
+    validation::validate_comparison_count(input.number_of_comparisons)?;
+
+    if input.adjustment_method == MultiplicityMethod::Holm {
+        let gate_position = input.gate_position.ok_or_else(|| Error::InvalidInput {
+            field: "gatePosition".into(),
+            message: "is required when using Holm gatekeeping".into(),
+        })?;
+        validation::validate_gate_position(gate_position, input.number_of_comparisons)?;
+    } else if input.gate_position.is_some() {
+        return Err(Error::InvalidInput {
+            field: "gatePosition".into(),
+            message: "must not be set unless using Holm gatekeeping".into(),
+        });
+    }
+
+    Ok(())
 }
 
 /// Compute a per-comparison alpha from a family-wise error rate.
@@ -64,6 +85,11 @@ pub fn calculate(input: MultiplicityInput) -> Result<MultiplicityResult> {
         MultiplicityMethod::Dunnett => {
             dunnett_alpha(input.family_wise_alpha, input.number_of_comparisons)?
         }
+        MultiplicityMethod::Holm => holm_alpha(
+            input.family_wise_alpha,
+            input.number_of_comparisons,
+            input.gate_position.expect("validated above"),
+        ),
     };
 
     if adjusted_alpha <= 0.0 {
@@ -81,6 +107,7 @@ pub fn calculate(input: MultiplicityInput) -> Result<MultiplicityResult> {
         family_wise_alpha: input.family_wise_alpha,
         number_of_comparisons: input.number_of_comparisons,
         adjustment_method: input.adjustment_method,
+        gate_position: input.gate_position,
         alpha_reduction_factor,
         warnings,
     })
@@ -99,6 +126,12 @@ fn dunnett_alpha(family_wise_alpha: f64, treatment_arms: u32) -> Result<f64> {
         .ok_or_else(|| Error::ConvergenceFailure(
             "failed to solve Dunnett critical value for the requested alpha and number of treatment arms".into(),
         ))
+}
+
+/// Holm step-down local alpha for gate `k` in a family of `m` ordered hypotheses.
+fn holm_alpha(family_wise_alpha: f64, number_of_comparisons: u32, gate_position: u32) -> f64 {
+    let remaining = number_of_comparisons - gate_position + 1;
+    family_wise_alpha / f64::from(remaining)
 }
 
 fn build_warnings(input: &MultiplicityInput) -> Vec<CalculationWarning> {
@@ -124,6 +157,10 @@ fn build_warnings(input: &MultiplicityInput) -> Vec<CalculationWarning> {
             "dunnett_equal_n",
             "Dunnett assumes each treatment arm is compared with a common control using equal per-group sample sizes (contrast correlation 0.5).",
         )),
+        MultiplicityMethod::Holm => warnings.push(CalculationWarning::new(
+            "holm_fixed_order",
+            "Holm gatekeeping assumes a pre-specified testing order; this alpha applies at the chosen gate after prior gates are passed.",
+        )),
     }
 
     let adjusted_alpha = match input.adjustment_method {
@@ -136,6 +173,11 @@ fn build_warnings(input: &MultiplicityInput) -> Vec<CalculationWarning> {
         MultiplicityMethod::Dunnett => {
             dunnett_alpha(input.family_wise_alpha, input.number_of_comparisons).unwrap_or(0.0)
         }
+        MultiplicityMethod::Holm => holm_alpha(
+            input.family_wise_alpha,
+            input.number_of_comparisons,
+            input.gate_position.unwrap_or(1),
+        ),
     };
 
     if adjusted_alpha < 0.001 {
@@ -159,6 +201,7 @@ mod tests {
             family_wise_alpha: 0.05,
             number_of_comparisons: 2,
             adjustment_method: MultiplicityMethod::Bonferroni,
+            gate_position: None,
         })
         .expect("calculate");
 
@@ -172,6 +215,7 @@ mod tests {
             family_wise_alpha: 0.05,
             number_of_comparisons: 5,
             adjustment_method: MultiplicityMethod::Bonferroni,
+            gate_position: None,
         })
         .expect("calculate");
 
@@ -184,6 +228,7 @@ mod tests {
             family_wise_alpha: 0.05,
             number_of_comparisons: 2,
             adjustment_method: MultiplicityMethod::Sidak,
+            gate_position: None,
         })
         .expect("calculate");
 
@@ -196,6 +241,7 @@ mod tests {
             family_wise_alpha: 0.05,
             number_of_comparisons: 5,
             adjustment_method: MultiplicityMethod::Sidak,
+            gate_position: None,
         })
         .expect("calculate");
 
@@ -208,6 +254,7 @@ mod tests {
             family_wise_alpha: 0.05,
             number_of_comparisons: 1,
             adjustment_method: MultiplicityMethod::Bonferroni,
+            gate_position: None,
         })
         .expect("calculate");
 
@@ -224,6 +271,7 @@ mod tests {
             family_wise_alpha: 0.05,
             number_of_comparisons: 2,
             adjustment_method: MultiplicityMethod::Dunnett,
+            gate_position: None,
         })
         .expect("calculate");
 
@@ -237,10 +285,77 @@ mod tests {
             family_wise_alpha: 0.05,
             number_of_comparisons: 3,
             adjustment_method: MultiplicityMethod::Dunnett,
+            gate_position: None,
         })
         .expect("calculate");
 
         assert_relative_eq!(result.adjusted_alpha, 0.01882430, epsilon = 1e-4);
+    }
+
+    #[test]
+    fn holm_first_gate_matches_bonferroni() {
+        let result = calculate(MultiplicityInput {
+            family_wise_alpha: 0.05,
+            number_of_comparisons: 5,
+            adjustment_method: MultiplicityMethod::Holm,
+            gate_position: Some(1),
+        })
+        .expect("calculate");
+
+        assert_relative_eq!(result.adjusted_alpha, 0.01, max_relative = 1e-12);
+        assert_eq!(result.gate_position, Some(1));
+    }
+
+    #[test]
+    fn holm_third_gate_matches_manual_reference() {
+        let result = calculate(MultiplicityInput {
+            family_wise_alpha: 0.05,
+            number_of_comparisons: 5,
+            adjustment_method: MultiplicityMethod::Holm,
+            gate_position: Some(3),
+        })
+        .expect("calculate");
+
+        assert_relative_eq!(result.adjusted_alpha, 0.05 / 3.0, max_relative = 1e-12);
+    }
+
+    #[test]
+    fn holm_final_gate_returns_family_wise_alpha() {
+        let result = calculate(MultiplicityInput {
+            family_wise_alpha: 0.05,
+            number_of_comparisons: 5,
+            adjustment_method: MultiplicityMethod::Holm,
+            gate_position: Some(5),
+        })
+        .expect("calculate");
+
+        assert_relative_eq!(result.adjusted_alpha, 0.05, max_relative = 1e-12);
+    }
+
+    #[test]
+    fn holm_requires_gate_position() {
+        let err = calculate(MultiplicityInput {
+            family_wise_alpha: 0.05,
+            number_of_comparisons: 3,
+            adjustment_method: MultiplicityMethod::Holm,
+            gate_position: None,
+        })
+        .expect_err("invalid");
+
+        assert!(matches!(err, Error::InvalidInput { .. }));
+    }
+
+    #[test]
+    fn rejects_gate_position_for_bonferroni() {
+        let err = calculate(MultiplicityInput {
+            family_wise_alpha: 0.05,
+            number_of_comparisons: 3,
+            adjustment_method: MultiplicityMethod::Bonferroni,
+            gate_position: Some(1),
+        })
+        .expect_err("invalid");
+
+        assert!(matches!(err, Error::InvalidInput { .. }));
     }
 
     #[test]
@@ -249,6 +364,7 @@ mod tests {
             family_wise_alpha: 0.05,
             number_of_comparisons: 0,
             adjustment_method: MultiplicityMethod::Bonferroni,
+            gate_position: None,
         })
         .expect_err("invalid");
 
