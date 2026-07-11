@@ -13,8 +13,8 @@ use crate::methods::continuous::ancova_two_sample::{AncovaTwoSampleInput, Ancova
 use crate::methods::continuous::change_from_baseline::{
     ChangeFromBaselineInput, ChangeFromBaselineResult,
 };
-use crate::methods::continuous::mmrm::{MmrmInput, MmrmResult};
 use crate::methods::continuous::mann_whitney::{MannWhitneyInput, MannWhitneyResult};
+use crate::methods::continuous::mmrm::{MmrmInput, MmrmResult};
 use crate::methods::continuous::one_sample_ttest::{OneSampleTTestInput, OneSampleTTestResult};
 use crate::methods::continuous::one_way_anova::{OneWayAnovaInput, OneWayAnovaResult};
 use crate::methods::continuous::paired_ttest::{PairedTTestInput, PairedTTestResult};
@@ -23,13 +23,13 @@ use crate::methods::continuous::wilcoxon_signed_rank::{
     WilcoxonSignedRankInput, WilcoxonSignedRankResult,
 };
 use crate::methods::count::negative_binomial::{NegativeBinomialInput, NegativeBinomialResult};
-use crate::methods::ordinal::proportional_odds::{ProportionalOddsInput, ProportionalOddsResult};
 use crate::methods::design::blinded_ssre::{BlindedSsreInput, BlindedSsreResult};
 use crate::methods::design::group_sequential::{GroupSequentialInput, GroupSequentialResult};
 use crate::methods::design::multiplicity::{
     MultiplicityInput, MultiplicityMethod, MultiplicityResult,
 };
 use crate::methods::design::spending::SpendingFunction;
+use crate::methods::ordinal::proportional_odds::{ProportionalOddsInput, ProportionalOddsResult};
 use crate::methods::survival::log_rank::{LogRankInput, LogRankResult};
 use crate::types::{Alternative, CorrelationStructure, SolveMode, StudyObjective};
 
@@ -57,10 +57,7 @@ fn z_beta_value(power: f64) -> f64 {
 
 fn format_z_criticals(alpha: f64, alternative: Alternative, power: f64) -> String {
     let (label, z_alpha) = z_alpha_label_and_value(alpha, alternative);
-    format!(
-        "{label} = {z_alpha:.3}, zβ = {:.3}",
-        z_beta_value(power)
-    )
+    format!("{label} = {z_alpha:.3}, zβ = {:.3}", z_beta_value(power))
 }
 
 fn format_percent_int(rate: f64) -> String {
@@ -146,9 +143,9 @@ pub fn two_sample_ttest_protocol(
                 format_z_criticals(input.alpha, input.alternative, target),
             ));
 
-            let mut p2 = format!(
+            let mut p2 = String::from(
                 "The primary analysis will use an unadjusted two-sample t-test on change from \
-                 baseline, assuming normality and a common pooled SD across arms."
+                 baseline, assuming normality and a common pooled SD across arms.",
             );
             let evaluable = if result.n_control == result.n_treatment {
                 format!("per arm is {}", result.n_control)
@@ -579,7 +576,7 @@ pub fn mmrm_protocol(input: &MmrmInput, result: &MmrmResult) -> String {
                 significance_level_phrase(input.alternative),
                 input.alpha,
             );
-            if input.per_visit_dropout_rate.is_some() {
+            if let Some(per_visit_dropout_rate) = input.per_visit_dropout_rate {
                 paragraph.push_str(&format!(
                     " The required number of evaluable subjects per arm is {} control and {} \
                      treatment (total N = {}). Allowing for an anticipated per-visit withdrawal \
@@ -588,7 +585,7 @@ pub fn mmrm_protocol(input: &MmrmInput, result: &MmrmResult) -> String {
                     result.n_control,
                     result.n_treatment,
                     result.total_n,
-                    input.per_visit_dropout_rate.expect("validated") * 100.0,
+                    per_visit_dropout_rate * 100.0,
                     input.n_post_baseline_visits,
                     result.cumulative_dropout * 100.0,
                     result.n_control_adjusted,
@@ -937,14 +934,12 @@ fn binary_effect_protocol(
             } else {
                 format!("subjects are {n_control} control and {n_treatment} treatment")
             };
-            let enrollable =
-                two_group_enrollable_phrase(n_control_adjusted, n_treatment_adjusted, total_n_adjusted);
-            append_dropout_enrollment_sentence(
-                &mut p2,
-                dropout_rate,
-                &evaluable,
-                &enrollable,
+            let enrollable = two_group_enrollable_phrase(
+                n_control_adjusted,
+                n_treatment_adjusted,
+                total_n_adjusted,
             );
+            append_dropout_enrollment_sentence(&mut p2, dropout_rate, &evaluable, &enrollable);
             p2.push_str(&format!(
                 " Sample size was computed using a normal approximation to the {test_statistic} \
                  with n derived from ({z_label} + zβ)² × variance / (log effect)²."
@@ -1222,9 +1217,10 @@ pub fn log_rank_protocol(input: &LogRankInput, result: &LogRankResult) -> String
                 result.events_treatment,
             ));
 
-            let mut p2 = "The primary analysis will use a two-arm log-rank test under proportional \
+            let mut p2 =
+                "The primary analysis will use a two-arm log-rank test under proportional \
                           hazards, based on the Schoenfeld (1981) event-driven approximation."
-                .to_string();
+                    .to_string();
             if let (Some(total_n), Some(n_control), Some(n_treatment)) =
                 (result.total_n, result.n_control, result.n_treatment)
             {

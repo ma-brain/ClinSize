@@ -14,8 +14,8 @@ use clinsize_core::methods::continuous::ancova_two_sample::{
 use clinsize_core::methods::continuous::change_from_baseline::{
     self, ChangeFromBaselineInput, ChangeFromBaselineResult,
 };
-use clinsize_core::methods::continuous::mmrm::{self, MmrmInput, MmrmResult};
 use clinsize_core::methods::continuous::mann_whitney::{self, MannWhitneyInput, MannWhitneyResult};
+use clinsize_core::methods::continuous::mmrm::{self, MmrmInput, MmrmResult};
 use clinsize_core::methods::continuous::one_sample_ttest::{
     self, OneSampleTTestInput, OneSampleTTestResult,
 };
@@ -32,14 +32,14 @@ use clinsize_core::methods::continuous::wilcoxon_signed_rank::{
 use clinsize_core::methods::count::negative_binomial::{
     self, NegativeBinomialInput, NegativeBinomialResult,
 };
-use clinsize_core::methods::ordinal::proportional_odds::{
-    self, ProportionalOddsInput, ProportionalOddsResult,
-};
 use clinsize_core::methods::design::blinded_ssre::{self, BlindedSsreInput, BlindedSsreResult};
 use clinsize_core::methods::design::group_sequential::{
     self, GroupSequentialInput, GroupSequentialResult,
 };
 use clinsize_core::methods::design::multiplicity::{self, MultiplicityInput, MultiplicityResult};
+use clinsize_core::methods::ordinal::proportional_odds::{
+    self, ProportionalOddsInput, ProportionalOddsResult,
+};
 use clinsize_core::methods::survival::log_rank::{self, LogRankInput, LogRankResult};
 use clinsize_core::registry::MethodDescriptor;
 use clinsize_core::types::SolveMode;
@@ -243,10 +243,7 @@ fn calculate_mmrm(input: MmrmInput) -> Result<MmrmResult, AppError> {
 }
 
 #[tauri::command]
-fn export_mmrm_markdown(
-    input: MmrmInput,
-    result: MmrmResult,
-) -> Result<String, AppError> {
+fn export_mmrm_markdown(input: MmrmInput, result: MmrmResult) -> Result<String, AppError> {
     Ok(clinsize_core::reports::mmrm_markdown(
         &input,
         &result,

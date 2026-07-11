@@ -12,8 +12,8 @@ use crate::methods::continuous::ancova_two_sample::{AncovaTwoSampleInput, Ancova
 use crate::methods::continuous::change_from_baseline::{
     ChangeFromBaselineInput, ChangeFromBaselineResult,
 };
-use crate::methods::continuous::mmrm::{MmrmInput, MmrmResult};
 use crate::methods::continuous::mann_whitney::{MannWhitneyInput, MannWhitneyResult};
+use crate::methods::continuous::mmrm::{MmrmInput, MmrmResult};
 use crate::methods::continuous::one_sample_ttest::{OneSampleTTestInput, OneSampleTTestResult};
 use crate::methods::continuous::one_way_anova::{OneWayAnovaInput, OneWayAnovaResult};
 use crate::methods::continuous::paired_ttest::{PairedTTestInput, PairedTTestResult};
@@ -22,13 +22,13 @@ use crate::methods::continuous::wilcoxon_signed_rank::{
     WilcoxonSignedRankInput, WilcoxonSignedRankResult,
 };
 use crate::methods::count::negative_binomial::{NegativeBinomialInput, NegativeBinomialResult};
-use crate::methods::ordinal::proportional_odds::{ProportionalOddsInput, ProportionalOddsResult};
 use crate::methods::design::blinded_ssre::{BlindedSsreInput, BlindedSsreResult};
 use crate::methods::design::group_sequential::{GroupSequentialInput, GroupSequentialResult};
 use crate::methods::design::multiplicity::{
     MultiplicityInput, MultiplicityMethod, MultiplicityResult,
 };
 use crate::methods::design::spending::SpendingFunction;
+use crate::methods::ordinal::proportional_odds::{ProportionalOddsInput, ProportionalOddsResult};
 use crate::methods::survival::log_rank::{LogRankInput, LogRankResult};
 use crate::types::{Alternative, CorrelationStructure, SolveMode, StudyObjective};
 

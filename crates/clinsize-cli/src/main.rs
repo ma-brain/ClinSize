@@ -178,13 +178,16 @@ mod tests {
 
     #[test]
     fn list_includes_all_methods() {
-        let mut lines = Vec::new();
-        for method in registry::list_methods() {
-            lines.push(method.id.to_string());
-        }
-        assert_eq!(lines.len(), 10);
+        // The exact method count is pinned by the registry's own tests;
+        // duplicating it here is what let this test go stale.
+        let lines: Vec<String> = registry::list_methods()
+            .iter()
+            .map(|method| method.id.to_string())
+            .collect();
+        assert!(!lines.is_empty());
         assert!(lines.contains(&"continuous.two_sample_ttest".to_string()));
         assert!(lines.contains(&"survival.log_rank".to_string()));
+        assert!(lines.contains(&"design.blinded_ssre".to_string()));
     }
 
     #[test]

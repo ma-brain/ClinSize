@@ -4,8 +4,8 @@ pub mod docx;
 pub mod html;
 pub mod markdown_render;
 pub mod pdf;
-pub mod rationale;
 pub mod protocol;
+pub mod rationale;
 
 use crate::methods::binary::odds_ratio::{OddsRatioInput, OddsRatioResult};
 use crate::methods::binary::one_sample_binomial::{
@@ -19,8 +19,8 @@ use crate::methods::continuous::ancova_two_sample::{AncovaTwoSampleInput, Ancova
 use crate::methods::continuous::change_from_baseline::{
     ChangeFromBaselineInput, ChangeFromBaselineResult,
 };
-use crate::methods::continuous::mmrm::{MmrmInput, MmrmResult};
 use crate::methods::continuous::mann_whitney::{MannWhitneyInput, MannWhitneyResult};
+use crate::methods::continuous::mmrm::{MmrmInput, MmrmResult};
 use crate::methods::continuous::one_sample_ttest::{OneSampleTTestInput, OneSampleTTestResult};
 use crate::methods::continuous::one_way_anova::{OneWayAnovaInput, OneWayAnovaResult};
 use crate::methods::continuous::paired_ttest::{PairedTTestInput, PairedTTestResult};
@@ -29,10 +29,10 @@ use crate::methods::continuous::wilcoxon_signed_rank::{
     WilcoxonSignedRankInput, WilcoxonSignedRankResult,
 };
 use crate::methods::count::negative_binomial::{NegativeBinomialInput, NegativeBinomialResult};
-use crate::methods::ordinal::proportional_odds::{ProportionalOddsInput, ProportionalOddsResult};
 use crate::methods::design::blinded_ssre::{BlindedSsreInput, BlindedSsreResult};
 use crate::methods::design::group_sequential::{GroupSequentialInput, GroupSequentialResult};
 use crate::methods::design::multiplicity::{MultiplicityInput, MultiplicityResult};
+use crate::methods::ordinal::proportional_odds::{ProportionalOddsInput, ProportionalOddsResult};
 use crate::methods::survival::log_rank::{LogRankInput, LogRankResult};
 use crate::types::{CorrelationStructure, SolveMode};
 
@@ -255,10 +255,7 @@ pub fn one_way_anova_markdown(
         &mut lines,
         rationale::one_way_anova_rationale(input, result),
     );
-    append_protocol_text(
-        &mut lines,
-        protocol::one_way_anova_protocol(input, result),
-    );
+    append_protocol_text(&mut lines, protocol::one_way_anova_protocol(input, result));
     append_warnings(&mut lines, &result.warnings);
     lines.push(String::new());
     lines.push("## Reproducibility".into());
@@ -1055,18 +1052,12 @@ pub fn mmrm_markdown(input: &MmrmInput, result: &MmrmResult, engine_version: &st
         format!("- **Control N (evaluable):** {}", result.n_control),
         format!("- **Treatment N (evaluable):** {}", result.n_treatment),
         format!("- **Total N (evaluable):** {}", result.total_n),
-        format!(
-            "- **Enrollable control N:** {}",
-            result.n_control_adjusted
-        ),
+        format!("- **Enrollable control N:** {}", result.n_control_adjusted),
         format!(
             "- **Enrollable treatment N:** {}",
             result.n_treatment_adjusted
         ),
-        format!(
-            "- **Enrollable total N:** {}",
-            result.total_n_adjusted
-        ),
+        format!("- **Enrollable total N:** {}", result.total_n_adjusted),
         format!("- **Achieved power:** {:.4}", result.achieved_power),
         format!("- **ρ_final:** {:.4}", result.rho_final),
         format!("- **GLS factor:** {:.4}", result.gls_factor),
@@ -1075,10 +1066,7 @@ pub fn mmrm_markdown(input: &MmrmInput, result: &MmrmResult, engine_version: &st
             result.gls_variance_efficiency_factor
         ),
         format!("- **V_eff:** {:.4}", result.v_eff),
-        format!(
-            "- **Cumulative dropout:** {:.4}",
-            result.cumulative_dropout
-        ),
+        format!("- **Cumulative dropout:** {:.4}", result.cumulative_dropout),
     ];
 
     append_rationale(&mut lines, rationale::mmrm_rationale(input, result));
@@ -1155,7 +1143,9 @@ pub fn negative_binomial_markdown(
     lines.push(String::new());
     lines.push("## Reproducibility".into());
     lines.push(format!("- **Engine version:** {engine_version}"));
-    lines.push("- **Validation source:** Zhu & Lakkis (2014) Wald test (gsDesignNB Method 3)".into());
+    lines.push(
+        "- **Validation source:** Zhu & Lakkis (2014) Wald test (gsDesignNB Method 3)".into(),
+    );
 
     lines.join("\n")
 }

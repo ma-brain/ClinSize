@@ -20,8 +20,8 @@ use crate::methods::continuous::ancova_two_sample::{
 use crate::methods::continuous::change_from_baseline::{
     self, ChangeFromBaselineInput, ChangeFromBaselineResult,
 };
-use crate::methods::continuous::mmrm::{self, MmrmInput, MmrmResult};
 use crate::methods::continuous::mann_whitney::{self, MannWhitneyInput, MannWhitneyResult};
+use crate::methods::continuous::mmrm::{self, MmrmInput, MmrmResult};
 use crate::methods::continuous::one_sample_ttest::{
     self, OneSampleTTestInput, OneSampleTTestResult,
 };
@@ -36,12 +36,12 @@ use crate::methods::continuous::wilcoxon_signed_rank::{
 use crate::methods::count::negative_binomial::{
     self, NegativeBinomialInput, NegativeBinomialResult,
 };
-use crate::methods::ordinal::proportional_odds::{
-    self, ProportionalOddsInput, ProportionalOddsResult,
-};
 use crate::methods::design::blinded_ssre::{self, BlindedSsreInput, BlindedSsreResult};
 use crate::methods::design::group_sequential::{self, GroupSequentialInput, GroupSequentialResult};
 use crate::methods::design::multiplicity::{self, MultiplicityInput, MultiplicityResult};
+use crate::methods::ordinal::proportional_odds::{
+    self, ProportionalOddsInput, ProportionalOddsResult,
+};
 use crate::methods::survival::log_rank::{self, LogRankInput, LogRankResult};
 use crate::reports;
 use crate::{engine_version, Error, Result};
@@ -189,12 +189,16 @@ pub fn report_markdown_json(
         "count.negative_binomial" => {
             let input = parse_input_json::<NegativeBinomialInput>(input_json)?;
             let result = parse_result_json::<NegativeBinomialResult>(result_json)?;
-            Ok(reports::negative_binomial_markdown(&input, &result, version))
+            Ok(reports::negative_binomial_markdown(
+                &input, &result, version,
+            ))
         }
         "ordinal.proportional_odds" => {
             let input = parse_input_json::<ProportionalOddsInput>(input_json)?;
             let result = parse_result_json::<ProportionalOddsResult>(result_json)?;
-            Ok(reports::proportional_odds_markdown(&input, &result, version))
+            Ok(reports::proportional_odds_markdown(
+                &input, &result, version,
+            ))
         }
         "survival.log_rank" => {
             let input = parse_input_json::<LogRankInput>(input_json)?;
@@ -348,12 +352,16 @@ pub fn protocol_text_json(method_id: &str, input_json: &str, result_json: &str) 
         "continuous.two_sample_ttest" => {
             let input = parse_input_json::<TwoSampleTTestInput>(input_json)?;
             let result = parse_result_json::<TwoSampleTTestResult>(result_json)?;
-            Ok(reports::protocol::two_sample_ttest_protocol(&input, &result))
+            Ok(reports::protocol::two_sample_ttest_protocol(
+                &input, &result,
+            ))
         }
         "continuous.one_sample_ttest" => {
             let input = parse_input_json::<OneSampleTTestInput>(input_json)?;
             let result = parse_result_json::<OneSampleTTestResult>(result_json)?;
-            Ok(reports::protocol::one_sample_ttest_protocol(&input, &result))
+            Ok(reports::protocol::one_sample_ttest_protocol(
+                &input, &result,
+            ))
         }
         "continuous.paired_ttest" => {
             let input = parse_input_json::<PairedTTestInput>(input_json)?;
@@ -368,12 +376,16 @@ pub fn protocol_text_json(method_id: &str, input_json: &str, result_json: &str) 
         "continuous.ancova_two_sample" => {
             let input = parse_input_json::<AncovaTwoSampleInput>(input_json)?;
             let result = parse_result_json::<AncovaTwoSampleResult>(result_json)?;
-            Ok(reports::protocol::ancova_two_sample_protocol(&input, &result))
+            Ok(reports::protocol::ancova_two_sample_protocol(
+                &input, &result,
+            ))
         }
         "continuous.change_from_baseline" => {
             let input = parse_input_json::<ChangeFromBaselineInput>(input_json)?;
             let result = parse_result_json::<ChangeFromBaselineResult>(result_json)?;
-            Ok(reports::protocol::change_from_baseline_protocol(&input, &result))
+            Ok(reports::protocol::change_from_baseline_protocol(
+                &input, &result,
+            ))
         }
         "continuous.mmrm" => {
             let input = parse_input_json::<MmrmInput>(input_json)?;
@@ -388,7 +400,9 @@ pub fn protocol_text_json(method_id: &str, input_json: &str, result_json: &str) 
         "continuous.wilcoxon_signed_rank" => {
             let input = parse_input_json::<WilcoxonSignedRankInput>(input_json)?;
             let result = parse_result_json::<WilcoxonSignedRankResult>(result_json)?;
-            Ok(reports::protocol::wilcoxon_signed_rank_protocol(&input, &result))
+            Ok(reports::protocol::wilcoxon_signed_rank_protocol(
+                &input, &result,
+            ))
         }
         "binary.two_proportion_difference" => {
             let input = parse_input_json::<TwoProportionDifferenceInput>(input_json)?;
@@ -405,7 +419,9 @@ pub fn protocol_text_json(method_id: &str, input_json: &str, result_json: &str) 
         "binary.one_sample_binomial" => {
             let input = parse_input_json::<OneSampleBinomialInput>(input_json)?;
             let result = parse_result_json::<OneSampleBinomialResult>(result_json)?;
-            Ok(reports::protocol::one_sample_binomial_protocol(&input, &result))
+            Ok(reports::protocol::one_sample_binomial_protocol(
+                &input, &result,
+            ))
         }
         "binary.risk_ratio" => {
             let input = parse_input_json::<RiskRatioInput>(input_json)?;
@@ -415,12 +431,16 @@ pub fn protocol_text_json(method_id: &str, input_json: &str, result_json: &str) 
         "count.negative_binomial" => {
             let input = parse_input_json::<NegativeBinomialInput>(input_json)?;
             let result = parse_result_json::<NegativeBinomialResult>(result_json)?;
-            Ok(reports::protocol::negative_binomial_protocol(&input, &result))
+            Ok(reports::protocol::negative_binomial_protocol(
+                &input, &result,
+            ))
         }
         "ordinal.proportional_odds" => {
             let input = parse_input_json::<ProportionalOddsInput>(input_json)?;
             let result = parse_result_json::<ProportionalOddsResult>(result_json)?;
-            Ok(reports::protocol::proportional_odds_protocol(&input, &result))
+            Ok(reports::protocol::proportional_odds_protocol(
+                &input, &result,
+            ))
         }
         "survival.log_rank" => {
             let input = parse_input_json::<LogRankInput>(input_json)?;
@@ -435,7 +455,9 @@ pub fn protocol_text_json(method_id: &str, input_json: &str, result_json: &str) 
         "design.group_sequential" => {
             let input = parse_input_json::<GroupSequentialInput>(input_json)?;
             let result = parse_result_json::<GroupSequentialResult>(result_json)?;
-            Ok(reports::protocol::group_sequential_protocol(&input, &result))
+            Ok(reports::protocol::group_sequential_protocol(
+                &input, &result,
+            ))
         }
         "design.blinded_ssre" => {
             let input = parse_input_json::<BlindedSsreInput>(input_json)?;

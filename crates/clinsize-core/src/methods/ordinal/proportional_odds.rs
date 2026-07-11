@@ -42,7 +42,10 @@ pub struct ProportionalOddsResult {
 }
 
 pub fn efficiency_factor(category_probabilities: &[f64]) -> f64 {
-    1.0 - category_probabilities.iter().map(|p| p.powi(3)).sum::<f64>()
+    1.0 - category_probabilities
+        .iter()
+        .map(|p| p.powi(3))
+        .sum::<f64>()
 }
 
 pub fn validate(input: &ProportionalOddsInput) -> Result<()> {
@@ -245,8 +248,13 @@ fn solve_total_n(
     ps: f64,
     log_or: f64,
 ) -> Result<u32> {
-    let continuous =
-        continuous_total_n(input.odds_ratio, input.treatment_fraction, input.alpha, target_power, ps);
+    let continuous = continuous_total_n(
+        input.odds_ratio,
+        input.treatment_fraction,
+        input.alpha,
+        target_power,
+        ps,
+    );
     let start = continuous.floor().max(2.0) as u32;
 
     find_minimum_integer(start.saturating_sub(1).max(2), MAX_SAMPLE_SIZE_SEARCH, |total_n| {

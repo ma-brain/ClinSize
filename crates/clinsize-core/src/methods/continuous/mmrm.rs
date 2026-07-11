@@ -135,8 +135,7 @@ pub fn achieved_power(
     alpha: f64,
     alternative: Alternative,
 ) -> f64 {
-    let variance_diff =
-        v_eff / 2.0 * (1.0 / n_control as f64 + 1.0 / n_treatment as f64);
+    let variance_diff = v_eff / 2.0 * (1.0 / n_control as f64 + 1.0 / n_treatment as f64);
     let z_stat = treatment_effect / variance_diff.sqrt();
     match alternative {
         Alternative::TwoSided => {
