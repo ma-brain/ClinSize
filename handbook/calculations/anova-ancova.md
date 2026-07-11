@@ -2,7 +2,21 @@
 
 ## ANOVA Scope
 
-Initial ANOVA support should focus on one-way fixed-effect ANOVA for comparing means across multiple groups.
+Initial ANOVA support should focus on one-way fixed-effect ANOVA for comparing means across multiple groups. **Implemented** as `continuous.one_way_anova` (balanced groups).
+
+## Formula Or Algorithm
+
+Uses R `stats::power.anova.test` parameterization with between-group variance `σ²_b` and within-group variance `σ²_w`:
+
+`λ = (k − 1) × n × (σ²_b / σ²_w)`
+
+`df₁ = k − 1`, `df₂ = k × (n − 1)`
+
+Power = `P(F > F_{α, df₁, df₂} | λ)` via noncentral F (`r_mathlib` / R `pnf`).
+
+Cohen's `f = √(σ²_b / σ²_w)`. Per-group sample size is the smallest integer `n ≥ 2` achieving the target power after rounding.
+
+Validation reference: R `power.anova.test`.
 
 ## ANOVA Inputs
 

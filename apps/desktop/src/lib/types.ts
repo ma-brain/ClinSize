@@ -78,3 +78,24 @@ export interface PairedTTestResult {
   effectSize: number;
   warnings: CalculationWarning[];
 }
+
+export interface OneWayAnovaInput {
+  solveMode: SolveMode;
+  alpha: number;
+  power?: number;
+  nPerGroup?: number;
+  nGroups: number;
+  betweenVariance: number;
+  withinVariance: number;
+  dropoutRate?: number;
+}
+
+export interface OneWayAnovaResult {
+  nPerGroup: number;
+  totalN: number;
+  nPerGroupAdjusted: number;
+  totalNAdjusted: number;
+  achievedPower: number;
+  effectSize: number;
+  warnings: CalculationWarning[];
+}

@@ -1,6 +1,7 @@
 //! Report data assembly for exported calculation summaries.
 
 use crate::methods::continuous::one_sample_ttest::{OneSampleTTestInput, OneSampleTTestResult};
+use crate::methods::continuous::one_way_anova::{OneWayAnovaInput, OneWayAnovaResult};
 use crate::methods::continuous::paired_ttest::{PairedTTestInput, PairedTTestResult};
 use crate::methods::continuous::two_sample_ttest::{TwoSampleTTestInput, TwoSampleTTestResult};
 
@@ -147,6 +148,53 @@ pub fn paired_ttest_markdown(
 
     append_warnings(&mut lines, &result.warnings);
     append_reproducibility(&mut lines, engine_version);
+
+    lines.join("\n")
+}
+
+/// Render a one-way ANOVA calculation summary as Markdown.
+pub fn one_way_anova_markdown(
+    input: &OneWayAnovaInput,
+    result: &OneWayAnovaResult,
+    engine_version: &str,
+) -> String {
+    let mut lines = vec![
+        "# ClinSize calculation summary".into(),
+        String::new(),
+        "## Method".into(),
+        "- **Method:** One-way ANOVA (balanced groups)".into(),
+        "- **Endpoint:** Continuous".into(),
+        format!("- **Solve mode:** {:?}", input.solve_mode),
+        String::new(),
+        "## Inputs".into(),
+        format!("- **Alpha:** {:.4}", input.alpha),
+        format!("- **Number of groups:** {}", input.n_groups),
+        format!(
+            "- **Between-group variance:** {:.4}",
+            input.between_variance
+        ),
+        format!("- **Within-group variance:** {:.4}", input.within_variance),
+        String::new(),
+        "## Results".into(),
+        format!("- **N per group:** {}", result.n_per_group),
+        format!("- **Total N:** {}", result.total_n),
+        format!(
+            "- **Dropout-adjusted N per group:** {}",
+            result.n_per_group_adjusted
+        ),
+        format!(
+            "- **Dropout-adjusted total N:** {}",
+            result.total_n_adjusted
+        ),
+        format!("- **Achieved power:** {:.4}", result.achieved_power),
+        format!("- **Effect size (Cohen's f):** {:.4}", result.effect_size),
+    ];
+
+    append_warnings(&mut lines, &result.warnings);
+    lines.push(String::new());
+    lines.push("## Reproducibility".into());
+    lines.push(format!("- **Engine version:** {engine_version}"));
+    lines.push("- **Validation source:** R `power.anova.test` (stats package)".into());
 
     lines.join("\n")
 }

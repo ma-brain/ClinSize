@@ -1,4 +1,5 @@
 <script lang="ts">
+  import OneWayAnovaView from "$lib/methods/OneWayAnovaView.svelte";
   import SingleSampleTTestView from "$lib/methods/SingleSampleTTestView.svelte";
   import TwoSampleTTestView from "$lib/methods/TwoSampleTTestView.svelte";
 
@@ -24,6 +25,8 @@
     sizeLabel="Number of pairs"
     variant="paired"
   />
+{:else if methodId === "continuous.one_way_anova"}
+  <OneWayAnovaView />
 {:else}
   <p class="muted">Select a method from the navigation rail.</p>
 {/if}

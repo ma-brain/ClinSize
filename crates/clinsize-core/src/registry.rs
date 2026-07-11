@@ -38,6 +38,13 @@ const METHODS: &[MethodDescriptor] = &[
         supported_solve_modes: &[SolveMode::SampleSize, SolveMode::Power],
         documentation_path: Some("handbook/calculations/continuous-ttest.md"),
     },
+    MethodDescriptor {
+        id: "continuous.one_way_anova",
+        display_name: "One-way ANOVA",
+        endpoint_category: "Continuous",
+        supported_solve_modes: &[SolveMode::SampleSize, SolveMode::Power],
+        documentation_path: Some("handbook/calculations/anova-ancova.md"),
+    },
 ];
 
 /// Return all registered methods.
@@ -52,9 +59,10 @@ mod tests {
     #[test]
     fn list_methods_includes_continuous_ttests() {
         let methods = list_methods();
-        assert_eq!(methods.len(), 3);
+        assert_eq!(methods.len(), 4);
         assert_eq!(methods[0].id, "continuous.two_sample_ttest");
         assert_eq!(methods[1].id, "continuous.one_sample_ttest");
         assert_eq!(methods[2].id, "continuous.paired_ttest");
+        assert_eq!(methods[3].id, "continuous.one_way_anova");
     }
 }
