@@ -182,7 +182,7 @@ mod tests {
         for method in registry::list_methods() {
             lines.push(method.id.to_string());
         }
-        assert_eq!(lines.len(), 9);
+        assert_eq!(lines.len(), 10);
         assert!(lines.contains(&"continuous.two_sample_ttest".to_string()));
         assert!(lines.contains(&"survival.log_rank".to_string()));
     }

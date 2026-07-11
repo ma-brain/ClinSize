@@ -58,7 +58,7 @@
 
 ## Backlog
 
-- Multiplicity adjustments.
+- Multiplicity adjustments. **In progress** — Bonferroni and Šidák per-comparison alpha via `design.multiplicity`; Dunnett, Holm, and gatekeeping remain.
 - Group sequential designs.
 - Adaptive design utilities.
 - Blinded sample size re-estimation.

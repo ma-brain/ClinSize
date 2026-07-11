@@ -12,6 +12,7 @@ use crate::methods::continuous::one_sample_ttest::{OneSampleTTestInput, OneSampl
 use crate::methods::continuous::one_way_anova::{OneWayAnovaInput, OneWayAnovaResult};
 use crate::methods::continuous::paired_ttest::{PairedTTestInput, PairedTTestResult};
 use crate::methods::continuous::two_sample_ttest::{TwoSampleTTestInput, TwoSampleTTestResult};
+use crate::methods::design::multiplicity::{MultiplicityInput, MultiplicityResult};
 use crate::methods::survival::log_rank::{LogRankInput, LogRankResult};
 use crate::types::SolveMode;
 
@@ -545,6 +546,55 @@ pub fn log_rank_markdown(
     lines.push(format!("- **Engine version:** {engine_version}"));
     lines.push(
         "- **Validation source:** R `gsDesign::nEvents` (Schoenfeld 1981 approximation)".into(),
+    );
+
+    lines.join("\n")
+}
+
+/// Render a multiplicity adjustment summary as Markdown.
+pub fn multiplicity_markdown(
+    input: &MultiplicityInput,
+    result: &MultiplicityResult,
+    engine_version: &str,
+) -> String {
+    let mut lines = vec![
+        "# ClinSize calculation summary".into(),
+        String::new(),
+        "## Method".into(),
+        "- **Method:** Family-wise alpha adjustment".into(),
+        "- **Endpoint:** Design".into(),
+        format!("- **Adjustment method:** {:?}", input.adjustment_method),
+        String::new(),
+        "## Inputs".into(),
+        format!(
+            "- **Family-wise alpha:** {:.6}",
+            input.family_wise_alpha
+        ),
+        format!(
+            "- **Number of comparisons:** {}",
+            input.number_of_comparisons
+        ),
+        String::new(),
+        "## Results".into(),
+        format!(
+            "- **Adjusted per-comparison alpha:** {:.6}",
+            result.adjusted_alpha
+        ),
+        format!(
+            "- **Alpha reduction factor:** {:.6}",
+            result.alpha_reduction_factor
+        ),
+        String::new(),
+        "## Usage".into(),
+        "- Use the adjusted per-comparison alpha as the `alpha` input in endpoint sample size calculations.".into(),
+    ];
+
+    append_warnings(&mut lines, &result.warnings);
+    lines.push(String::new());
+    lines.push("## Reproducibility".into());
+    lines.push(format!("- **Engine version:** {engine_version}"));
+    lines.push(
+        "- **Validation source:** Closed-form Bonferroni and Sidak formulas (Julious 2010)".into(),
     );
 
     lines.join("\n")

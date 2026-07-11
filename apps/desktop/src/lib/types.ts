@@ -232,3 +232,20 @@ export interface LogRankResult {
   probabilityEventTreatment?: number;
   warnings: CalculationWarning[];
 }
+
+export type MultiplicityMethod = "bonferroni" | "sidak";
+
+export interface MultiplicityInput {
+  familyWiseAlpha: number;
+  numberOfComparisons: number;
+  adjustmentMethod: MultiplicityMethod;
+}
+
+export interface MultiplicityResult {
+  adjustedAlpha: number;
+  familyWiseAlpha: number;
+  numberOfComparisons: number;
+  adjustmentMethod: MultiplicityMethod;
+  alphaReductionFactor: number;
+  warnings: CalculationWarning[];
+}

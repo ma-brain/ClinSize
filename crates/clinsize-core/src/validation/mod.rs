@@ -73,6 +73,17 @@ pub fn validate_dropout_rate(dropout_rate: f64) -> Result<()> {
     }
 }
 
+pub fn validate_comparison_count(count: u32) -> Result<()> {
+    if count >= 1 {
+        Ok(())
+    } else {
+        Err(Error::InvalidInput {
+            field: "number_of_comparisons".into(),
+            message: "must be at least 1".into(),
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -121,5 +132,12 @@ mod tests {
         assert!(validate_dropout_rate(0.2).is_ok());
         assert!(validate_dropout_rate(1.0).is_err());
         assert!(validate_dropout_rate(-0.01).is_err());
+    }
+
+    #[test]
+    fn comparison_count_requires_at_least_one() {
+        assert!(validate_comparison_count(1).is_ok());
+        assert!(validate_comparison_count(5).is_ok());
+        assert!(validate_comparison_count(0).is_err());
     }
 }

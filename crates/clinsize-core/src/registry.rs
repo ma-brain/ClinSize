@@ -80,6 +80,13 @@ const METHODS: &[MethodDescriptor] = &[
         supported_solve_modes: &[SolveMode::SampleSize, SolveMode::Power],
         documentation_path: Some("handbook/calculations/survival-endpoints.md"),
     },
+    MethodDescriptor {
+        id: "design.multiplicity",
+        display_name: "Multiplicity adjustment",
+        endpoint_category: "Design",
+        supported_solve_modes: &[],
+        documentation_path: Some("handbook/calculations/multiplicity.md"),
+    },
 ];
 
 /// Return all registered methods.
@@ -94,11 +101,12 @@ mod tests {
     #[test]
     fn list_methods_includes_continuous_ttests() {
         let methods = list_methods();
-        assert_eq!(methods.len(), 9);
+        assert_eq!(methods.len(), 10);
         assert_eq!(methods[0].id, "continuous.two_sample_ttest");
         assert_eq!(methods[5].id, "binary.two_proportion_difference");
         assert_eq!(methods[6].id, "binary.odds_ratio");
         assert_eq!(methods[7].id, "binary.risk_ratio");
         assert_eq!(methods[8].id, "survival.log_rank");
+        assert_eq!(methods[9].id, "design.multiplicity");
     }
 }

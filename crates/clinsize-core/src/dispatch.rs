@@ -22,6 +22,7 @@ use crate::methods::continuous::paired_ttest::{self, PairedTTestInput, PairedTTe
 use crate::methods::continuous::two_sample_ttest::{
     self, TwoSampleTTestInput, TwoSampleTTestResult,
 };
+use crate::methods::design::multiplicity::{self, MultiplicityInput, MultiplicityResult};
 use crate::methods::survival::log_rank::{self, LogRankInput, LogRankResult};
 use crate::reports;
 use crate::{engine_version, Error, Result};
@@ -69,6 +70,7 @@ pub fn calculate_json(method_id: &str, input_json: &str) -> Result<String> {
         "binary.odds_ratio" => calculate(input_json, odds_ratio::calculate),
         "binary.risk_ratio" => calculate(input_json, risk_ratio::calculate),
         "survival.log_rank" => calculate(input_json, log_rank::calculate),
+        "design.multiplicity" => calculate(input_json, multiplicity::calculate),
         other => Err(Error::UnsupportedMethod(other.into())),
     }
 }
@@ -129,6 +131,11 @@ pub fn report_markdown_json(
             let input = parse_input_json::<LogRankInput>(input_json)?;
             let result = parse_result_json::<LogRankResult>(result_json)?;
             Ok(reports::log_rank_markdown(&input, &result, version))
+        }
+        "design.multiplicity" => {
+            let input = parse_input_json::<MultiplicityInput>(input_json)?;
+            let result = parse_result_json::<MultiplicityResult>(result_json)?;
+            Ok(reports::multiplicity_markdown(&input, &result, version))
         }
         other => Err(Error::UnsupportedMethod(other.into())),
     }

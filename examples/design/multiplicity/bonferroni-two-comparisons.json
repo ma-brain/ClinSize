@@ -1,0 +1,5 @@
+{
+  "familyWiseAlpha": 0.05,
+  "numberOfComparisons": 2,
+  "adjustmentMethod": "bonferroni"
+}

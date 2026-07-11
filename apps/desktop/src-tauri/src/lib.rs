@@ -18,6 +18,7 @@ use clinsize_core::methods::continuous::paired_ttest::{self, PairedTTestInput, P
 use clinsize_core::methods::continuous::two_sample_ttest::{
     self, TwoSampleTTestInput, TwoSampleTTestResult,
 };
+use clinsize_core::methods::design::multiplicity::{self, MultiplicityInput, MultiplicityResult};
 use clinsize_core::methods::survival::log_rank::{self, LogRankInput, LogRankResult};
 use clinsize_core::registry::MethodDescriptor;
 use clinsize_core::types::SolveMode;
@@ -247,6 +248,23 @@ fn export_log_rank_markdown(
 }
 
 #[tauri::command]
+fn calculate_multiplicity(input: MultiplicityInput) -> Result<MultiplicityResult, AppError> {
+    multiplicity::calculate(input).map_err(AppError::from)
+}
+
+#[tauri::command]
+fn export_multiplicity_markdown(
+    input: MultiplicityInput,
+    result: MultiplicityResult,
+) -> Result<String, AppError> {
+    Ok(clinsize_core::reports::multiplicity_markdown(
+        &input,
+        &result,
+        clinsize_core::engine_version(),
+    ))
+}
+
+#[tauri::command]
 fn create_project(name: String) -> ProjectFile {
     ProjectFile::new(name)
 }
@@ -325,7 +343,9 @@ pub fn run() {
             calculate_risk_ratio,
             export_risk_ratio_markdown,
             calculate_log_rank,
-            export_log_rank_markdown
+            export_log_rank_markdown,
+            calculate_multiplicity,
+            export_multiplicity_markdown
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

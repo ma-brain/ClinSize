@@ -1,6 +1,7 @@
 <script lang="ts">
   import BinaryEffectMeasureView from "$lib/methods/BinaryEffectMeasureView.svelte";
   import LogRankView from "$lib/methods/LogRankView.svelte";
+  import MultiplicityView from "$lib/methods/MultiplicityView.svelte";
   import TwoProportionDifferenceView from "$lib/methods/TwoProportionDifferenceView.svelte";
   import AncovaTwoSampleView from "$lib/methods/AncovaTwoSampleView.svelte";
   import OneWayAnovaView from "$lib/methods/OneWayAnovaView.svelte";
@@ -57,6 +58,8 @@
   />
 {:else if methodId === "survival.log_rank"}
   <LogRankView />
+{:else if methodId === "design.multiplicity"}
+  <MultiplicityView />
 {:else}
   <p class="muted">Select a method from the navigation rail.</p>
 {/if}
