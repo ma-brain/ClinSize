@@ -1,14 +1,31 @@
 <script lang="ts">
+  import type { MethodDescriptor } from "$lib/types";
+  import { invoke } from "@tauri-apps/api/core";
+  import { onMount } from "svelte";
+
   let { children } = $props();
+  let methods = $state<MethodDescriptor[]>([]);
+
+  onMount(async () => {
+    methods = await invoke<MethodDescriptor[]>("list_methods");
+  });
 </script>
 
 <div class="workbench">
   <nav class="rail" aria-label="Method navigation">
     <header class="brand">
-      <h1>ClinSize</h1>
+      <h1><a href="/">ClinSize</a></h1>
       <p>Sample size and power</p>
     </header>
-    <p class="rail-note">Methods appear here as they are implemented.</p>
+
+    <ul class="method-list">
+      {#each methods as method}
+        <li>
+          <a href="/methods/{method.id}">{method.displayName}</a>
+          <span>{method.endpointCategory}</span>
+        </li>
+      {/each}
+    </ul>
   </nav>
 
   <div class="content">
@@ -40,6 +57,11 @@
     background: var(--background);
   }
 
+  :global(a) {
+    color: inherit;
+    text-decoration: none;
+  }
+
   .workbench {
     display: grid;
     grid-template-columns: var(--rail-width) 1fr;
@@ -64,11 +86,28 @@
     color: var(--muted);
   }
 
-  .rail-note {
-    margin: 1.5rem 0 0;
-    font-size: 0.8125rem;
+  .method-list {
+    list-style: none;
+    margin: 1.25rem 0 0;
+    padding: 0;
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .method-list a {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .method-list a:hover {
+    color: var(--accent);
+  }
+
+  .method-list span {
+    display: block;
+    font-size: 0.75rem;
     color: var(--muted);
-    line-height: 1.4;
   }
 
   .content {

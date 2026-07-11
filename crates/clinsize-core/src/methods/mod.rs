@@ -5,6 +5,5 @@
 //! a validation function, a calculation function, unit tests, and
 //! reference examples. See `templates/new-calculation-method.md` before
 //! adding a method here.
-//!
-//! No methods are implemented yet — see the roadmap's Phase 1
-//! (two-sample t-test sample size) for the first one.
+
+pub mod continuous;

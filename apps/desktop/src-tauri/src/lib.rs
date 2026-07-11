@@ -1,3 +1,6 @@
+use clinsize_core::methods::continuous::two_sample_ttest::{
+    self, TwoSampleTTestInput, TwoSampleTTestResult,
+};
 use clinsize_core::registry::MethodDescriptor;
 use clinsize_core::types::SolveMode;
 use serde::Serialize;
@@ -63,11 +66,35 @@ fn list_methods() -> Vec<MethodDescriptorDto> {
         .collect()
 }
 
+#[tauri::command]
+fn calculate_two_sample_ttest(
+    input: TwoSampleTTestInput,
+) -> Result<TwoSampleTTestResult, AppError> {
+    two_sample_ttest::calculate(input).map_err(AppError::from)
+}
+
+#[tauri::command]
+fn export_two_sample_ttest_markdown(
+    input: TwoSampleTTestInput,
+    result: TwoSampleTTestResult,
+) -> Result<String, AppError> {
+    Ok(clinsize_core::reports::two_sample_ttest_markdown(
+        &input,
+        &result,
+        clinsize_core::engine_version(),
+    ))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![engine_info, list_methods])
+        .invoke_handler(tauri::generate_handler![
+            engine_info,
+            list_methods,
+            calculate_two_sample_ttest,
+            export_two_sample_ttest_markdown
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

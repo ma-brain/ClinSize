@@ -63,7 +63,36 @@ Compare against:
 
 Tests should cover equal allocation, unequal allocation, one-sided alpha, two-sided alpha, and dropout inflation.
 
+## Formula Or Algorithm
+
+Equal-variance two-sample t-test power uses the noncentral t distribution with
+degrees of freedom `ν = n_control + n_treatment − 2` and noncentrality parameter:
+
+`δ = (μ_treatment − μ_control) / (σ × √(1/n_treatment + 1/n_control))`
+
+Two-sided power at significance `α`:
+
+`P(T > t_{α/2, ν} | δ) + P(T < −t_{α/2, ν} | δ)`
+
+where `T` follows a noncentral t distribution with `ν` df and noncentrality `δ`.
+One-sided greater/less alternatives use `t_{α, ν}` with the corresponding single
+tail.
+
+Sample size is the smallest integer control-group size such that the rounded
+allocation (`n_treatment = ⌈n_control × allocation_ratio⌉`) achieves at least the
+target power. Achieved power is recalculated after rounding. Dropout inflation
+multiplies rounded group sizes by `1/(1 − dropout_rate)` and rounds up.
+
+Implementation uses R's `pnt` algorithm via the `r_mathlib` crate. Validation
+reference: R `power.t.test` (stats package).
+
 ## Known Limitations
 
-Early versions may use normal approximations for planning. If exact t-based power is implemented, document the degrees of freedom and numerical integration or distribution functions used.
+- Equal variance only; Welch's test is not implemented yet.
+- Detectable-effect solve mode is not implemented.
+- Unequal allocation uses integer-rounded treatment sizes; validation against R
+  `power.t.test` covers equal allocation only (base R does not accept a ratio
+  argument).
+- Dropout inflation applies a simple uniform inflation factor; it does not model
+  differential dropout between arms.
 

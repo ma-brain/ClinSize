@@ -16,3 +16,27 @@ export interface MethodDescriptor {
   supportedSolveModes: SolveMode[];
   documentationPath: string | null;
 }
+
+export interface TwoSampleTTestInput {
+  solveMode: SolveMode;
+  alpha: number;
+  power?: number;
+  controlN?: number;
+  meanDifference: number;
+  standardDeviation: number;
+  allocationRatio: number;
+  alternative: Alternative;
+  dropoutRate?: number;
+}
+
+export interface TwoSampleTTestResult {
+  nControl: number;
+  nTreatment: number;
+  totalN: number;
+  nControlAdjusted: number;
+  nTreatmentAdjusted: number;
+  totalNAdjusted: number;
+  achievedPower: number;
+  effectSize: number;
+  warnings: CalculationWarning[];
+}

@@ -16,9 +16,17 @@ pub struct MethodDescriptor {
     pub documentation_path: Option<&'static str>,
 }
 
-/// Return all registered methods. Empty until Phase 1 adds the first method.
+const METHODS: &[MethodDescriptor] = &[MethodDescriptor {
+    id: "continuous.two_sample_ttest",
+    display_name: "Two-sample t-test",
+    endpoint_category: "Continuous",
+    supported_solve_modes: &[SolveMode::SampleSize, SolveMode::Power],
+    documentation_path: Some("handbook/calculations/continuous-ttest.md"),
+}];
+
+/// Return all registered methods.
 pub fn list_methods() -> &'static [MethodDescriptor] {
-    &[]
+    METHODS
 }
 
 #[cfg(test)]
@@ -26,7 +34,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn list_methods_is_empty_during_phase_0() {
-        assert!(list_methods().is_empty());
+    fn list_methods_includes_two_sample_ttest() {
+        let methods = list_methods();
+        assert_eq!(methods.len(), 1);
+        assert_eq!(methods[0].id, "continuous.two_sample_ttest");
     }
 }

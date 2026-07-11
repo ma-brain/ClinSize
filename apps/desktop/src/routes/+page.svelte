@@ -1,32 +1,32 @@
 <script lang="ts">
   import type { MethodDescriptor } from "$lib/types";
   import { invoke } from "@tauri-apps/api/core";
+  import { onMount } from "svelte";
 
-  let engineVersion = $state<string | null>(null);
   let methods = $state<MethodDescriptor[]>([]);
 
-  async function loadFoundation() {
-    engineVersion = await invoke<string>("engine_info");
+  onMount(async () => {
     methods = await invoke<MethodDescriptor[]>("list_methods");
-  }
+  });
 </script>
 
 <main class="home">
   <section class="panel">
-    <h2>Foundation</h2>
+    <h2>ClinSize</h2>
     <p>
-      Phase 0 is complete: Rust workspace, statistical engine crate, Tauri command
-      boundary, and project tooling are in place. Calculation methods begin in
-      Phase 1.
+      Clinical trial sample size and power workbench. Phase 1 adds the first
+      validated method: two-sample t-test sample size and power.
     </p>
-    <button onclick={loadFoundation}>Verify engine boundary</button>
-    {#if engineVersion}
-      <dl class="status">
-        <dt>Engine version</dt>
-        <dd>{engineVersion}</dd>
-        <dt>Registered methods</dt>
-        <dd>{methods.length}</dd>
-      </dl>
+    <dl class="status">
+      <dt>Registered methods</dt>
+      <dd>{methods.length}</dd>
+    </dl>
+    {#if methods.length > 0}
+      <ul>
+        {#each methods as method}
+          <li><a href="/methods/{method.id}">{method.displayName}</a></li>
+        {/each}
+      </ul>
     {/if}
   </section>
 </main>
@@ -56,21 +56,8 @@
     line-height: 1.5;
   }
 
-  button {
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 0.4rem 0.75rem;
-    background: var(--background);
-    cursor: pointer;
-    font-size: 0.875rem;
-  }
-
-  button:hover {
-    border-color: var(--accent);
-  }
-
   .status {
-    margin: 1rem 0 0;
+    margin: 0 0 1rem;
     display: grid;
     grid-template-columns: auto 1fr;
     gap: 0.25rem 1rem;
@@ -84,5 +71,15 @@
   dd {
     margin: 0;
     font-weight: 500;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 1.1rem;
+    font-size: 0.875rem;
+  }
+
+  a:hover {
+    color: var(--accent);
   }
 </style>

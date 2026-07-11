@@ -7,6 +7,7 @@
 pub mod distributions;
 pub mod error;
 pub mod methods;
+pub mod numerics;
 pub mod registry;
 pub mod reports;
 pub mod types;

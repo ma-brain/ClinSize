@@ -35,7 +35,7 @@ just cli -- --help   # run the CLI wrapper
 
 ## Status
 
-Phase 0 (project foundation) is complete: Rust workspace, `clinsize-core` crate
-with shared types and validation, empty method registry, Tauri command boundary,
-desktop workbench shell, and project tooling. No calculation methods are
-implemented yet — see [`handbook/11-roadmap.md`](handbook/11-roadmap.md) Phase 1.
+Phase 1 (first validated method) is in progress on branch `cursor/phase-1-two-sample-ttest`:
+two-sample t-test sample size and power in `clinsize-core`, reference tests against
+R `power.t.test`, method page, and Markdown export. See
+[`handbook/11-roadmap.md`](handbook/11-roadmap.md).
