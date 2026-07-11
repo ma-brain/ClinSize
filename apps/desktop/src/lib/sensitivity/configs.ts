@@ -1,14 +1,21 @@
 import type {
   AncovaTwoSampleInput,
+  ChangeFromBaselineInput,
   LogRankInput,
+  MannWhitneyInput,
+  MmrmInput,
+  NegativeBinomialInput,
   OddsRatioInput,
+  OneSampleBinomialInput,
   OneSampleTTestInput,
   OneWayAnovaInput,
   PairedTTestInput,
+  ProportionalOddsInput,
   SolveMode,
   StudyObjective,
   TwoProportionDifferenceInput,
   TwoSampleTTestInput,
+  WilcoxonSignedRankInput,
 } from "$lib/types";
 import { centeredRange, linearRange, ratioRange } from "./ranges";
 import type { SensitivityOptionDef } from "./types";
@@ -350,6 +357,286 @@ export function ancovaSensitivityOptions(
   return asSensitivityOptions(options);
 }
 
+export function changeFromBaselineSensitivityOptions(
+  solveMode: SolveMode,
+  meanDifference: string,
+  standardDeviation: string,
+  baselineOutcomeCorrelation: string,
+  alpha: string,
+  power: string,
+  allocationRatio: string,
+  dropoutRate: string,
+): SensitivityOptionDef[] {
+  return ancovaSensitivityOptions(
+    solveMode,
+    meanDifference,
+    standardDeviation,
+    baselineOutcomeCorrelation,
+    alpha,
+    power,
+    allocationRatio,
+    dropoutRate,
+  ).map((option) => ({
+    ...option,
+    mutate: (input: unknown, value: number) =>
+      option.mutate(input as AncovaTwoSampleInput, value) as ChangeFromBaselineInput,
+  }));
+}
+
+export function mmrmSensitivityOptions(
+  solveMode: SolveMode,
+  treatmentEffect: string,
+  residualStandardDeviation: string,
+  correlation: string,
+  nPostBaselineVisits: string,
+  alpha: string,
+  power: string,
+  allocationRatio: string,
+  perVisitDropoutRate: string,
+): SensitivityOptionDef[] {
+  const delta = Number(treatmentEffect);
+  const sigma = Number(residualStandardDeviation);
+  const rho = Number(correlation);
+  const alphaValue = Number(alpha);
+  const powerValue = Number(power);
+  const ratio = Number(allocationRatio);
+  const dropout = parseOptionalRate(perVisitDropoutRate);
+
+  const options = [
+    {
+      id: "treatmentEffect",
+      label: "Treatment effect (δ)",
+      getValues: () => ratioRange(delta || 2, 0.5, 2),
+      mutate: (input: MmrmInput, value: number) => ({
+        ...input,
+        treatmentEffect: value,
+      }),
+    },
+    {
+      id: "residualStandardDeviation",
+      label: "Residual SD (σ)",
+      getValues: () => ratioRange(sigma || 2, 0.5, 2),
+      mutate: (input: MmrmInput, value: number) => ({
+        ...input,
+        residualStandardDeviation: value,
+      }),
+    },
+    {
+      id: "correlation",
+      label: "Correlation (ρ)",
+      getValues: () => centeredRange(rho || 0.5, 0.2, 0, 0.9, 8),
+      mutate: (input: MmrmInput, value: number) => ({
+        ...input,
+        correlation: value,
+      }),
+    },
+    {
+      id: "nPostBaselineVisits",
+      label: "Post-baseline visits (k)",
+      getValues: () => linearRange(1, 6, 6),
+      mutate: (input: MmrmInput, value: number) => ({
+        ...input,
+        nPostBaselineVisits: Math.max(1, Math.round(value)),
+      }),
+    },
+    {
+      id: "alpha",
+      label: "Type I error (α)",
+      getValues: () => centeredRange(alphaValue || 0.05, 0.02, 0.01, 0.1, 6),
+      mutate: (input: MmrmInput, value: number) => ({ ...input, alpha: value }),
+    },
+    {
+      id: "allocationRatio",
+      label: "Allocation ratio",
+      getValues: () => ratioRange(ratio || 1, 0.5, 2),
+      mutate: (input: MmrmInput, value: number) => ({
+        ...input,
+        allocationRatio: value,
+      }),
+    },
+    {
+      id: "perVisitDropoutRate",
+      label: "Per-visit dropout rate",
+      getValues: () => centeredRange(dropout || 0.05, 0.03, 0, 0.3, 6),
+      mutate: (input: MmrmInput, value: number) => ({
+        ...input,
+        perVisitDropoutRate: value,
+      }),
+    },
+  ];
+
+  if (solveMode === "sample_size") {
+    options.push({
+      id: "power",
+      label: "Target power",
+      getValues: () => centeredRange(powerValue || 0.8, 0.15, 0.6, 0.95, 8),
+      mutate: (input: MmrmInput, value: number) => ({ ...input, power: value }),
+    });
+  }
+
+  return asSensitivityOptions(options);
+}
+
+export function negativeBinomialSensitivityOptions(
+  solveMode: SolveMode,
+  controlRate: string,
+  treatmentRate: string,
+  dispersion: string,
+  exposureTime: string,
+  alpha: string,
+  power: string,
+  allocationRatio: string,
+  dropoutRate: string,
+): SensitivityOptionDef[] {
+  const control = Number(controlRate);
+  const treatment = Number(treatmentRate);
+  const k = Number(dispersion);
+  const exposure = Number(exposureTime);
+  const alphaValue = Number(alpha);
+  const powerValue = Number(power);
+  const ratio = Number(allocationRatio);
+  const dropout = parseOptionalRate(dropoutRate);
+
+  const options = [
+    {
+      id: "controlRate",
+      label: "Control rate (λ₁)",
+      getValues: () => ratioRange(control || 1, 0.5, 2),
+      mutate: (input: NegativeBinomialInput, value: number) => ({
+        ...input,
+        controlRate: value,
+      }),
+    },
+    {
+      id: "treatmentRate",
+      label: "Treatment rate (λ₂)",
+      getValues: () => ratioRange(treatment || 1, 0.5, 2),
+      mutate: (input: NegativeBinomialInput, value: number) => ({
+        ...input,
+        treatmentRate: value,
+      }),
+    },
+    {
+      id: "dispersion",
+      label: "Dispersion (k)",
+      getValues: () => ratioRange(k || 1, 0.5, 2),
+      mutate: (input: NegativeBinomialInput, value: number) => ({
+        ...input,
+        dispersion: value,
+      }),
+    },
+    {
+      id: "exposureTime",
+      label: "Exposure time",
+      getValues: () => ratioRange(exposure || 1, 0.5, 2),
+      mutate: (input: NegativeBinomialInput, value: number) => ({
+        ...input,
+        exposureTime: value,
+      }),
+    },
+    {
+      id: "alpha",
+      label: "Type I error (alpha)",
+      getValues: () => centeredRange(alphaValue || 0.05, 0.03, 0.01, 0.1, 9),
+      mutate: (input: NegativeBinomialInput, value: number) => ({ ...input, alpha: value }),
+    },
+    {
+      id: "allocationRatio",
+      label: "Allocation ratio",
+      getValues: () => (ratio > 0 ? centeredRange(ratio, 1, 0.5, 3) : linearRange(0.5, 3, 11)),
+      mutate: (input: NegativeBinomialInput, value: number) => ({
+        ...input,
+        allocationRatio: value,
+      }),
+    },
+    {
+      id: "dropoutRate",
+      label: "Dropout rate",
+      getValues: () => linearRange(0, Math.max(dropout, 0.4), 9),
+      mutate: (input: NegativeBinomialInput, value: number) => ({
+        ...input,
+        dropoutRate: value === 0 ? undefined : value,
+      }),
+    },
+  ];
+
+  if (solveMode === "sample_size") {
+    options.splice(4, 0, {
+      id: "power",
+      label: "Target power",
+      getValues: () => centeredRange(powerValue || 0.8, 0.15, 0.6, 0.95, 8),
+      mutate: (input: NegativeBinomialInput, value: number) => ({ ...input, power: value }),
+    });
+  }
+
+  return asSensitivityOptions(options);
+}
+
+export function proportionalOddsSensitivityOptions(
+  solveMode: SolveMode,
+  categoryProbabilities: string,
+  oddsRatio: string,
+  treatmentFraction: string,
+  alpha: string,
+  power: string,
+  dropoutRate: string,
+): SensitivityOptionDef[] {
+  const orValue = Number(oddsRatio);
+  const fraction = Number(treatmentFraction);
+  const alphaValue = Number(alpha);
+  const powerValue = Number(power);
+  const dropout = parseOptionalRate(dropoutRate);
+
+  const options = [
+    {
+      id: "oddsRatio",
+      label: "Odds ratio",
+      getValues: () => ratioRange(orValue || 2, 0.5, 2),
+      mutate: (input: ProportionalOddsInput, value: number) => ({
+        ...input,
+        oddsRatio: value,
+      }),
+    },
+    {
+      id: "treatmentFraction",
+      label: "Treatment fraction",
+      getValues: () => centeredRange(fraction || 0.5, 0.2, 0.2, 0.8, 9),
+      mutate: (input: ProportionalOddsInput, value: number) => ({
+        ...input,
+        treatmentFraction: value,
+      }),
+    },
+    {
+      id: "alpha",
+      label: "Type I error (alpha)",
+      getValues: () => centeredRange(alphaValue || 0.05, 0.03, 0.01, 0.1, 9),
+      mutate: (input: ProportionalOddsInput, value: number) => ({ ...input, alpha: value }),
+    },
+    {
+      id: "dropoutRate",
+      label: "Dropout rate",
+      getValues: () => linearRange(0, Math.max(dropout, 0.4), 9),
+      mutate: (input: ProportionalOddsInput, value: number) => ({
+        ...input,
+        dropoutRate: value === 0 ? undefined : value,
+      }),
+    },
+  ];
+
+  if (solveMode === "sample_size") {
+    options.splice(2, 0, {
+      id: "power",
+      label: "Target power",
+      getValues: () => centeredRange(powerValue || 0.8, 0.15, 0.6, 0.95, 8),
+      mutate: (input: ProportionalOddsInput, value: number) => ({ ...input, power: value }),
+    });
+  }
+
+  void categoryProbabilities;
+
+  return asSensitivityOptions(options);
+}
+
 function binaryRateOptions(
   solveMode: SolveMode,
   controlRate: string,
@@ -593,5 +880,113 @@ export function logRankSensitivityOptions(
     getValues: option.getValues,
     mutate: (input: unknown, value: number) =>
       option.mutate(input as LogRankInput, value),
+  }));
+}
+
+export function oneSampleBinomialSensitivityOptions(
+  solveMode: SolveMode,
+  referenceRate: string,
+  responseRate: string,
+  alpha: string,
+  power: string,
+  dropoutRate: string,
+): SensitivityOptionDef[] {
+  const reference = Number(referenceRate);
+  const response = Number(responseRate);
+  const alphaValue = Number(alpha);
+  const powerValue = Number(power);
+  const dropout = parseOptionalRate(dropoutRate);
+
+  const options = [
+    {
+      id: "referenceRate",
+      label: "Reference response rate",
+      getValues: () => centeredRange(reference || 0.2, 0.1, 0.05, 0.95, 9),
+      mutate: (input: OneSampleBinomialInput, value: number) => ({
+        ...input,
+        referenceRate: value,
+      }),
+    },
+    {
+      id: "responseRate",
+      label: "Hypothesized response rate",
+      getValues: () => centeredRange(response || 0.4, 0.1, 0.05, 0.95, 9),
+      mutate: (input: OneSampleBinomialInput, value: number) => ({
+        ...input,
+        responseRate: value,
+      }),
+    },
+    {
+      id: "alpha",
+      label: "Type I error (alpha)",
+      getValues: () => centeredRange(alphaValue || 0.05, 0.03, 0.01, 0.1, 9),
+      mutate: (input: OneSampleBinomialInput, value: number) => ({ ...input, alpha: value }),
+    },
+    {
+      id: "dropoutRate",
+      label: "Dropout rate",
+      getValues: () => linearRange(0, Math.max(dropout, 0.4), 9),
+      mutate: (input: OneSampleBinomialInput, value: number) => ({
+        ...input,
+        dropoutRate: value === 0 ? undefined : value,
+      }),
+    },
+  ];
+
+  if (solveMode === "sample_size") {
+    options.splice(3, 0, {
+      id: "power",
+      label: "Target power",
+      getValues: () => centeredRange(powerValue || 0.8, 0.15, 0.6, 0.95, 8),
+      mutate: (input: OneSampleBinomialInput, value: number) => ({ ...input, power: value }),
+    });
+  }
+
+  return asSensitivityOptions(options);
+}
+
+export function mannWhitneySensitivityOptions(
+  solveMode: SolveMode,
+  meanDifference: string,
+  standardDeviation: string,
+  alpha: string,
+  power: string,
+  allocationRatio: string,
+  dropoutRate: string,
+): SensitivityOptionDef[] {
+  return twoSampleSensitivityOptions(
+    solveMode,
+    meanDifference,
+    standardDeviation,
+    alpha,
+    power,
+    allocationRatio,
+    dropoutRate,
+  ).map((option) => ({
+    ...option,
+    mutate: (input: unknown, value: number) =>
+      option.mutate(input as TwoSampleTTestInput, value) as MannWhitneyInput,
+  }));
+}
+
+export function wilcoxonSignedRankSensitivityOptions(
+  solveMode: SolveMode,
+  meanDifference: string,
+  standardDeviation: string,
+  alpha: string,
+  power: string,
+  dropoutRate: string,
+): SensitivityOptionDef[] {
+  return oneSampleSensitivityOptions(
+    solveMode,
+    meanDifference,
+    standardDeviation,
+    alpha,
+    power,
+    dropoutRate,
+  ).map((option) => ({
+    ...option,
+    mutate: (input: unknown, value: number) =>
+      option.mutate(input as OneSampleTTestInput, value) as WilcoxonSignedRankInput,
   }));
 }

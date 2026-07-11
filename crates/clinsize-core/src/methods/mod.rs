@@ -8,5 +8,7 @@
 
 pub mod binary;
 pub mod continuous;
+pub mod count;
 pub mod design;
+pub mod ordinal;
 pub mod survival;

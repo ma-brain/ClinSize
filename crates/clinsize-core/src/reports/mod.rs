@@ -4,28 +4,55 @@ pub mod docx;
 pub mod html;
 pub mod markdown_render;
 pub mod pdf;
+pub mod rationale;
+pub mod protocol;
 
 use crate::methods::binary::odds_ratio::{OddsRatioInput, OddsRatioResult};
+use crate::methods::binary::one_sample_binomial::{
+    OneSampleBinomialInput, OneSampleBinomialResult,
+};
 use crate::methods::binary::risk_ratio::{RiskRatioInput, RiskRatioResult};
 use crate::methods::binary::two_proportion_difference::{
     TwoProportionDifferenceInput, TwoProportionDifferenceResult,
 };
 use crate::methods::continuous::ancova_two_sample::{AncovaTwoSampleInput, AncovaTwoSampleResult};
+use crate::methods::continuous::change_from_baseline::{
+    ChangeFromBaselineInput, ChangeFromBaselineResult,
+};
+use crate::methods::continuous::mmrm::{MmrmInput, MmrmResult};
+use crate::methods::continuous::mann_whitney::{MannWhitneyInput, MannWhitneyResult};
 use crate::methods::continuous::one_sample_ttest::{OneSampleTTestInput, OneSampleTTestResult};
 use crate::methods::continuous::one_way_anova::{OneWayAnovaInput, OneWayAnovaResult};
 use crate::methods::continuous::paired_ttest::{PairedTTestInput, PairedTTestResult};
 use crate::methods::continuous::two_sample_ttest::{TwoSampleTTestInput, TwoSampleTTestResult};
+use crate::methods::continuous::wilcoxon_signed_rank::{
+    WilcoxonSignedRankInput, WilcoxonSignedRankResult,
+};
+use crate::methods::count::negative_binomial::{NegativeBinomialInput, NegativeBinomialResult};
+use crate::methods::ordinal::proportional_odds::{ProportionalOddsInput, ProportionalOddsResult};
 use crate::methods::design::blinded_ssre::{BlindedSsreInput, BlindedSsreResult};
 use crate::methods::design::group_sequential::{GroupSequentialInput, GroupSequentialResult};
 use crate::methods::design::multiplicity::{MultiplicityInput, MultiplicityResult};
 use crate::methods::survival::log_rank::{LogRankInput, LogRankResult};
-use crate::types::SolveMode;
+use crate::types::{CorrelationStructure, SolveMode};
 
 fn append_warnings(lines: &mut Vec<String>, warnings: &[crate::types::CalculationWarning]) {
     lines.push("## Assumptions and warnings".into());
     for warning in warnings {
         lines.push(format!("- **{}:** {}", warning.code, warning.message));
     }
+}
+
+fn append_rationale(lines: &mut Vec<String>, rationale: String) {
+    lines.push(String::new());
+    lines.push("## Sample size calculation rationale".into());
+    lines.push(rationale);
+}
+
+fn append_protocol_text(lines: &mut Vec<String>, protocol: String) {
+    lines.push(String::new());
+    lines.push("## Protocol text".into());
+    lines.push(protocol);
 }
 
 fn append_reproducibility(lines: &mut Vec<String>, engine_version: &str) {
@@ -96,6 +123,14 @@ pub fn two_sample_ttest_markdown(
         format!("- **Effect size (Cohen's d):** {:.4}", result.effect_size),
     ];
 
+    append_rationale(
+        &mut lines,
+        rationale::two_sample_ttest_rationale(input, result),
+    );
+    append_protocol_text(
+        &mut lines,
+        protocol::two_sample_ttest_protocol(input, result),
+    );
     append_warnings(&mut lines, &result.warnings);
     append_reproducibility(&mut lines, engine_version);
 
@@ -129,6 +164,14 @@ pub fn one_sample_ttest_markdown(
         format!("- **Effect size (Cohen's d):** {:.4}", result.effect_size),
     ];
 
+    append_rationale(
+        &mut lines,
+        rationale::one_sample_ttest_rationale(input, result),
+    );
+    append_protocol_text(
+        &mut lines,
+        protocol::one_sample_ttest_protocol(input, result),
+    );
     append_warnings(&mut lines, &result.warnings);
     append_reproducibility(&mut lines, engine_version);
 
@@ -162,6 +205,8 @@ pub fn paired_ttest_markdown(
         format!("- **Effect size (Cohen's d):** {:.4}", result.effect_size),
     ];
 
+    append_rationale(&mut lines, rationale::paired_ttest_rationale(input, result));
+    append_protocol_text(&mut lines, protocol::paired_ttest_protocol(input, result));
     append_warnings(&mut lines, &result.warnings);
     append_reproducibility(&mut lines, engine_version);
 
@@ -206,6 +251,14 @@ pub fn one_way_anova_markdown(
         format!("- **Effect size (Cohen's f):** {:.4}", result.effect_size),
     ];
 
+    append_rationale(
+        &mut lines,
+        rationale::one_way_anova_rationale(input, result),
+    );
+    append_protocol_text(
+        &mut lines,
+        protocol::one_way_anova_protocol(input, result),
+    );
     append_warnings(&mut lines, &result.warnings);
     lines.push(String::new());
     lines.push("## Reproducibility".into());
@@ -294,6 +347,14 @@ pub fn ancova_two_sample_markdown(
         ),
     ];
 
+    append_rationale(
+        &mut lines,
+        rationale::ancova_two_sample_rationale(input, result),
+    );
+    append_protocol_text(
+        &mut lines,
+        protocol::ancova_two_sample_protocol(input, result),
+    );
     append_warnings(&mut lines, &result.warnings);
     lines.push(String::new());
     lines.push("## Reproducibility".into());
@@ -351,6 +412,14 @@ pub fn two_proportion_difference_markdown(
         ),
     ];
 
+    append_rationale(
+        &mut lines,
+        rationale::two_proportion_difference_rationale(input, result),
+    );
+    append_protocol_text(
+        &mut lines,
+        protocol::two_proportion_difference_protocol(input, result),
+    );
     append_warnings(&mut lines, &result.warnings);
     lines.push(String::new());
     lines.push("## Reproducibility".into());
@@ -368,24 +437,29 @@ pub fn odds_ratio_markdown(
     result: &OddsRatioResult,
     engine_version: &str,
 ) -> String {
-    binary_effect_markdown(&BinaryEffectReportContext {
-        method_name: "Odds ratio superiority",
-        solve_mode: input.solve_mode,
-        alpha: input.alpha,
-        control_rate: input.control_rate,
-        treatment_rate: input.treatment_rate,
-        allocation_ratio: input.allocation_ratio,
-        dropout_rate: input.dropout_rate,
-        n_control: result.n_control,
-        n_treatment: result.n_treatment,
-        total_n: result.total_n,
-        total_n_adjusted: result.total_n_adjusted,
-        achieved_power: result.achieved_power,
-        effect_line: format!("- **Odds ratio:** {:.4}", result.odds_ratio),
-        warnings: &result.warnings,
-        engine_version,
-        validation_source: "TrialSize `RelativeRisk.Equality` (log odds ratio; Chow et al. 2003)",
-    })
+    binary_effect_markdown(
+        &BinaryEffectReportContext {
+            method_name: "Odds ratio superiority",
+            solve_mode: input.solve_mode,
+            alpha: input.alpha,
+            control_rate: input.control_rate,
+            treatment_rate: input.treatment_rate,
+            allocation_ratio: input.allocation_ratio,
+            dropout_rate: input.dropout_rate,
+            n_control: result.n_control,
+            n_treatment: result.n_treatment,
+            total_n: result.total_n,
+            total_n_adjusted: result.total_n_adjusted,
+            achieved_power: result.achieved_power,
+            effect_line: format!("- **Odds ratio:** {:.4}", result.odds_ratio),
+            warnings: &result.warnings,
+            engine_version,
+            validation_source:
+                "TrialSize `RelativeRisk.Equality` (log odds ratio; Chow et al. 2003)",
+        },
+        rationale::odds_ratio_rationale(input, result),
+        protocol::odds_ratio_protocol(input, result),
+    )
 }
 
 /// Render a risk-ratio calculation summary as Markdown.
@@ -394,24 +468,28 @@ pub fn risk_ratio_markdown(
     result: &RiskRatioResult,
     engine_version: &str,
 ) -> String {
-    binary_effect_markdown(&BinaryEffectReportContext {
-        method_name: "Risk ratio superiority",
-        solve_mode: input.solve_mode,
-        alpha: input.alpha,
-        control_rate: input.control_rate,
-        treatment_rate: input.treatment_rate,
-        allocation_ratio: input.allocation_ratio,
-        dropout_rate: input.dropout_rate,
-        n_control: result.n_control,
-        n_treatment: result.n_treatment,
-        total_n: result.total_n,
-        total_n_adjusted: result.total_n_adjusted,
-        achieved_power: result.achieved_power,
-        effect_line: format!("- **Risk ratio:** {:.4}", result.risk_ratio),
-        warnings: &result.warnings,
-        engine_version,
-        validation_source: "Chow et al. 2003 log risk-ratio normal approximation",
-    })
+    binary_effect_markdown(
+        &BinaryEffectReportContext {
+            method_name: "Risk ratio superiority",
+            solve_mode: input.solve_mode,
+            alpha: input.alpha,
+            control_rate: input.control_rate,
+            treatment_rate: input.treatment_rate,
+            allocation_ratio: input.allocation_ratio,
+            dropout_rate: input.dropout_rate,
+            n_control: result.n_control,
+            n_treatment: result.n_treatment,
+            total_n: result.total_n,
+            total_n_adjusted: result.total_n_adjusted,
+            achieved_power: result.achieved_power,
+            effect_line: format!("- **Risk ratio:** {:.4}", result.risk_ratio),
+            warnings: &result.warnings,
+            engine_version,
+            validation_source: "Chow et al. 2003 log risk-ratio normal approximation",
+        },
+        rationale::risk_ratio_rationale(input, result),
+        protocol::risk_ratio_protocol(input, result),
+    )
 }
 
 struct BinaryEffectReportContext<'a> {
@@ -433,7 +511,11 @@ struct BinaryEffectReportContext<'a> {
     validation_source: &'a str,
 }
 
-fn binary_effect_markdown(ctx: &BinaryEffectReportContext<'_>) -> String {
+fn binary_effect_markdown(
+    ctx: &BinaryEffectReportContext<'_>,
+    rationale: String,
+    protocol: String,
+) -> String {
     let dropout = ctx
         .dropout_rate
         .map(|rate| format!("{rate:.4}"))
@@ -463,6 +545,8 @@ fn binary_effect_markdown(ctx: &BinaryEffectReportContext<'_>) -> String {
         ctx.effect_line.clone(),
     ];
 
+    append_rationale(&mut lines, rationale);
+    append_protocol_text(&mut lines, protocol);
     append_warnings(&mut lines, ctx.warnings);
     lines.push(String::new());
     lines.push("## Reproducibility".into());
@@ -545,6 +629,8 @@ pub fn log_rank_markdown(
         }
     }
 
+    append_rationale(&mut lines, rationale::log_rank_rationale(input, result));
+    append_protocol_text(&mut lines, protocol::log_rank_protocol(input, result));
     append_warnings(&mut lines, &result.warnings);
     lines.push(String::new());
     lines.push("## Reproducibility".into());
@@ -602,6 +688,8 @@ pub fn multiplicity_markdown(
         "- Use the adjusted per-comparison alpha as the `alpha` input in endpoint sample size calculations.".into(),
     ]);
 
+    append_rationale(&mut lines, rationale::multiplicity_rationale(input, result));
+    append_protocol_text(&mut lines, protocol::multiplicity_protocol(input, result));
     append_warnings(&mut lines, &result.warnings);
     lines.push(String::new());
     lines.push("## Reproducibility".into());
@@ -659,6 +747,14 @@ pub fn group_sequential_markdown(
         "- Multiply the fixed-design sample size by the inflation factor to obtain the maximum sample size under this plan.".into(),
     ]);
 
+    append_rationale(
+        &mut lines,
+        rationale::group_sequential_rationale(input, result),
+    );
+    append_protocol_text(
+        &mut lines,
+        protocol::group_sequential_protocol(input, result),
+    );
     append_warnings(&mut lines, &result.warnings);
     lines.push(String::new());
     lines.push("## Reproducibility".into());
@@ -752,6 +848,8 @@ pub fn blinded_ssre_markdown(
         ),
     ];
 
+    append_rationale(&mut lines, rationale::blinded_ssre_rationale(input, result));
+    append_protocol_text(&mut lines, protocol::blinded_ssre_protocol(input, result));
     append_warnings(&mut lines, &result.warnings);
     lines.push(String::new());
     lines.push("## Reproducibility".into());
@@ -760,6 +858,469 @@ pub fn blinded_ssre_markdown(
         "- **Validation source:** Friede & Kieser (2006); planned N via R `power.t.test`".into(),
     );
 
+    lines.join("\n")
+}
+
+/// Render a one-sample binomial calculation summary as Markdown.
+pub fn one_sample_binomial_markdown(
+    input: &OneSampleBinomialInput,
+    result: &OneSampleBinomialResult,
+    engine_version: &str,
+) -> String {
+    let mut lines = vec![
+        "# ClinSize calculation summary".into(),
+        String::new(),
+        "## Method".into(),
+        "- **Method:** One-sample binomial (single-arm response rate)".into(),
+        "- **Endpoint:** Binary".into(),
+        format!("- **Solve mode:** {:?}", input.solve_mode),
+        format!("- **Alternative:** {:?}", input.alternative),
+        String::new(),
+        "## Inputs".into(),
+        format!("- **Alpha:** {:.4}", input.alpha),
+        format!("- **Reference rate:** {:.4}", input.reference_rate),
+        format!("- **Response rate:** {:.4}", input.response_rate),
+        String::new(),
+        "## Results".into(),
+        format!("- **N:** {}", result.n),
+        format!("- **Dropout-adjusted N:** {}", result.n_adjusted),
+        format!("- **Achieved power:** {:.4}", result.achieved_power),
+        format!("- **Rate difference:** {:.4}", result.rate_difference),
+    ];
+    append_rationale(
+        &mut lines,
+        rationale::one_sample_binomial_rationale(input, result),
+    );
+    append_protocol_text(
+        &mut lines,
+        protocol::one_sample_binomial_protocol(input, result),
+    );
+    append_warnings(&mut lines, &result.warnings);
+    append_reproducibility(&mut lines, engine_version);
+    lines.join("\n")
+}
+
+/// Render a change-from-baseline calculation summary as Markdown.
+pub fn change_from_baseline_markdown(
+    input: &ChangeFromBaselineInput,
+    result: &ChangeFromBaselineResult,
+    engine_version: &str,
+) -> String {
+    let dropout = input
+        .dropout_rate
+        .map(|rate| format!("{rate:.4}"))
+        .unwrap_or_else(|| "none".into());
+
+    let mut lines = vec![
+        "# ClinSize calculation summary".into(),
+        String::new(),
+        "## Method".into(),
+        "- **Method:** Two-sample change from baseline".into(),
+        "- **Endpoint:** Continuous".into(),
+        format!("- **Solve mode:** {:?}", input.solve_mode),
+        format!("- **Alternative:** {:?}", input.alternative),
+        String::new(),
+        "## Inputs".into(),
+        format!("- **Alpha:** {:.4}", input.alpha),
+        format!(
+            "- **Target power:** {}",
+            input
+                .power
+                .map(|p| format!("{p:.4}"))
+                .unwrap_or_else(|| "n/a".into())
+        ),
+        format!(
+            "- **Control N (given):** {}",
+            input
+                .control_n
+                .map(|n| n.to_string())
+                .unwrap_or_else(|| "n/a".into())
+        ),
+        format!("- **Mean CFB difference:** {:.4}", input.mean_difference),
+        format!(
+            "- **Outcome standard deviation:** {:.4}",
+            input.standard_deviation
+        ),
+        format!(
+            "- **Baseline-outcome correlation:** {:.4}",
+            input.baseline_outcome_correlation
+        ),
+        format!("- **Allocation ratio:** {:.4}", input.allocation_ratio),
+        format!("- **Dropout rate:** {dropout}"),
+        String::new(),
+        "## Results".into(),
+        format!("- **Control N:** {}", result.n_control),
+        format!("- **Treatment N:** {}", result.n_treatment),
+        format!("- **Total N:** {}", result.total_n),
+        format!(
+            "- **Dropout-adjusted control N:** {}",
+            result.n_control_adjusted
+        ),
+        format!(
+            "- **Dropout-adjusted treatment N:** {}",
+            result.n_treatment_adjusted
+        ),
+        format!(
+            "- **Dropout-adjusted total N:** {}",
+            result.total_n_adjusted
+        ),
+        format!("- **Achieved power:** {:.4}", result.achieved_power),
+        format!(
+            "- **Effect size (Cohen's d, unadjusted SD):** {:.4}",
+            result.effect_size
+        ),
+        format!(
+            "- **Change-score standard deviation:** {:.4}",
+            result.change_score_standard_deviation
+        ),
+    ];
+
+    append_rationale(
+        &mut lines,
+        rationale::change_from_baseline_rationale(input, result),
+    );
+    append_protocol_text(
+        &mut lines,
+        protocol::change_from_baseline_protocol(input, result),
+    );
+    append_warnings(&mut lines, &result.warnings);
+    lines.push(String::new());
+    lines.push("## Reproducibility".into());
+    lines.push(format!("- **Engine version:** {engine_version}"));
+    lines.push("- **Validation source:** R `power.t.test` with σ_cfb = σ × √(2(1 − ρ))".into());
+
+    lines.join("\n")
+}
+
+fn correlation_structure_label(structure: CorrelationStructure) -> &'static str {
+    match structure {
+        CorrelationStructure::Unstructured => "unstructured",
+        CorrelationStructure::Ar1 => "AR(1)",
+        CorrelationStructure::CompoundSymmetry => "compound symmetry",
+        CorrelationStructure::Toeplitz => "Toeplitz",
+        CorrelationStructure::Csh => "CSH",
+    }
+}
+
+/// Render an MMRM calculation summary as Markdown.
+pub fn mmrm_markdown(input: &MmrmInput, result: &MmrmResult, engine_version: &str) -> String {
+    let per_visit_dropout = input
+        .per_visit_dropout_rate
+        .map(|rate| format!("{rate:.4}"))
+        .unwrap_or_else(|| "none".into());
+
+    let mut lines = vec![
+        "# ClinSize calculation summary".into(),
+        String::new(),
+        "## Method".into(),
+        "- **Method:** MMRM (longitudinal repeated measures)".into(),
+        "- **Endpoint:** Continuous".into(),
+        format!("- **Solve mode:** {:?}", input.solve_mode),
+        format!("- **Alternative:** {:?}", input.alternative),
+        String::new(),
+        "## Inputs".into(),
+        format!("- **Alpha:** {:.4}", input.alpha),
+        format!(
+            "- **Target power:** {}",
+            input
+                .power
+                .map(|p| format!("{p:.4}"))
+                .unwrap_or_else(|| "n/a".into())
+        ),
+        format!(
+            "- **Control N (given):** {}",
+            input
+                .control_n
+                .map(|n| n.to_string())
+                .unwrap_or_else(|| "n/a".into())
+        ),
+        format!("- **Treatment effect (δ):** {:.4}", input.treatment_effect),
+        format!(
+            "- **Residual standard deviation (σ):** {:.4}",
+            input.residual_standard_deviation
+        ),
+        format!(
+            "- **Correlation structure:** {}",
+            correlation_structure_label(input.correlation_structure)
+        ),
+        format!("- **Correlation (ρ):** {:.4}", input.correlation),
+        format!(
+            "- **Post-baseline visits (k):** {}",
+            input.n_post_baseline_visits
+        ),
+        format!("- **Per-visit dropout rate:** {per_visit_dropout}"),
+        format!("- **Allocation ratio:** {:.4}", input.allocation_ratio),
+        String::new(),
+        "## Results".into(),
+        format!("- **Control N (evaluable):** {}", result.n_control),
+        format!("- **Treatment N (evaluable):** {}", result.n_treatment),
+        format!("- **Total N (evaluable):** {}", result.total_n),
+        format!(
+            "- **Enrollable control N:** {}",
+            result.n_control_adjusted
+        ),
+        format!(
+            "- **Enrollable treatment N:** {}",
+            result.n_treatment_adjusted
+        ),
+        format!(
+            "- **Enrollable total N:** {}",
+            result.total_n_adjusted
+        ),
+        format!("- **Achieved power:** {:.4}", result.achieved_power),
+        format!("- **ρ_final:** {:.4}", result.rho_final),
+        format!("- **GLS factor:** {:.4}", result.gls_factor),
+        format!(
+            "- **GLS variance efficiency factor:** {:.4}",
+            result.gls_variance_efficiency_factor
+        ),
+        format!("- **V_eff:** {:.4}", result.v_eff),
+        format!(
+            "- **Cumulative dropout:** {:.4}",
+            result.cumulative_dropout
+        ),
+    ];
+
+    append_rationale(&mut lines, rationale::mmrm_rationale(input, result));
+    append_protocol_text(&mut lines, protocol::mmrm_protocol(input, result));
+    append_warnings(&mut lines, &result.warnings);
+    lines.push(String::new());
+    lines.push("## Reproducibility".into());
+    lines.push(format!("- **Engine version:** {engine_version}"));
+    lines.push(
+        "- **Validation source:** Lu–Skellam (1988) GLS efficiency; reference case δ=2, σ=2, UN, ρ=0.5, k=3"
+            .into(),
+    );
+
+    lines.join("\n")
+}
+
+/// Render a negative binomial calculation summary as Markdown.
+pub fn negative_binomial_markdown(
+    input: &NegativeBinomialInput,
+    result: &NegativeBinomialResult,
+    engine_version: &str,
+) -> String {
+    let dropout = input
+        .dropout_rate
+        .map(|rate| format!("{rate:.4}"))
+        .unwrap_or_else(|| "none".into());
+
+    let mut lines = vec![
+        "# ClinSize calculation summary".into(),
+        String::new(),
+        "## Method".into(),
+        "- **Method:** Two-sample negative binomial (recurrent events)".into(),
+        "- **Endpoint:** Count".into(),
+        format!("- **Solve mode:** {:?}", input.solve_mode),
+        format!("- **Alternative:** {:?}", input.alternative),
+        String::new(),
+        "## Inputs".into(),
+        format!("- **Alpha:** {:.4}", input.alpha),
+        format!(
+            "- **Target power:** {}",
+            input
+                .power
+                .map(|p| format!("{p:.4}"))
+                .unwrap_or_else(|| "n/a".into())
+        ),
+        format!("- **Control rate λ₁:** {:.4}", input.control_rate),
+        format!("- **Treatment rate λ₂:** {:.4}", input.treatment_rate),
+        format!("- **Dispersion k:** {:.4}", input.dispersion),
+        format!("- **Exposure time:** {:.4}", input.exposure_time),
+        format!("- **Allocation ratio:** {:.4}", input.allocation_ratio),
+        format!("- **Dropout rate:** {dropout}"),
+        String::new(),
+        "## Results".into(),
+        format!("- **Control N:** {}", result.n_control),
+        format!("- **Treatment N:** {}", result.n_treatment),
+        format!("- **Total N:** {}", result.total_n),
+        format!(
+            "- **Dropout-adjusted total N:** {}",
+            result.total_n_adjusted
+        ),
+        format!("- **Achieved power:** {:.4}", result.achieved_power),
+        format!("- **Rate ratio (λ₂/λ₁):** {:.4}", result.rate_ratio),
+    ];
+
+    append_rationale(
+        &mut lines,
+        rationale::negative_binomial_rationale(input, result),
+    );
+    append_protocol_text(
+        &mut lines,
+        protocol::negative_binomial_protocol(input, result),
+    );
+    append_warnings(&mut lines, &result.warnings);
+    lines.push(String::new());
+    lines.push("## Reproducibility".into());
+    lines.push(format!("- **Engine version:** {engine_version}"));
+    lines.push("- **Validation source:** Zhu & Lakkis (2014) Wald test (gsDesignNB Method 3)".into());
+
+    lines.join("\n")
+}
+
+/// Render a proportional odds calculation summary as Markdown.
+pub fn proportional_odds_markdown(
+    input: &ProportionalOddsInput,
+    result: &ProportionalOddsResult,
+    engine_version: &str,
+) -> String {
+    let dropout = input
+        .dropout_rate
+        .map(|rate| format!("{rate:.4}"))
+        .unwrap_or_else(|| "none".into());
+    let probs: Vec<String> = input
+        .category_probabilities
+        .iter()
+        .map(|p| format!("{p:.4}"))
+        .collect();
+
+    let mut lines = vec![
+        "# ClinSize calculation summary".into(),
+        String::new(),
+        "## Method".into(),
+        "- **Method:** Ordinal proportional odds (Whitehead 1993)".into(),
+        "- **Endpoint:** Ordinal".into(),
+        format!("- **Solve mode:** {:?}", input.solve_mode),
+        String::new(),
+        "## Inputs".into(),
+        format!("- **Alpha:** {:.4}", input.alpha),
+        format!(
+            "- **Target power:** {}",
+            input
+                .power
+                .map(|p| format!("{p:.4}"))
+                .unwrap_or_else(|| "n/a".into())
+        ),
+        format!(
+            "- **Category probabilities (best→worst):** [{}]",
+            probs.join(", ")
+        ),
+        format!("- **Odds ratio:** {:.4}", input.odds_ratio),
+        format!("- **Treatment fraction:** {:.4}", input.treatment_fraction),
+        format!("- **Dropout rate:** {dropout}"),
+        String::new(),
+        "## Results".into(),
+        format!("- **Control N:** {}", result.n_control),
+        format!("- **Treatment N:** {}", result.n_treatment),
+        format!("- **Total N:** {}", result.total_n),
+        format!(
+            "- **Dropout-adjusted total N:** {}",
+            result.total_n_adjusted
+        ),
+        format!("- **Achieved power:** {:.4}", result.achieved_power),
+        format!("- **Efficiency (ps):** {:.4}", result.efficiency),
+    ];
+
+    append_rationale(
+        &mut lines,
+        rationale::proportional_odds_rationale(input, result),
+    );
+    append_protocol_text(
+        &mut lines,
+        protocol::proportional_odds_protocol(input, result),
+    );
+    append_warnings(&mut lines, &result.warnings);
+    lines.push(String::new());
+    lines.push("## Reproducibility".into());
+    lines.push(format!("- **Engine version:** {engine_version}"));
+    lines.push("- **Validation source:** Hmisc `posamsize` / Whitehead (1993)".into());
+
+    lines.join("\n")
+}
+
+/// Render a Mann-Whitney U calculation summary as Markdown.
+pub fn mann_whitney_markdown(
+    input: &MannWhitneyInput,
+    result: &MannWhitneyResult,
+    engine_version: &str,
+) -> String {
+    let mut lines = vec![
+        "# ClinSize calculation summary".into(),
+        String::new(),
+        "## Method".into(),
+        "- **Method:** Mann-Whitney U (Wilcoxon rank-sum)".into(),
+        "- **Endpoint:** Continuous".into(),
+        format!("- **Solve mode:** {:?}", input.solve_mode),
+        format!("- **Alternative:** {:?}", input.alternative),
+        String::new(),
+        "## Inputs".into(),
+        format!("- **Alpha:** {:.4}", input.alpha),
+        format!("- **Mean difference:** {:.4}", input.mean_difference),
+        format!("- **Standard deviation:** {:.4}", input.standard_deviation),
+        format!("- **Allocation ratio:** {:.4}", input.allocation_ratio),
+        String::new(),
+        "## Results".into(),
+        format!("- **Control N:** {}", result.n_control),
+        format!("- **Treatment N:** {}", result.n_treatment),
+        format!("- **Total N:** {}", result.total_n),
+        format!(
+            "- **Dropout-adjusted total N:** {}",
+            result.total_n_adjusted
+        ),
+        format!("- **Achieved power:** {:.4}", result.achieved_power),
+        format!(
+            "- **P(treatment > control):** {:.4}",
+            result.probability_superiority
+        ),
+        format!("- **Effect size (Cohen's d):** {:.4}", result.effect_size),
+    ];
+    append_rationale(&mut lines, rationale::mann_whitney_rationale(input, result));
+    append_protocol_text(&mut lines, protocol::mann_whitney_protocol(input, result));
+    append_warnings(&mut lines, &result.warnings);
+    lines.push(String::new());
+    lines.push("## Reproducibility".into());
+    lines.push(format!("- **Engine version:** {engine_version}"));
+    lines.push("- **Validation source:** Noether (1987) Mann-Whitney sample size formula".into());
+    lines.join("\n")
+}
+
+/// Render a Wilcoxon signed-rank calculation summary as Markdown.
+pub fn wilcoxon_signed_rank_markdown(
+    input: &WilcoxonSignedRankInput,
+    result: &WilcoxonSignedRankResult,
+    engine_version: &str,
+) -> String {
+    let mut lines = vec![
+        "# ClinSize calculation summary".into(),
+        String::new(),
+        "## Method".into(),
+        "- **Method:** Wilcoxon signed-rank".into(),
+        "- **Endpoint:** Continuous".into(),
+        format!("- **Solve mode:** {:?}", input.solve_mode),
+        format!("- **Alternative:** {:?}", input.alternative),
+        String::new(),
+        "## Inputs".into(),
+        format!("- **Alpha:** {:.4}", input.alpha),
+        format!("- **Mean difference:** {:.4}", input.mean_difference),
+        format!("- **Standard deviation:** {:.4}", input.standard_deviation),
+        String::new(),
+        "## Results".into(),
+        format!("- **Pairs:** {}", result.n_pairs),
+        format!("- **Dropout-adjusted pairs:** {}", result.n_pairs_adjusted),
+        format!("- **Achieved power:** {:.4}", result.achieved_power),
+        format!(
+            "- **P(difference > 0):** {:.4}",
+            result.probability_positive_difference
+        ),
+        format!("- **Effect size (Cohen's d):** {:.4}", result.effect_size),
+    ];
+    append_rationale(
+        &mut lines,
+        rationale::wilcoxon_signed_rank_rationale(input, result),
+    );
+    append_protocol_text(
+        &mut lines,
+        protocol::wilcoxon_signed_rank_protocol(input, result),
+    );
+    append_warnings(&mut lines, &result.warnings);
+    lines.push(String::new());
+    lines.push("## Reproducibility".into());
+    lines.push(format!("- **Engine version:** {engine_version}"));
+    lines.push(
+        "- **Validation source:** Noether (1987) Wilcoxon signed-rank sample size formula".into(),
+    );
     lines.join("\n")
 }
 
@@ -788,5 +1349,7 @@ mod tests {
         assert!(markdown.contains("Control N:** 17"));
         assert!(markdown.contains("Achieved power:**"));
         assert!(markdown.contains("equal_variance"));
+        assert!(markdown.contains("## Sample size calculation rationale"));
+        assert!(markdown.contains("noncentral t"));
     }
 }

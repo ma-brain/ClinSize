@@ -7,6 +7,7 @@
 - `binary.two_proportion_difference` — difference in proportions (superiority and basic non-inferiority).
 - `binary.odds_ratio` — log odds-ratio superiority.
 - `binary.risk_ratio` — log risk-ratio superiority.
+- `binary.one_sample_binomial` — single-arm response rate versus a reference proportion.
 
 ## Difference In Proportions
 
@@ -27,6 +28,28 @@ Log odds-ratio normal approximation (Chow et al. 2003). Validated against TrialS
 Log risk-ratio normal approximation (Chow et al. 2003).
 
 `RR = p_t / p_c`
+
+## One-Sample Binomial
+
+Compares a single-arm response rate to a reference (null) proportion using a normal approximation to the binomial distribution.
+
+**Formula:** For sample size, finds the smallest integer `N` such that achieved power meets the target. Power uses separate variance estimates at the reference and hypothesized rates:
+
+`z = (|p_alt − p_ref| × √N − z_{α/2} × √(p_ref(1 − p_ref))) / √(p_alt(1 − p_alt))`
+
+One-sided alternatives use `z_α` and the corresponding tail probability.
+
+**Inputs:** reference rate, hypothesized response rate, alpha, target power or sample size, alternative, optional dropout rate.
+
+**Outputs:** sample size N, dropout-adjusted N, achieved power, rate difference, warnings.
+
+**Assumptions:**
+
+- Independent Bernoulli outcomes on one arm.
+- Normal approximation; continuity correction and exact binomial power are not implemented.
+- Rates must differ and be consistent with the chosen alternative.
+
+**Limitations:** Small sample sizes or rates near 0 or 1 may make the normal approximation unreliable. Detectable-effect solve mode is not implemented.
 
 ## Inputs
 

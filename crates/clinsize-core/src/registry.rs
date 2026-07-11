@@ -53,6 +53,34 @@ const METHODS: &[MethodDescriptor] = &[
         documentation_path: Some("handbook/calculations/anova-ancova.md"),
     },
     MethodDescriptor {
+        id: "continuous.change_from_baseline",
+        display_name: "Change from baseline",
+        endpoint_category: "Continuous",
+        supported_solve_modes: &[SolveMode::SampleSize, SolveMode::Power],
+        documentation_path: Some("handbook/calculations/change-from-baseline.md"),
+    },
+    MethodDescriptor {
+        id: "continuous.mmrm",
+        display_name: "MMRM (longitudinal)",
+        endpoint_category: "Continuous",
+        supported_solve_modes: &[SolveMode::SampleSize, SolveMode::Power],
+        documentation_path: Some("handbook/calculations/mmrm-longitudinal.md"),
+    },
+    MethodDescriptor {
+        id: "continuous.mann_whitney",
+        display_name: "Mann-Whitney U",
+        endpoint_category: "Continuous",
+        supported_solve_modes: &[SolveMode::SampleSize, SolveMode::Power],
+        documentation_path: Some("handbook/calculations/nonparametric.md"),
+    },
+    MethodDescriptor {
+        id: "continuous.wilcoxon_signed_rank",
+        display_name: "Wilcoxon signed-rank",
+        endpoint_category: "Continuous",
+        supported_solve_modes: &[SolveMode::SampleSize, SolveMode::Power],
+        documentation_path: Some("handbook/calculations/nonparametric.md"),
+    },
+    MethodDescriptor {
         id: "binary.two_proportion_difference",
         display_name: "Difference in proportions",
         endpoint_category: "Binary",
@@ -67,11 +95,32 @@ const METHODS: &[MethodDescriptor] = &[
         documentation_path: Some("handbook/calculations/binary-endpoints.md"),
     },
     MethodDescriptor {
+        id: "binary.one_sample_binomial",
+        display_name: "One-sample binomial",
+        endpoint_category: "Binary",
+        supported_solve_modes: &[SolveMode::SampleSize, SolveMode::Power],
+        documentation_path: Some("handbook/calculations/binary-endpoints.md"),
+    },
+    MethodDescriptor {
         id: "binary.risk_ratio",
         display_name: "Risk ratio",
         endpoint_category: "Binary",
         supported_solve_modes: &[SolveMode::SampleSize, SolveMode::Power],
         documentation_path: Some("handbook/calculations/binary-endpoints.md"),
+    },
+    MethodDescriptor {
+        id: "count.negative_binomial",
+        display_name: "Negative binomial",
+        endpoint_category: "Count",
+        supported_solve_modes: &[SolveMode::SampleSize, SolveMode::Power],
+        documentation_path: Some("handbook/calculations/count-endpoints.md"),
+    },
+    MethodDescriptor {
+        id: "ordinal.proportional_odds",
+        display_name: "Proportional odds",
+        endpoint_category: "Ordinal",
+        supported_solve_modes: &[SolveMode::SampleSize, SolveMode::Power],
+        documentation_path: Some("handbook/calculations/ordinal-endpoints.md"),
     },
     MethodDescriptor {
         id: "survival.log_rank",
@@ -115,14 +164,14 @@ mod tests {
     #[test]
     fn list_methods_includes_continuous_ttests() {
         let methods = list_methods();
-        assert_eq!(methods.len(), 12);
+        assert_eq!(methods.len(), 19);
         assert_eq!(methods[0].id, "continuous.two_sample_ttest");
-        assert_eq!(methods[5].id, "binary.two_proportion_difference");
-        assert_eq!(methods[6].id, "binary.odds_ratio");
-        assert_eq!(methods[7].id, "binary.risk_ratio");
-        assert_eq!(methods[8].id, "survival.log_rank");
-        assert_eq!(methods[9].id, "design.multiplicity");
-        assert_eq!(methods[10].id, "design.group_sequential");
-        assert_eq!(methods[11].id, "design.blinded_ssre");
+        assert_eq!(methods[5].id, "continuous.change_from_baseline");
+        assert_eq!(methods[6].id, "continuous.mmrm");
+        assert_eq!(methods[7].id, "continuous.mann_whitney");
+        assert_eq!(methods[12].id, "binary.risk_ratio");
+        assert_eq!(methods[13].id, "count.negative_binomial");
+        assert_eq!(methods[14].id, "ordinal.proportional_odds");
+        assert_eq!(methods[18].id, "design.blinded_ssre");
     }
 }

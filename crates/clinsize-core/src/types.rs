@@ -17,6 +17,17 @@ pub enum StudyObjective {
     NonInferiority,
 }
 
+/// Within-subject correlation structure for MMRM longitudinal designs.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum CorrelationStructure {
+    Unstructured,
+    Ar1,
+    CompoundSymmetry,
+    Toeplitz,
+    Csh,
+}
+
 /// Which quantity a method should solve for.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]

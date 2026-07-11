@@ -7,6 +7,8 @@
   import MethodHeader from "$lib/components/ui/MethodHeader.svelte";
   import Panel from "$lib/components/ui/Panel.svelte";
   import PrimaryButton from "$lib/components/ui/PrimaryButton.svelte";
+  import RationaleCard from "$lib/components/ui/RationaleCard.svelte";
+  import ProtocolTextCard from "$lib/components/ui/ProtocolTextCard.svelte";
   import ResultGrid from "$lib/components/ui/ResultGrid.svelte";
   import ResultHero from "$lib/components/ui/ResultHero.svelte";
   import Section from "$lib/components/ui/Section.svelte";
@@ -16,6 +18,7 @@
     pairedSensitivityOptions,
   } from "$lib/sensitivity/configs";
   import { persistCalculation } from "$lib/workflow/record";
+  import { fetchCalculationRationale, fetchProtocolText } from "$lib/workflow/rationale";
   import type {
     Alternative,
     OneSampleTTestInput,
@@ -54,6 +57,8 @@
   let oneSampleResult = $state<OneSampleTTestResult | null>(null);
   let pairedResult = $state<PairedTTestResult | null>(null);
   let exportMarkdown = $state<string | null>(null);
+  let rationale = $state<string | null>(null);
+  let protocolText = $state<string | null>(null);
   let errorMessage = $state<string | null>(null);
   let calculating = $state(false);
   let lastCalculatedSignature = $state<string | null>(null);
@@ -204,6 +209,8 @@
     oneSampleResult = null;
     pairedResult = null;
     exportMarkdown = null;
+    rationale = null;
+    protocolText = null;
 
     try {
       if (variant === "one_sample") {
@@ -216,6 +223,16 @@
           input,
           result: oneSampleResult,
         });
+        rationale = await fetchCalculationRationale(
+          "continuous.one_sample_ttest",
+          input,
+          oneSampleResult,
+        );
+        protocolText = await fetchProtocolText(
+          "continuous.one_sample_ttest",
+          input,
+          oneSampleResult,
+        );
         lastCalculatedSignature = inputSignature;
         persistCalculation({
           methodId: "continuous.one_sample_ttest",
@@ -232,6 +249,16 @@
           input,
           result: pairedResult,
         });
+        rationale = await fetchCalculationRationale(
+          "continuous.paired_ttest",
+          input,
+          pairedResult,
+        );
+        protocolText = await fetchProtocolText(
+          "continuous.paired_ttest",
+          input,
+          pairedResult,
+        );
         lastCalculatedSignature = inputSignature;
         persistCalculation({
           methodId: "continuous.paired_ttest",
@@ -337,6 +364,12 @@
       {#if oneSampleResult || pairedResult}
         <ResultHero label={heroLabel} value={heroValue} />
         <ResultGrid items={resultItems} />
+        {#if rationale}
+          <RationaleCard text={rationale} />
+        {/if}
+        {#if protocolText}
+          <ProtocolTextCard text={protocolText} />
+        {/if}
         <WarningList warnings={activeWarnings} />
         <AssumptionsCard
           items={variant === "one_sample"

@@ -131,6 +131,121 @@ export interface AncovaTwoSampleResult {
   warnings: CalculationWarning[];
 }
 
+export interface ChangeFromBaselineInput {
+  solveMode: SolveMode;
+  alpha: number;
+  power?: number;
+  controlN?: number;
+  meanDifference: number;
+  standardDeviation: number;
+  baselineOutcomeCorrelation: number;
+  allocationRatio: number;
+  alternative: Alternative;
+  dropoutRate?: number;
+}
+
+export interface ChangeFromBaselineResult {
+  nControl: number;
+  nTreatment: number;
+  totalN: number;
+  nControlAdjusted: number;
+  nTreatmentAdjusted: number;
+  totalNAdjusted: number;
+  achievedPower: number;
+  effectSize: number;
+  unadjustedStandardDeviation: number;
+  changeScoreStandardDeviation: number;
+  baselineOutcomeCorrelation: number;
+  warnings: CalculationWarning[];
+}
+
+export type CorrelationStructure =
+  | "unstructured"
+  | "ar1"
+  | "compound_symmetry"
+  | "toeplitz"
+  | "csh";
+
+export interface MmrmInput {
+  solveMode: SolveMode;
+  alpha: number;
+  power?: number;
+  controlN?: number;
+  treatmentEffect: number;
+  residualStandardDeviation: number;
+  correlationStructure: CorrelationStructure;
+  correlation: number;
+  nPostBaselineVisits: number;
+  perVisitDropoutRate?: number;
+  allocationRatio: number;
+  alternative: Alternative;
+}
+
+export interface MmrmResult {
+  nControl: number;
+  nTreatment: number;
+  totalN: number;
+  nControlAdjusted: number;
+  nTreatmentAdjusted: number;
+  totalNAdjusted: number;
+  achievedPower: number;
+  rhoFinal: number;
+  glsFactor: number;
+  glsVarianceEfficiencyFactor: number;
+  vEff: number;
+  cumulativeDropout: number;
+  warnings: CalculationWarning[];
+}
+
+export interface NegativeBinomialInput {
+  solveMode: SolveMode;
+  alpha: number;
+  power?: number;
+  controlN?: number;
+  controlRate: number;
+  treatmentRate: number;
+  dispersion: number;
+  exposureTime?: number;
+  allocationRatio: number;
+  alternative: Alternative;
+  dropoutRate?: number;
+}
+
+export interface NegativeBinomialResult {
+  nControl: number;
+  nTreatment: number;
+  totalN: number;
+  nControlAdjusted: number;
+  nTreatmentAdjusted: number;
+  totalNAdjusted: number;
+  achievedPower: number;
+  rateRatio: number;
+  warnings: CalculationWarning[];
+}
+
+export interface ProportionalOddsInput {
+  solveMode: SolveMode;
+  alpha: number;
+  power?: number;
+  controlN?: number;
+  categoryProbabilities: number[];
+  oddsRatio: number;
+  treatmentFraction: number;
+  dropoutRate?: number;
+}
+
+export interface ProportionalOddsResult {
+  nControl: number;
+  nTreatment: number;
+  totalN: number;
+  nControlAdjusted: number;
+  nTreatmentAdjusted: number;
+  totalNAdjusted: number;
+  achievedPower: number;
+  efficiency: number;
+  warnings: CalculationWarning[];
+}
+
 export interface TwoProportionDifferenceInput {
   solveMode: SolveMode;
   alpha: number;
@@ -202,6 +317,70 @@ export interface RiskRatioResult {
   totalNAdjusted: number;
   achievedPower: number;
   riskRatio: number;
+  warnings: CalculationWarning[];
+}
+
+export interface OneSampleBinomialInput {
+  solveMode: SolveMode;
+  alpha: number;
+  power?: number;
+  n?: number;
+  referenceRate: number;
+  responseRate: number;
+  alternative: Alternative;
+  dropoutRate?: number;
+}
+
+export interface OneSampleBinomialResult {
+  n: number;
+  nAdjusted: number;
+  achievedPower: number;
+  rateDifference: number;
+  warnings: CalculationWarning[];
+}
+
+export interface MannWhitneyInput {
+  solveMode: SolveMode;
+  alpha: number;
+  power?: number;
+  controlN?: number;
+  meanDifference: number;
+  standardDeviation: number;
+  allocationRatio: number;
+  alternative: Alternative;
+  dropoutRate?: number;
+}
+
+export interface MannWhitneyResult {
+  nControl: number;
+  nTreatment: number;
+  totalN: number;
+  nControlAdjusted: number;
+  nTreatmentAdjusted: number;
+  totalNAdjusted: number;
+  achievedPower: number;
+  probabilitySuperiority: number;
+  effectSize: number;
+  warnings: CalculationWarning[];
+}
+
+export interface WilcoxonSignedRankInput {
+  solveMode: SolveMode;
+  alpha: number;
+  power?: number;
+  nPairs?: number;
+  meanDifference: number;
+  standardDeviation: number;
+  alternative: Alternative;
+  dropoutRate?: number;
+}
+
+export interface WilcoxonSignedRankResult {
+  nPairs: number;
+  nPairsAdjusted: number;
+  achievedPower: number;
+  probabilityPositiveDifference: number;
+  effectSize: number;
   warnings: CalculationWarning[];
 }
 

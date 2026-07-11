@@ -13,13 +13,13 @@
   import ResultHero from "$lib/components/ui/ResultHero.svelte";
   import Section from "$lib/components/ui/Section.svelte";
   import WarningList from "$lib/components/ui/WarningList.svelte";
-  import { ancovaSensitivityOptions } from "$lib/sensitivity/configs";
+  import { negativeBinomialSensitivityOptions } from "$lib/sensitivity/configs";
   import { persistCalculation } from "$lib/workflow/record";
   import { fetchCalculationRationale, fetchProtocolText } from "$lib/workflow/rationale";
   import type {
     Alternative,
-    AncovaTwoSampleInput,
-    AncovaTwoSampleResult,
+    NegativeBinomialInput,
+    NegativeBinomialResult,
     SolveMode,
   } from "$lib/types";
   import { invoke } from "@tauri-apps/api/core";
@@ -27,15 +27,16 @@
   let solveMode = $state<SolveMode>("sample_size");
   let alpha = $state("0.05");
   let power = $state("0.8");
-  let controlN = $state("132");
-  let meanDifference = $state("3");
-  let standardDeviation = $state("10");
-  let baselineOutcomeCorrelation = $state("0.5");
+  let controlN = $state("58");
+  let controlRate = $state("2");
+  let treatmentRate = $state("1");
+  let dispersion = $state("1");
+  let exposureTime = $state("1");
   let allocationRatio = $state("1");
   let alternative = $state<Alternative>("two_sided");
   let dropoutRate = $state("");
 
-  let result = $state<AncovaTwoSampleResult | null>(null);
+  let result = $state<NegativeBinomialResult | null>(null);
   let exportMarkdown = $state<string | null>(null);
   let rationale = $state<string | null>(null);
   let protocolText = $state<string | null>(null);
@@ -49,9 +50,10 @@
       alpha,
       power,
       controlN,
-      meanDifference,
-      standardDeviation,
-      baselineOutcomeCorrelation,
+      controlRate,
+      treatmentRate,
+      dispersion,
+      exposureTime,
       allocationRatio,
       alternative,
       dropoutRate,
@@ -65,11 +67,12 @@
   );
 
   const sensitivityOptions = $derived(
-    ancovaSensitivityOptions(
+    negativeBinomialSensitivityOptions(
       solveMode,
-      meanDifference,
-      standardDeviation,
-      baselineOutcomeCorrelation,
+      controlRate,
+      treatmentRate,
+      dispersion,
+      exposureTime,
       alpha,
       power,
       allocationRatio,
@@ -112,9 +115,7 @@
           { label: "Treatment N", value: String(result.nTreatment) },
           { label: "Total N", value: String(result.totalN) },
           { label: "Achieved power", value: result.achievedPower.toFixed(4) },
-          { label: "Effect size (Cohen's d, unadjusted SD)", value: result.effectSize.toFixed(4) },
-          { label: "Adjusted standard deviation", value: result.adjustedStandardDeviation.toFixed(4) },
-          { label: "Variance reduction factor (1 − ρ²)", value: result.varianceReductionFactor.toFixed(4) },
+          { label: "Rate ratio (λ₂/λ₁)", value: result.rateRatio.toFixed(4) },
           ...(result.nControlAdjusted !== result.nControl
             ? [
                 {
@@ -128,13 +129,14 @@
       : [],
   );
 
-  function buildInput(): AncovaTwoSampleInput {
-    const input: AncovaTwoSampleInput = {
+  function buildInput(): NegativeBinomialInput {
+    const input: NegativeBinomialInput = {
       solveMode,
       alpha: Number(alpha),
-      meanDifference: Number(meanDifference),
-      standardDeviation: Number(standardDeviation),
-      baselineOutcomeCorrelation: Number(baselineOutcomeCorrelation),
+      controlRate: Number(controlRate),
+      treatmentRate: Number(treatmentRate),
+      dispersion: Number(dispersion),
+      exposureTime: Number(exposureTime),
       allocationRatio: Number(allocationRatio),
       alternative,
     };
@@ -158,14 +160,14 @@
 
     try {
       const input = buildInput();
-      result = await invoke<AncovaTwoSampleResult>("calculate_ancova_two_sample", { input });
-      exportMarkdown = await invoke<string>("export_ancova_two_sample_markdown", { input, result });
-      rationale = await fetchCalculationRationale("continuous.ancova_two_sample", input, result);
-      protocolText = await fetchProtocolText("continuous.ancova_two_sample", input, result);
+      result = await invoke<NegativeBinomialResult>("calculate_negative_binomial", { input });
+      exportMarkdown = await invoke<string>("export_negative_binomial_markdown", { input, result });
+      rationale = await fetchCalculationRationale("count.negative_binomial", input, result);
+      protocolText = await fetchProtocolText("count.negative_binomial", input, result);
       lastCalculatedSignature = inputSignature;
       persistCalculation({
-        methodId: "continuous.ancova_two_sample",
-        methodName: "Two-sample ANCOVA",
+        methodId: "count.negative_binomial",
+        methodName: "Negative binomial",
         input,
         result,
       });
@@ -185,9 +187,9 @@
 <MethodPage {resultsStale}>
   {#snippet header()}
     <MethodHeader
-      title="Two-sample ANCOVA"
-      description="Parallel-group comparison with baseline covariate adjustment via approximate variance reduction."
-      category="Continuous"
+      title="Negative binomial"
+      description="Two-sample comparison of recurrent event rates under an NB2 model."
+      category="Count"
       badges={[solveModeLabel, alternativeLabel, "Superiority"]}
     />
   {/snippet}
@@ -234,32 +236,32 @@
           </Field>
         {/if}
 
-        <Field label="Mean difference (treatment − control)">
+        <Field label="Control event rate (λ₁)">
           {#snippet control()}
-            <input type="number" step="0.01" bind:value={meanDifference} />
+            <input type="number" min="0" step="0.01" bind:value={controlRate} />
           {/snippet}
         </Field>
 
-        <Field label="Unadjusted outcome standard deviation">
+        <Field label="Treatment event rate (λ₂)">
           {#snippet control()}
-            <input type="number" min="0" step="0.01" bind:value={standardDeviation} />
+            <input type="number" min="0" step="0.01" bind:value={treatmentRate} />
           {/snippet}
         </Field>
 
-        <Field label="Baseline-outcome correlation">
+        <Field label="Dispersion (k)">
           {#snippet control()}
-            <input
-              type="number"
-              min="-0.99"
-              max="0.99"
-              step="0.01"
-              bind:value={baselineOutcomeCorrelation}
-            />
+            <input type="number" min="0" step="0.01" bind:value={dispersion} />
           {/snippet}
         </Field>
       </Section>
 
       <Section title="Advanced" collapsible defaultCollapsed={true}>
+        <Field label="Exposure time">
+          {#snippet control()}
+            <input type="number" min="0" step="0.01" bind:value={exposureTime} />
+          {/snippet}
+        </Field>
+
         <Field label="Allocation ratio (treatment / control)">
           {#snippet control()}
             <input type="number" min="0" step="0.01" bind:value={allocationRatio} />
@@ -297,22 +299,22 @@
         <WarningList warnings={result.warnings} />
         <AssumptionsCard
           items={[
-            "Baseline covariate measured without error and linearly related to outcome.",
-            "Approximate variance reduction via ρ²; equal within-group variance assumed.",
-            "Independent observations with approximately normal endpoints.",
+            "NB2 variance Var(Y) = μ + kμ² with common dispersion k.",
+            "Fixed exposure per subject; Wald test on log rate ratio.",
+            "Independent negative binomial counts across subjects.",
           ]}
         />
-        <ExportMenu title="Two-sample ANCOVA" markdown={exportMarkdown} />
+        <ExportMenu title="Negative binomial" markdown={exportMarkdown} />
         <SensitivityPanel
           ready={true}
           defaultExpanded={true}
-          chartFileStem="clinsize-sensitivity-ancova-two-sample"
+          chartFileStem="clinsize-sensitivity-negative-binomial"
           inputSignature={lastCalculatedSignature ?? inputSignature}
-          command="calculate_ancova_two_sample"
+          command="calculate_negative_binomial"
           buildInput={buildInput}
           options={sensitivityOptions}
           getOutputValue={(value) => {
-            const row = value as AncovaTwoSampleResult;
+            const row = value as NegativeBinomialResult;
             return solveMode === "sample_size" ? row.totalN : row.achievedPower;
           }}
           outputLabel={sensitivityOutputLabel}

@@ -13,13 +13,13 @@
   import ResultHero from "$lib/components/ui/ResultHero.svelte";
   import Section from "$lib/components/ui/Section.svelte";
   import WarningList from "$lib/components/ui/WarningList.svelte";
-  import { ancovaSensitivityOptions } from "$lib/sensitivity/configs";
+  import { changeFromBaselineSensitivityOptions } from "$lib/sensitivity/configs";
   import { persistCalculation } from "$lib/workflow/record";
   import { fetchCalculationRationale, fetchProtocolText } from "$lib/workflow/rationale";
   import type {
     Alternative,
-    AncovaTwoSampleInput,
-    AncovaTwoSampleResult,
+    ChangeFromBaselineInput,
+    ChangeFromBaselineResult,
     SolveMode,
   } from "$lib/types";
   import { invoke } from "@tauri-apps/api/core";
@@ -27,7 +27,7 @@
   let solveMode = $state<SolveMode>("sample_size");
   let alpha = $state("0.05");
   let power = $state("0.8");
-  let controlN = $state("132");
+  let controlN = $state("176");
   let meanDifference = $state("3");
   let standardDeviation = $state("10");
   let baselineOutcomeCorrelation = $state("0.5");
@@ -35,7 +35,7 @@
   let alternative = $state<Alternative>("two_sided");
   let dropoutRate = $state("");
 
-  let result = $state<AncovaTwoSampleResult | null>(null);
+  let result = $state<ChangeFromBaselineResult | null>(null);
   let exportMarkdown = $state<string | null>(null);
   let rationale = $state<string | null>(null);
   let protocolText = $state<string | null>(null);
@@ -65,7 +65,7 @@
   );
 
   const sensitivityOptions = $derived(
-    ancovaSensitivityOptions(
+    changeFromBaselineSensitivityOptions(
       solveMode,
       meanDifference,
       standardDeviation,
@@ -113,8 +113,10 @@
           { label: "Total N", value: String(result.totalN) },
           { label: "Achieved power", value: result.achievedPower.toFixed(4) },
           { label: "Effect size (Cohen's d, unadjusted SD)", value: result.effectSize.toFixed(4) },
-          { label: "Adjusted standard deviation", value: result.adjustedStandardDeviation.toFixed(4) },
-          { label: "Variance reduction factor (1 − ρ²)", value: result.varianceReductionFactor.toFixed(4) },
+          {
+            label: "Change-score standard deviation",
+            value: result.changeScoreStandardDeviation.toFixed(4),
+          },
           ...(result.nControlAdjusted !== result.nControl
             ? [
                 {
@@ -128,8 +130,8 @@
       : [],
   );
 
-  function buildInput(): AncovaTwoSampleInput {
-    const input: AncovaTwoSampleInput = {
+  function buildInput(): ChangeFromBaselineInput {
+    const input: ChangeFromBaselineInput = {
       solveMode,
       alpha: Number(alpha),
       meanDifference: Number(meanDifference),
@@ -158,14 +160,14 @@
 
     try {
       const input = buildInput();
-      result = await invoke<AncovaTwoSampleResult>("calculate_ancova_two_sample", { input });
-      exportMarkdown = await invoke<string>("export_ancova_two_sample_markdown", { input, result });
-      rationale = await fetchCalculationRationale("continuous.ancova_two_sample", input, result);
-      protocolText = await fetchProtocolText("continuous.ancova_two_sample", input, result);
+      result = await invoke<ChangeFromBaselineResult>("calculate_change_from_baseline", { input });
+      exportMarkdown = await invoke<string>("export_change_from_baseline_markdown", { input, result });
+      rationale = await fetchCalculationRationale("continuous.change_from_baseline", input, result);
+      protocolText = await fetchProtocolText("continuous.change_from_baseline", input, result);
       lastCalculatedSignature = inputSignature;
       persistCalculation({
-        methodId: "continuous.ancova_two_sample",
-        methodName: "Two-sample ANCOVA",
+        methodId: "continuous.change_from_baseline",
+        methodName: "Change from baseline",
         input,
         result,
       });
@@ -185,8 +187,8 @@
 <MethodPage {resultsStale}>
   {#snippet header()}
     <MethodHeader
-      title="Two-sample ANCOVA"
-      description="Parallel-group comparison with baseline covariate adjustment via approximate variance reduction."
+      title="Change from baseline"
+      description="Parallel-group comparison of within-subject change scores between treatment and control."
       category="Continuous"
       badges={[solveModeLabel, alternativeLabel, "Superiority"]}
     />
@@ -234,13 +236,13 @@
           </Field>
         {/if}
 
-        <Field label="Mean difference (treatment − control)">
+        <Field label="Mean CFB difference (treatment − control)">
           {#snippet control()}
             <input type="number" step="0.01" bind:value={meanDifference} />
           {/snippet}
         </Field>
 
-        <Field label="Unadjusted outcome standard deviation">
+        <Field label="Outcome standard deviation">
           {#snippet control()}
             <input type="number" min="0" step="0.01" bind:value={standardDeviation} />
           {/snippet}
@@ -297,22 +299,22 @@
         <WarningList warnings={result.warnings} />
         <AssumptionsCard
           items={[
-            "Baseline covariate measured without error and linearly related to outcome.",
-            "Approximate variance reduction via ρ²; equal within-group variance assumed.",
-            "Independent observations with approximately normal endpoints.",
+            "Parallel groups with normality of change-from-baseline scores.",
+            "Common outcome SD at baseline and follow-up; equal correlation across arms.",
+            "σ_cfb = σ × √(2(1 − ρ)) for within-subject change-score variance.",
           ]}
         />
-        <ExportMenu title="Two-sample ANCOVA" markdown={exportMarkdown} />
+        <ExportMenu title="Change from baseline" markdown={exportMarkdown} />
         <SensitivityPanel
           ready={true}
           defaultExpanded={true}
-          chartFileStem="clinsize-sensitivity-ancova-two-sample"
+          chartFileStem="clinsize-sensitivity-change-from-baseline"
           inputSignature={lastCalculatedSignature ?? inputSignature}
-          command="calculate_ancova_two_sample"
+          command="calculate_change_from_baseline"
           buildInput={buildInput}
           options={sensitivityOptions}
           getOutputValue={(value) => {
-            const row = value as AncovaTwoSampleResult;
+            const row = value as ChangeFromBaselineResult;
             return solveMode === "sample_size" ? row.totalN : row.achievedPower;
           }}
           outputLabel={sensitivityOutputLabel}
