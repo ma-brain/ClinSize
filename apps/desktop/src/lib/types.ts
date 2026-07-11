@@ -233,7 +233,7 @@ export interface LogRankResult {
   warnings: CalculationWarning[];
 }
 
-export type MultiplicityMethod = "bonferroni" | "sidak";
+export type MultiplicityMethod = "bonferroni" | "sidak" | "dunnett";
 
 export interface MultiplicityInput {
   familyWiseAlpha: number;

@@ -16,6 +16,11 @@
   let exportMarkdown = $state<string | null>(null);
   let errorMessage = $state<string | null>(null);
   let calculating = $state(false);
+  const comparisonLabel = $derived(
+    adjustmentMethod === "dunnett"
+      ? "Number of treatment arms (vs control)"
+      : "Number of comparisons",
+  );
 
   function buildInput(): MultiplicityInput {
     return {
@@ -71,7 +76,7 @@
       </label>
 
       <label>
-        Number of comparisons
+        {comparisonLabel}
         <input type="number" min="1" step="1" bind:value={numberOfComparisons} />
       </label>
 
@@ -80,6 +85,7 @@
         <select bind:value={adjustmentMethod}>
           <option value="bonferroni">Bonferroni</option>
           <option value="sidak">Šidák (Sidak)</option>
+          <option value="dunnett">Dunnett (arms vs control)</option>
         </select>
       </label>
 

@@ -594,7 +594,7 @@ pub fn multiplicity_markdown(
     lines.push("## Reproducibility".into());
     lines.push(format!("- **Engine version:** {engine_version}"));
     lines.push(
-        "- **Validation source:** Closed-form Bonferroni and Sidak formulas (Julious 2010)".into(),
+        "- **Validation source:** Closed-form Bonferroni and Sidak formulas; Dunnett via equicorrelated MVN (R `mvtnorm` reference)".into(),
     );
 
     lines.join("\n")

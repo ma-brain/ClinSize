@@ -2,6 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::distributions::equicorrelated_normal;
 use crate::error::{Error, Result};
 use crate::types::CalculationWarning;
 use crate::validation;
@@ -15,6 +16,8 @@ pub enum MultiplicityMethod {
     Bonferroni,
     /// `alpha_adj = 1 - (1 - alpha_family)^(1/m)`. Assumes independent tests.
     Sidak,
+    /// Dunnett adjustment for `m` treatment arms vs a common control (equal group sizes).
+    Dunnett,
 }
 
 /// Inputs for a family-wise alpha adjustment.
@@ -58,6 +61,9 @@ pub fn calculate(input: MultiplicityInput) -> Result<MultiplicityResult> {
         MultiplicityMethod::Sidak => {
             sidak_alpha(input.family_wise_alpha, input.number_of_comparisons)
         }
+        MultiplicityMethod::Dunnett => {
+            dunnett_alpha(input.family_wise_alpha, input.number_of_comparisons)?
+        }
     };
 
     if adjusted_alpha <= 0.0 {
@@ -88,6 +94,13 @@ fn sidak_alpha(family_wise_alpha: f64, number_of_comparisons: u32) -> f64 {
     1.0 - (1.0 - family_wise_alpha).powf(1.0 / f64::from(number_of_comparisons))
 }
 
+fn dunnett_alpha(family_wise_alpha: f64, treatment_arms: u32) -> Result<f64> {
+    equicorrelated_normal::dunnett_two_sided_adjusted_alpha(treatment_arms, family_wise_alpha)
+        .ok_or_else(|| Error::ConvergenceFailure(
+            "failed to solve Dunnett critical value for the requested alpha and number of treatment arms".into(),
+        ))
+}
+
 fn build_warnings(input: &MultiplicityInput) -> Vec<CalculationWarning> {
     let mut warnings = Vec::new();
 
@@ -107,6 +120,10 @@ fn build_warnings(input: &MultiplicityInput) -> Vec<CalculationWarning> {
             "sidak_independence",
             "Sidak assumes independent comparisons; positively correlated endpoints may require Bonferroni or another method.",
         )),
+        MultiplicityMethod::Dunnett => warnings.push(CalculationWarning::new(
+            "dunnett_equal_n",
+            "Dunnett assumes each treatment arm is compared with a common control using equal per-group sample sizes (contrast correlation 0.5).",
+        )),
     }
 
     let adjusted_alpha = match input.adjustment_method {
@@ -115,6 +132,9 @@ fn build_warnings(input: &MultiplicityInput) -> Vec<CalculationWarning> {
         }
         MultiplicityMethod::Sidak => {
             sidak_alpha(input.family_wise_alpha, input.number_of_comparisons)
+        }
+        MultiplicityMethod::Dunnett => {
+            dunnett_alpha(input.family_wise_alpha, input.number_of_comparisons).unwrap_or(0.0)
         }
     };
 
@@ -196,6 +216,31 @@ mod tests {
             .warnings
             .iter()
             .any(|warning| warning.code == "single_comparison"));
+    }
+
+    #[test]
+    fn dunnett_two_arms_matches_reference() {
+        let result = calculate(MultiplicityInput {
+            family_wise_alpha: 0.05,
+            number_of_comparisons: 2,
+            adjustment_method: MultiplicityMethod::Dunnett,
+        })
+        .expect("calculate");
+
+        assert_relative_eq!(result.adjusted_alpha, 0.02695777, epsilon = 1e-4);
+        assert!(result.adjusted_alpha > 0.025);
+    }
+
+    #[test]
+    fn dunnett_three_arms_matches_reference() {
+        let result = calculate(MultiplicityInput {
+            family_wise_alpha: 0.05,
+            number_of_comparisons: 3,
+            adjustment_method: MultiplicityMethod::Dunnett,
+        })
+        .expect("calculate");
+
+        assert_relative_eq!(result.adjusted_alpha, 0.01882430, epsilon = 1e-4);
     }
 
     #[test]

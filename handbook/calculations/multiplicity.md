@@ -22,7 +22,7 @@ per-comparison alpha to use in downstream endpoint calculations.
 
 - `familyWiseAlpha`: Family-wise Type I error rate to control across all comparisons.
 - `numberOfComparisons`: Number of comparisons in the family (integer ≥ 1).
-- `adjustmentMethod`: `bonferroni` or `sidak`.
+- `adjustmentMethod`: `bonferroni`, `sidak`, or `dunnett`.
 
 ## Outputs
 
@@ -51,11 +51,31 @@ alpha_adj = 1 - (1 - alpha_family)^(1/m)
 Controls FWER exactly at `alpha_family` when the `m` comparisons are
 independent. Slightly less conservative than Bonferroni under independence.
 
+**Dunnett (many arms vs control)**
+
+For `m` active treatment arms each compared with a common control using equal
+per-group sample sizes, solve the two-sided Dunnett critical value `c` from
+
+```text
+P(|Z_i| <= c for all i = 1..m) = 1 - alpha_family
+```
+
+where `(Z_1, ..., Z_m)` is multivariate standard normal with pairwise
+correlation 0.5 between treatment-vs-control contrasts. The equivalent
+per-comparison alpha is
+
+```text
+alpha_adj = 2 * Phi(-c)
+```
+
+Computed via the equicorrelated-normal integral representation and validated
+against R `mvtnorm::pmvnorm`.
+
 ## Assumptions
 
 - Bonferroni: valid under arbitrary dependence; conservative with positive correlation.
 - Šidák: assumes independent comparisons.
-- Does not model correlation structure between endpoints.
+- Dunnett: equal per-group sample sizes; one control; two-sided contrasts.
 
 ## Validation Rules
 
@@ -82,10 +102,12 @@ Validated against closed-form arithmetic reference values.
 | 0.05 | 5 | Bonferroni | 0.01 |
 | 0.05 | 2 | Šidák | 0.025321 |
 | 0.05 | 5 | Šidák | 0.010206 |
+| 0.05 | 2 | Dunnett | 0.026958 |
+| 0.05 | 3 | Dunnett | 0.018824 |
+| 0.05 | 5 | Dunnett | 0.012023 |
 
 ## Known Limitations
 
-- Dunnett adjustment for multiple arms vs control is not implemented.
 - Holm, Hochberg, and gatekeeping procedures are not implemented.
 - FDR methods are not implemented.
 - Does not automatically propagate adjusted alpha into endpoint methods; users
