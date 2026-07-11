@@ -7,12 +7,15 @@
   import MethodHeader from "$lib/components/ui/MethodHeader.svelte";
   import Panel from "$lib/components/ui/Panel.svelte";
   import PrimaryButton from "$lib/components/ui/PrimaryButton.svelte";
+  import RationaleCard from "$lib/components/ui/RationaleCard.svelte";
+  import ProtocolTextCard from "$lib/components/ui/ProtocolTextCard.svelte";
   import ResultGrid from "$lib/components/ui/ResultGrid.svelte";
   import ResultHero from "$lib/components/ui/ResultHero.svelte";
   import Section from "$lib/components/ui/Section.svelte";
   import WarningList from "$lib/components/ui/WarningList.svelte";
   import { twoProportionSensitivityOptions } from "$lib/sensitivity/configs";
   import { persistCalculation } from "$lib/workflow/record";
+  import { fetchCalculationRationale, fetchProtocolText } from "$lib/workflow/rationale";
   import type {
     Alternative,
     SolveMode,
@@ -36,6 +39,8 @@
 
   let result = $state<TwoProportionDifferenceResult | null>(null);
   let exportMarkdown = $state<string | null>(null);
+  let rationale = $state<string | null>(null);
+  let protocolText = $state<string | null>(null);
   let errorMessage = $state<string | null>(null);
   let calculating = $state(false);
   let lastCalculatedSignature = $state<string | null>(null);
@@ -169,6 +174,16 @@
         input,
         result,
       });
+      rationale = await fetchCalculationRationale(
+        "binary.two_proportion_difference",
+        input,
+        result,
+      );
+      protocolText = await fetchProtocolText(
+        "binary.two_proportion_difference",
+        input,
+        result,
+      );
       lastCalculatedSignature = inputSignature;
       persistCalculation({
         methodId: "binary.two_proportion_difference",
@@ -179,6 +194,8 @@
     } catch (error) {
       result = null;
       exportMarkdown = null;
+      rationale = null;
+      protocolText = null;
       lastCalculatedSignature = null;
       errorMessage = String(error);
     } finally {
@@ -300,6 +317,12 @@
       {#if result}
         <ResultHero label={heroLabel} value={heroValue} />
         <ResultGrid items={resultItems} />
+        {#if rationale}
+          <RationaleCard text={rationale} />
+        {/if}
+        {#if protocolText}
+          <ProtocolTextCard text={protocolText} />
+        {/if}
         <WarningList warnings={result.warnings} />
         <AssumptionsCard
           items={[

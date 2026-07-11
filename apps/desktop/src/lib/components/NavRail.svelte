@@ -10,7 +10,7 @@
     { href: "/validation", label: "Validation reports" },
   ];
 
-  const categoryOrder = ["Continuous", "Binary", "Survival", "Design"];
+  const categoryOrder = ["Continuous", "Binary", "Count", "Ordinal", "Survival", "Design"];
 
   const groupedMethods = $derived.by(() => {
     const groups = new Map<string, MethodDescriptor[]>();

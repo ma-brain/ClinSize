@@ -13,29 +13,27 @@
   import ResultHero from "$lib/components/ui/ResultHero.svelte";
   import Section from "$lib/components/ui/Section.svelte";
   import WarningList from "$lib/components/ui/WarningList.svelte";
-  import { ancovaSensitivityOptions } from "$lib/sensitivity/configs";
+  import { wilcoxonSignedRankSensitivityOptions } from "$lib/sensitivity/configs";
   import { persistCalculation } from "$lib/workflow/record";
   import { fetchCalculationRationale, fetchProtocolText } from "$lib/workflow/rationale";
   import type {
     Alternative,
-    AncovaTwoSampleInput,
-    AncovaTwoSampleResult,
     SolveMode,
+    WilcoxonSignedRankInput,
+    WilcoxonSignedRankResult,
   } from "$lib/types";
   import { invoke } from "@tauri-apps/api/core";
 
   let solveMode = $state<SolveMode>("sample_size");
   let alpha = $state("0.05");
   let power = $state("0.8");
-  let controlN = $state("132");
-  let meanDifference = $state("3");
-  let standardDeviation = $state("10");
-  let baselineOutcomeCorrelation = $state("0.5");
-  let allocationRatio = $state("1");
+  let nPairs = $state("131");
+  let meanDifference = $state("0.2533");
+  let standardDeviation = $state("1");
   let alternative = $state<Alternative>("two_sided");
   let dropoutRate = $state("");
 
-  let result = $state<AncovaTwoSampleResult | null>(null);
+  let result = $state<WilcoxonSignedRankResult | null>(null);
   let exportMarkdown = $state<string | null>(null);
   let rationale = $state<string | null>(null);
   let protocolText = $state<string | null>(null);
@@ -48,11 +46,9 @@
       solveMode,
       alpha,
       power,
-      controlN,
+      nPairs,
       meanDifference,
       standardDeviation,
-      baselineOutcomeCorrelation,
-      allocationRatio,
       alternative,
       dropoutRate,
     }),
@@ -65,16 +61,18 @@
   );
 
   const sensitivityOptions = $derived(
-    ancovaSensitivityOptions(
+    wilcoxonSignedRankSensitivityOptions(
       solveMode,
       meanDifference,
       standardDeviation,
-      baselineOutcomeCorrelation,
       alpha,
       power,
-      allocationRatio,
       dropoutRate,
     ),
+  );
+
+  const sensitivityOutputLabel = $derived(
+    solveMode === "sample_size" ? "Number of pairs" : "Achieved power",
   );
 
   const solveModeLabel = $derived(
@@ -89,18 +87,14 @@
         : "Less",
   );
 
-  const sensitivityOutputLabel = $derived(
-    solveMode === "sample_size" ? "Total sample size" : "Achieved power",
-  );
-
   const heroLabel = $derived(
-    solveMode === "sample_size" ? "Total sample size" : "Achieved power",
+    solveMode === "sample_size" ? "Number of pairs" : "Achieved power",
   );
 
   const heroValue = $derived(
     result
       ? solveMode === "sample_size"
-        ? String(result.totalN)
+        ? String(result.nPairs)
         : result.achievedPower.toFixed(4)
       : "—",
   );
@@ -108,18 +102,18 @@
   const resultItems = $derived(
     result
       ? [
-          { label: "Control N", value: String(result.nControl) },
-          { label: "Treatment N", value: String(result.nTreatment) },
-          { label: "Total N", value: String(result.totalN) },
+          { label: "Number of pairs", value: String(result.nPairs) },
           { label: "Achieved power", value: result.achievedPower.toFixed(4) },
-          { label: "Effect size (Cohen's d, unadjusted SD)", value: result.effectSize.toFixed(4) },
-          { label: "Adjusted standard deviation", value: result.adjustedStandardDeviation.toFixed(4) },
-          { label: "Variance reduction factor (1 − ρ²)", value: result.varianceReductionFactor.toFixed(4) },
-          ...(result.nControlAdjusted !== result.nControl
+          {
+            label: "P(difference > 0)",
+            value: result.probabilityPositiveDifference.toFixed(4),
+          },
+          { label: "Effect size (Cohen's d)", value: result.effectSize.toFixed(4) },
+          ...(result.nPairsAdjusted !== result.nPairs
             ? [
                 {
-                  label: "Dropout-adjusted total N",
-                  value: String(result.totalNAdjusted),
+                  label: "Dropout-adjusted pairs",
+                  value: String(result.nPairsAdjusted),
                   highlight: true,
                 },
               ]
@@ -128,21 +122,19 @@
       : [],
   );
 
-  function buildInput(): AncovaTwoSampleInput {
-    const input: AncovaTwoSampleInput = {
+  function buildInput(): WilcoxonSignedRankInput {
+    const input: WilcoxonSignedRankInput = {
       solveMode,
       alpha: Number(alpha),
       meanDifference: Number(meanDifference),
       standardDeviation: Number(standardDeviation),
-      baselineOutcomeCorrelation: Number(baselineOutcomeCorrelation),
-      allocationRatio: Number(allocationRatio),
       alternative,
     };
 
     if (solveMode === "sample_size") {
       input.power = Number(power);
     } else {
-      input.controlN = Number(controlN);
+      input.nPairs = Number(nPairs);
     }
 
     if (dropoutRate.trim() !== "") {
@@ -158,14 +150,27 @@
 
     try {
       const input = buildInput();
-      result = await invoke<AncovaTwoSampleResult>("calculate_ancova_two_sample", { input });
-      exportMarkdown = await invoke<string>("export_ancova_two_sample_markdown", { input, result });
-      rationale = await fetchCalculationRationale("continuous.ancova_two_sample", input, result);
-      protocolText = await fetchProtocolText("continuous.ancova_two_sample", input, result);
+      result = await invoke<WilcoxonSignedRankResult>("calculate_wilcoxon_signed_rank", {
+        input,
+      });
+      exportMarkdown = await invoke<string>("export_wilcoxon_signed_rank_markdown", {
+        input,
+        result,
+      });
+      rationale = await fetchCalculationRationale(
+        "continuous.wilcoxon_signed_rank",
+        input,
+        result,
+      );
+      protocolText = await fetchProtocolText(
+        "continuous.wilcoxon_signed_rank",
+        input,
+        result,
+      );
       lastCalculatedSignature = inputSignature;
       persistCalculation({
-        methodId: "continuous.ancova_two_sample",
-        methodName: "Two-sample ANCOVA",
+        methodId: "continuous.wilcoxon_signed_rank",
+        methodName: "Wilcoxon signed-rank",
         input,
         result,
       });
@@ -185,8 +190,8 @@
 <MethodPage {resultsStale}>
   {#snippet header()}
     <MethodHeader
-      title="Two-sample ANCOVA"
-      description="Parallel-group comparison with baseline covariate adjustment via approximate variance reduction."
+      title="Wilcoxon signed-rank"
+      description="Nonparametric paired comparison using Noether (1987) normal approximation."
       category="Continuous"
       badges={[solveModeLabel, alternativeLabel, "Superiority"]}
     />
@@ -208,8 +213,8 @@
           {#snippet control()}
             <select bind:value={alternative}>
               <option value="two_sided">Two-sided</option>
-              <option value="greater">Greater (treatment &gt; control)</option>
-              <option value="less">Less (treatment &lt; control)</option>
+              <option value="greater">Greater</option>
+              <option value="less">Less</option>
             </select>
           {/snippet}
         </Field>
@@ -227,45 +232,27 @@
             {/snippet}
           </Field>
         {:else}
-          <Field label="Control group N">
+          <Field label="Number of pairs">
             {#snippet control()}
-              <input type="number" min="2" step="1" bind:value={controlN} />
+              <input type="number" min="1" step="1" bind:value={nPairs} />
             {/snippet}
           </Field>
         {/if}
 
-        <Field label="Mean difference (treatment − control)">
+        <Field label="Expected mean paired difference">
           {#snippet control()}
             <input type="number" step="0.01" bind:value={meanDifference} />
           {/snippet}
         </Field>
 
-        <Field label="Unadjusted outcome standard deviation">
+        <Field label="Standard deviation of differences">
           {#snippet control()}
             <input type="number" min="0" step="0.01" bind:value={standardDeviation} />
-          {/snippet}
-        </Field>
-
-        <Field label="Baseline-outcome correlation">
-          {#snippet control()}
-            <input
-              type="number"
-              min="-0.99"
-              max="0.99"
-              step="0.01"
-              bind:value={baselineOutcomeCorrelation}
-            />
           {/snippet}
         </Field>
       </Section>
 
       <Section title="Advanced" collapsible defaultCollapsed={true}>
-        <Field label="Allocation ratio (treatment / control)">
-          {#snippet control()}
-            <input type="number" min="0" step="0.01" bind:value={allocationRatio} />
-          {/snippet}
-        </Field>
-
         <Field label="Dropout rate (optional)">
           {#snippet control()}
             <input type="number" min="0" max="0.99" step="0.01" bind:value={dropoutRate} />
@@ -297,23 +284,23 @@
         <WarningList warnings={result.warnings} />
         <AssumptionsCard
           items={[
-            "Baseline covariate measured without error and linearly related to outcome.",
-            "Approximate variance reduction via ρ²; equal within-group variance assumed.",
-            "Independent observations with approximately normal endpoints.",
+            "Continuous paired differences without ties.",
+            "Location shift mapped to P(difference > 0) under normality for planning.",
+            "Noether (1987) normal approximation; exact signed-rank power is not implemented.",
           ]}
         />
-        <ExportMenu title="Two-sample ANCOVA" markdown={exportMarkdown} />
+        <ExportMenu title="Wilcoxon signed-rank" markdown={exportMarkdown} />
         <SensitivityPanel
           ready={true}
           defaultExpanded={true}
-          chartFileStem="clinsize-sensitivity-ancova-two-sample"
+          chartFileStem="clinsize-sensitivity-wilcoxon-signed-rank"
           inputSignature={lastCalculatedSignature ?? inputSignature}
-          command="calculate_ancova_two_sample"
+          command="calculate_wilcoxon_signed_rank"
           buildInput={buildInput}
           options={sensitivityOptions}
           getOutputValue={(value) => {
-            const row = value as AncovaTwoSampleResult;
-            return solveMode === "sample_size" ? row.totalN : row.achievedPower;
+            const row = value as WilcoxonSignedRankResult;
+            return solveMode === "sample_size" ? row.nPairs : row.achievedPower;
           }}
           outputLabel={sensitivityOutputLabel}
         />

@@ -96,3 +96,17 @@ reference: R `power.t.test` (stats package).
 - Dropout inflation applies a simple uniform inflation factor; it does not model
   differential dropout between arms.
 
+## Sample Size Calculation Rationale
+
+Each method should expose narrative rationale text that explains, in clinical trial
+language, how the reported sample size or power follows from the stated inputs.
+Rationale is generated in `clinsize-core` (not the UI) so exports and on-screen
+display stay aligned.
+
+**Implemented** for all registered calculation methods in
+`crates/clinsize-core/src/reports/rationale.rs` (continuous t-tests and ANOVA/ANCOVA,
+binary proportion and effect-measure methods, log-rank survival, and design tools for
+multiplicity, group sequential, and blinded SSR). The text appears in the results
+panel and in Markdown/PDF/DOCX/HTML exports under **Sample size calculation
+rationale**.
+

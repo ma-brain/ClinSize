@@ -13,13 +13,13 @@
   import ResultHero from "$lib/components/ui/ResultHero.svelte";
   import Section from "$lib/components/ui/Section.svelte";
   import WarningList from "$lib/components/ui/WarningList.svelte";
-  import { ancovaSensitivityOptions } from "$lib/sensitivity/configs";
+  import { oneSampleBinomialSensitivityOptions } from "$lib/sensitivity/configs";
   import { persistCalculation } from "$lib/workflow/record";
   import { fetchCalculationRationale, fetchProtocolText } from "$lib/workflow/rationale";
   import type {
     Alternative,
-    AncovaTwoSampleInput,
-    AncovaTwoSampleResult,
+    OneSampleBinomialInput,
+    OneSampleBinomialResult,
     SolveMode,
   } from "$lib/types";
   import { invoke } from "@tauri-apps/api/core";
@@ -27,15 +27,13 @@
   let solveMode = $state<SolveMode>("sample_size");
   let alpha = $state("0.05");
   let power = $state("0.8");
-  let controlN = $state("132");
-  let meanDifference = $state("3");
-  let standardDeviation = $state("10");
-  let baselineOutcomeCorrelation = $state("0.5");
-  let allocationRatio = $state("1");
+  let n = $state("50");
+  let referenceRate = $state("0.2");
+  let responseRate = $state("0.4");
   let alternative = $state<Alternative>("two_sided");
   let dropoutRate = $state("");
 
-  let result = $state<AncovaTwoSampleResult | null>(null);
+  let result = $state<OneSampleBinomialResult | null>(null);
   let exportMarkdown = $state<string | null>(null);
   let rationale = $state<string | null>(null);
   let protocolText = $state<string | null>(null);
@@ -48,11 +46,9 @@
       solveMode,
       alpha,
       power,
-      controlN,
-      meanDifference,
-      standardDeviation,
-      baselineOutcomeCorrelation,
-      allocationRatio,
+      n,
+      referenceRate,
+      responseRate,
       alternative,
       dropoutRate,
     }),
@@ -65,16 +61,18 @@
   );
 
   const sensitivityOptions = $derived(
-    ancovaSensitivityOptions(
+    oneSampleBinomialSensitivityOptions(
       solveMode,
-      meanDifference,
-      standardDeviation,
-      baselineOutcomeCorrelation,
+      referenceRate,
+      responseRate,
       alpha,
       power,
-      allocationRatio,
       dropoutRate,
     ),
+  );
+
+  const sensitivityOutputLabel = $derived(
+    solveMode === "sample_size" ? "Sample size N" : "Achieved power",
   );
 
   const solveModeLabel = $derived(
@@ -89,18 +87,14 @@
         : "Less",
   );
 
-  const sensitivityOutputLabel = $derived(
-    solveMode === "sample_size" ? "Total sample size" : "Achieved power",
-  );
-
   const heroLabel = $derived(
-    solveMode === "sample_size" ? "Total sample size" : "Achieved power",
+    solveMode === "sample_size" ? "Sample size N" : "Achieved power",
   );
 
   const heroValue = $derived(
     result
       ? solveMode === "sample_size"
-        ? String(result.totalN)
+        ? String(result.n)
         : result.achievedPower.toFixed(4)
       : "—",
   );
@@ -108,18 +102,14 @@
   const resultItems = $derived(
     result
       ? [
-          { label: "Control N", value: String(result.nControl) },
-          { label: "Treatment N", value: String(result.nTreatment) },
-          { label: "Total N", value: String(result.totalN) },
+          { label: "Sample size N", value: String(result.n) },
           { label: "Achieved power", value: result.achievedPower.toFixed(4) },
-          { label: "Effect size (Cohen's d, unadjusted SD)", value: result.effectSize.toFixed(4) },
-          { label: "Adjusted standard deviation", value: result.adjustedStandardDeviation.toFixed(4) },
-          { label: "Variance reduction factor (1 − ρ²)", value: result.varianceReductionFactor.toFixed(4) },
-          ...(result.nControlAdjusted !== result.nControl
+          { label: "Rate difference", value: result.rateDifference.toFixed(4) },
+          ...(result.nAdjusted !== result.n
             ? [
                 {
-                  label: "Dropout-adjusted total N",
-                  value: String(result.totalNAdjusted),
+                  label: "Dropout-adjusted N",
+                  value: String(result.nAdjusted),
                   highlight: true,
                 },
               ]
@@ -128,21 +118,19 @@
       : [],
   );
 
-  function buildInput(): AncovaTwoSampleInput {
-    const input: AncovaTwoSampleInput = {
+  function buildInput(): OneSampleBinomialInput {
+    const input: OneSampleBinomialInput = {
       solveMode,
       alpha: Number(alpha),
-      meanDifference: Number(meanDifference),
-      standardDeviation: Number(standardDeviation),
-      baselineOutcomeCorrelation: Number(baselineOutcomeCorrelation),
-      allocationRatio: Number(allocationRatio),
+      referenceRate: Number(referenceRate),
+      responseRate: Number(responseRate),
       alternative,
     };
 
     if (solveMode === "sample_size") {
       input.power = Number(power);
     } else {
-      input.controlN = Number(controlN);
+      input.n = Number(n);
     }
 
     if (dropoutRate.trim() !== "") {
@@ -158,14 +146,27 @@
 
     try {
       const input = buildInput();
-      result = await invoke<AncovaTwoSampleResult>("calculate_ancova_two_sample", { input });
-      exportMarkdown = await invoke<string>("export_ancova_two_sample_markdown", { input, result });
-      rationale = await fetchCalculationRationale("continuous.ancova_two_sample", input, result);
-      protocolText = await fetchProtocolText("continuous.ancova_two_sample", input, result);
+      result = await invoke<OneSampleBinomialResult>("calculate_one_sample_binomial", {
+        input,
+      });
+      exportMarkdown = await invoke<string>("export_one_sample_binomial_markdown", {
+        input,
+        result,
+      });
+      rationale = await fetchCalculationRationale(
+        "binary.one_sample_binomial",
+        input,
+        result,
+      );
+      protocolText = await fetchProtocolText(
+        "binary.one_sample_binomial",
+        input,
+        result,
+      );
       lastCalculatedSignature = inputSignature;
       persistCalculation({
-        methodId: "continuous.ancova_two_sample",
-        methodName: "Two-sample ANCOVA",
+        methodId: "binary.one_sample_binomial",
+        methodName: "One-sample binomial",
         input,
         result,
       });
@@ -185,9 +186,9 @@
 <MethodPage {resultsStale}>
   {#snippet header()}
     <MethodHeader
-      title="Two-sample ANCOVA"
-      description="Parallel-group comparison with baseline covariate adjustment via approximate variance reduction."
-      category="Continuous"
+      title="One-sample binomial"
+      description="Compare a single-arm response rate to a reference proportion."
+      category="Binary"
       badges={[solveModeLabel, alternativeLabel, "Superiority"]}
     />
   {/snippet}
@@ -208,8 +209,8 @@
           {#snippet control()}
             <select bind:value={alternative}>
               <option value="two_sided">Two-sided</option>
-              <option value="greater">Greater (treatment &gt; control)</option>
-              <option value="less">Less (treatment &lt; control)</option>
+              <option value="greater">Greater</option>
+              <option value="less">Less</option>
             </select>
           {/snippet}
         </Field>
@@ -227,45 +228,27 @@
             {/snippet}
           </Field>
         {:else}
-          <Field label="Control group N">
+          <Field label="Sample size N">
             {#snippet control()}
-              <input type="number" min="2" step="1" bind:value={controlN} />
+              <input type="number" min="1" step="1" bind:value={n} />
             {/snippet}
           </Field>
         {/if}
 
-        <Field label="Mean difference (treatment − control)">
+        <Field label="Reference response rate">
           {#snippet control()}
-            <input type="number" step="0.01" bind:value={meanDifference} />
+            <input type="number" min="0" max="1" step="0.01" bind:value={referenceRate} />
           {/snippet}
         </Field>
 
-        <Field label="Unadjusted outcome standard deviation">
+        <Field label="Hypothesized response rate">
           {#snippet control()}
-            <input type="number" min="0" step="0.01" bind:value={standardDeviation} />
-          {/snippet}
-        </Field>
-
-        <Field label="Baseline-outcome correlation">
-          {#snippet control()}
-            <input
-              type="number"
-              min="-0.99"
-              max="0.99"
-              step="0.01"
-              bind:value={baselineOutcomeCorrelation}
-            />
+            <input type="number" min="0" max="1" step="0.01" bind:value={responseRate} />
           {/snippet}
         </Field>
       </Section>
 
       <Section title="Advanced" collapsible defaultCollapsed={true}>
-        <Field label="Allocation ratio (treatment / control)">
-          {#snippet control()}
-            <input type="number" min="0" step="0.01" bind:value={allocationRatio} />
-          {/snippet}
-        </Field>
-
         <Field label="Dropout rate (optional)">
           {#snippet control()}
             <input type="number" min="0" max="0.99" step="0.01" bind:value={dropoutRate} />
@@ -297,23 +280,23 @@
         <WarningList warnings={result.warnings} />
         <AssumptionsCard
           items={[
-            "Baseline covariate measured without error and linearly related to outcome.",
-            "Approximate variance reduction via ρ²; equal within-group variance assumed.",
-            "Independent observations with approximately normal endpoints.",
+            "Independent Bernoulli outcomes on a single arm.",
+            "Normal approximation to the binomial; exact methods are not implemented.",
+            "Higher response rate is favorable for one-sided greater alternatives.",
           ]}
         />
-        <ExportMenu title="Two-sample ANCOVA" markdown={exportMarkdown} />
+        <ExportMenu title="One-sample binomial" markdown={exportMarkdown} />
         <SensitivityPanel
           ready={true}
           defaultExpanded={true}
-          chartFileStem="clinsize-sensitivity-ancova-two-sample"
+          chartFileStem="clinsize-sensitivity-one-sample-binomial"
           inputSignature={lastCalculatedSignature ?? inputSignature}
-          command="calculate_ancova_two_sample"
+          command="calculate_one_sample_binomial"
           buildInput={buildInput}
           options={sensitivityOptions}
           getOutputValue={(value) => {
-            const row = value as AncovaTwoSampleResult;
-            return solveMode === "sample_size" ? row.totalN : row.achievedPower;
+            const row = value as OneSampleBinomialResult;
+            return solveMode === "sample_size" ? row.n : row.achievedPower;
           }}
           outputLabel={sensitivityOutputLabel}
         />

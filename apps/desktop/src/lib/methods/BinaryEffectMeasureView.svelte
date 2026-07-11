@@ -7,12 +7,15 @@
   import MethodHeader from "$lib/components/ui/MethodHeader.svelte";
   import Panel from "$lib/components/ui/Panel.svelte";
   import PrimaryButton from "$lib/components/ui/PrimaryButton.svelte";
+  import RationaleCard from "$lib/components/ui/RationaleCard.svelte";
+  import ProtocolTextCard from "$lib/components/ui/ProtocolTextCard.svelte";
   import ResultGrid from "$lib/components/ui/ResultGrid.svelte";
   import ResultHero from "$lib/components/ui/ResultHero.svelte";
   import Section from "$lib/components/ui/Section.svelte";
   import WarningList from "$lib/components/ui/WarningList.svelte";
   import { binaryEffectSensitivityOptions } from "$lib/sensitivity/configs";
   import { persistCalculation } from "$lib/workflow/record";
+  import { fetchCalculationRationale, fetchProtocolText } from "$lib/workflow/rationale";
   import type {
     Alternative,
     OddsRatioInput,
@@ -55,6 +58,8 @@
   let oddsResult = $state<OddsRatioResult | null>(null);
   let riskResult = $state<RiskRatioResult | null>(null);
   let exportMarkdown = $state<string | null>(null);
+  let rationale = $state<string | null>(null);
+  let protocolText = $state<string | null>(null);
   let errorMessage = $state<string | null>(null);
   let calculating = $state(false);
   let lastCalculatedSignature = $state<string | null>(null);
@@ -189,12 +194,16 @@
     oddsResult = null;
     riskResult = null;
     exportMarkdown = null;
+    rationale = null;
+    protocolText = null;
 
     try {
       if (variant === "odds_ratio") {
         const input = buildOddsInput();
         oddsResult = await invoke<OddsRatioResult>(calculateCommand, { input });
         exportMarkdown = await invoke<string>(exportCommand, { input, result: oddsResult });
+        rationale = await fetchCalculationRationale("binary.odds_ratio", input, oddsResult);
+        protocolText = await fetchProtocolText("binary.odds_ratio", input, oddsResult);
         lastCalculatedSignature = inputSignature;
         persistCalculation({
           methodId: "binary.odds_ratio",
@@ -206,6 +215,8 @@
         const input = buildRiskInput();
         riskResult = await invoke<RiskRatioResult>(calculateCommand, { input });
         exportMarkdown = await invoke<string>(exportCommand, { input, result: riskResult });
+        rationale = await fetchCalculationRationale("binary.risk_ratio", input, riskResult);
+        protocolText = await fetchProtocolText("binary.risk_ratio", input, riskResult);
         lastCalculatedSignature = inputSignature;
         persistCalculation({
           methodId: "binary.risk_ratio",
@@ -317,6 +328,12 @@
       {#if activeResult}
         <ResultHero label={heroLabel} value={heroValue} />
         <ResultGrid items={resultItems} />
+        {#if rationale}
+          <RationaleCard text={rationale} />
+        {/if}
+        {#if protocolText}
+          <ProtocolTextCard text={protocolText} />
+        {/if}
         <WarningList warnings={activeResult.warnings} />
         <AssumptionsCard
           items={[

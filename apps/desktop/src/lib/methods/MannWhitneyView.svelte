@@ -13,13 +13,13 @@
   import ResultHero from "$lib/components/ui/ResultHero.svelte";
   import Section from "$lib/components/ui/Section.svelte";
   import WarningList from "$lib/components/ui/WarningList.svelte";
-  import { ancovaSensitivityOptions } from "$lib/sensitivity/configs";
+  import { mannWhitneySensitivityOptions } from "$lib/sensitivity/configs";
   import { persistCalculation } from "$lib/workflow/record";
   import { fetchCalculationRationale, fetchProtocolText } from "$lib/workflow/rationale";
   import type {
     Alternative,
-    AncovaTwoSampleInput,
-    AncovaTwoSampleResult,
+    MannWhitneyInput,
+    MannWhitneyResult,
     SolveMode,
   } from "$lib/types";
   import { invoke } from "@tauri-apps/api/core";
@@ -27,15 +27,14 @@
   let solveMode = $state<SolveMode>("sample_size");
   let alpha = $state("0.05");
   let power = $state("0.8");
-  let controlN = $state("132");
-  let meanDifference = $state("3");
-  let standardDeviation = $state("10");
-  let baselineOutcomeCorrelation = $state("0.5");
+  let controlN = $state("131");
+  let meanDifference = $state("0.3583");
+  let standardDeviation = $state("1");
   let allocationRatio = $state("1");
   let alternative = $state<Alternative>("two_sided");
   let dropoutRate = $state("");
 
-  let result = $state<AncovaTwoSampleResult | null>(null);
+  let result = $state<MannWhitneyResult | null>(null);
   let exportMarkdown = $state<string | null>(null);
   let rationale = $state<string | null>(null);
   let protocolText = $state<string | null>(null);
@@ -51,7 +50,6 @@
       controlN,
       meanDifference,
       standardDeviation,
-      baselineOutcomeCorrelation,
       allocationRatio,
       alternative,
       dropoutRate,
@@ -65,16 +63,19 @@
   );
 
   const sensitivityOptions = $derived(
-    ancovaSensitivityOptions(
+    mannWhitneySensitivityOptions(
       solveMode,
       meanDifference,
       standardDeviation,
-      baselineOutcomeCorrelation,
       alpha,
       power,
       allocationRatio,
       dropoutRate,
     ),
+  );
+
+  const sensitivityOutputLabel = $derived(
+    solveMode === "sample_size" ? "Total sample size" : "Achieved power",
   );
 
   const solveModeLabel = $derived(
@@ -87,10 +88,6 @@
       : alternative === "greater"
         ? "Greater"
         : "Less",
-  );
-
-  const sensitivityOutputLabel = $derived(
-    solveMode === "sample_size" ? "Total sample size" : "Achieved power",
   );
 
   const heroLabel = $derived(
@@ -112,9 +109,11 @@
           { label: "Treatment N", value: String(result.nTreatment) },
           { label: "Total N", value: String(result.totalN) },
           { label: "Achieved power", value: result.achievedPower.toFixed(4) },
-          { label: "Effect size (Cohen's d, unadjusted SD)", value: result.effectSize.toFixed(4) },
-          { label: "Adjusted standard deviation", value: result.adjustedStandardDeviation.toFixed(4) },
-          { label: "Variance reduction factor (1 − ρ²)", value: result.varianceReductionFactor.toFixed(4) },
+          {
+            label: "P(treatment > control)",
+            value: result.probabilitySuperiority.toFixed(4),
+          },
+          { label: "Effect size (Cohen's d)", value: result.effectSize.toFixed(4) },
           ...(result.nControlAdjusted !== result.nControl
             ? [
                 {
@@ -128,13 +127,12 @@
       : [],
   );
 
-  function buildInput(): AncovaTwoSampleInput {
-    const input: AncovaTwoSampleInput = {
+  function buildInput(): MannWhitneyInput {
+    const input: MannWhitneyInput = {
       solveMode,
       alpha: Number(alpha),
       meanDifference: Number(meanDifference),
       standardDeviation: Number(standardDeviation),
-      baselineOutcomeCorrelation: Number(baselineOutcomeCorrelation),
       allocationRatio: Number(allocationRatio),
       alternative,
     };
@@ -158,14 +156,25 @@
 
     try {
       const input = buildInput();
-      result = await invoke<AncovaTwoSampleResult>("calculate_ancova_two_sample", { input });
-      exportMarkdown = await invoke<string>("export_ancova_two_sample_markdown", { input, result });
-      rationale = await fetchCalculationRationale("continuous.ancova_two_sample", input, result);
-      protocolText = await fetchProtocolText("continuous.ancova_two_sample", input, result);
+      result = await invoke<MannWhitneyResult>("calculate_mann_whitney", { input });
+      exportMarkdown = await invoke<string>("export_mann_whitney_markdown", {
+        input,
+        result,
+      });
+      rationale = await fetchCalculationRationale(
+        "continuous.mann_whitney",
+        input,
+        result,
+      );
+      protocolText = await fetchProtocolText(
+        "continuous.mann_whitney",
+        input,
+        result,
+      );
       lastCalculatedSignature = inputSignature;
       persistCalculation({
-        methodId: "continuous.ancova_two_sample",
-        methodName: "Two-sample ANCOVA",
+        methodId: "continuous.mann_whitney",
+        methodName: "Mann-Whitney U",
         input,
         result,
       });
@@ -185,8 +194,8 @@
 <MethodPage {resultsStale}>
   {#snippet header()}
     <MethodHeader
-      title="Two-sample ANCOVA"
-      description="Parallel-group comparison with baseline covariate adjustment via approximate variance reduction."
+      title="Mann-Whitney U"
+      description="Nonparametric two-group comparison using Noether (1987) normal approximation."
       category="Continuous"
       badges={[solveModeLabel, alternativeLabel, "Superiority"]}
     />
@@ -208,8 +217,8 @@
           {#snippet control()}
             <select bind:value={alternative}>
               <option value="two_sided">Two-sided</option>
-              <option value="greater">Greater (treatment &gt; control)</option>
-              <option value="less">Less (treatment &lt; control)</option>
+              <option value="greater">Greater</option>
+              <option value="less">Less</option>
             </select>
           {/snippet}
         </Field>
@@ -229,7 +238,7 @@
         {:else}
           <Field label="Control group N">
             {#snippet control()}
-              <input type="number" min="2" step="1" bind:value={controlN} />
+              <input type="number" min="1" step="1" bind:value={controlN} />
             {/snippet}
           </Field>
         {/if}
@@ -240,32 +249,20 @@
           {/snippet}
         </Field>
 
-        <Field label="Unadjusted outcome standard deviation">
+        <Field label="Common standard deviation">
           {#snippet control()}
             <input type="number" min="0" step="0.01" bind:value={standardDeviation} />
           {/snippet}
         </Field>
 
-        <Field label="Baseline-outcome correlation">
+        <Field label="Allocation ratio (treatment : control)">
           {#snippet control()}
-            <input
-              type="number"
-              min="-0.99"
-              max="0.99"
-              step="0.01"
-              bind:value={baselineOutcomeCorrelation}
-            />
+            <input type="number" min="0" step="0.01" bind:value={allocationRatio} />
           {/snippet}
         </Field>
       </Section>
 
       <Section title="Advanced" collapsible defaultCollapsed={true}>
-        <Field label="Allocation ratio (treatment / control)">
-          {#snippet control()}
-            <input type="number" min="0" step="0.01" bind:value={allocationRatio} />
-          {/snippet}
-        </Field>
-
         <Field label="Dropout rate (optional)">
           {#snippet control()}
             <input type="number" min="0" max="0.99" step="0.01" bind:value={dropoutRate} />
@@ -297,22 +294,22 @@
         <WarningList warnings={result.warnings} />
         <AssumptionsCard
           items={[
-            "Baseline covariate measured without error and linearly related to outcome.",
-            "Approximate variance reduction via ρ²; equal within-group variance assumed.",
-            "Independent observations with approximately normal endpoints.",
+            "Continuous endpoint without ties; location shift mapped to P(treatment > control).",
+            "Equal within-group variance under normality for planning purposes.",
+            "Noether (1987) normal approximation; exact rank-based power is not implemented.",
           ]}
         />
-        <ExportMenu title="Two-sample ANCOVA" markdown={exportMarkdown} />
+        <ExportMenu title="Mann-Whitney U" markdown={exportMarkdown} />
         <SensitivityPanel
           ready={true}
           defaultExpanded={true}
-          chartFileStem="clinsize-sensitivity-ancova-two-sample"
+          chartFileStem="clinsize-sensitivity-mann-whitney"
           inputSignature={lastCalculatedSignature ?? inputSignature}
-          command="calculate_ancova_two_sample"
+          command="calculate_mann_whitney"
           buildInput={buildInput}
           options={sensitivityOptions}
           getOutputValue={(value) => {
-            const row = value as AncovaTwoSampleResult;
+            const row = value as MannWhitneyResult;
             return solveMode === "sample_size" ? row.totalN : row.achievedPower;
           }}
           outputLabel={sensitivityOutputLabel}

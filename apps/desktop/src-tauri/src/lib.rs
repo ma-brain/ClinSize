@@ -1,6 +1,9 @@
 mod project;
 
 use clinsize_core::methods::binary::odds_ratio::{self, OddsRatioInput, OddsRatioResult};
+use clinsize_core::methods::binary::one_sample_binomial::{
+    self, OneSampleBinomialInput, OneSampleBinomialResult,
+};
 use clinsize_core::methods::binary::risk_ratio::{self, RiskRatioInput, RiskRatioResult};
 use clinsize_core::methods::binary::two_proportion_difference::{
     self, TwoProportionDifferenceInput, TwoProportionDifferenceResult,
@@ -8,6 +11,11 @@ use clinsize_core::methods::binary::two_proportion_difference::{
 use clinsize_core::methods::continuous::ancova_two_sample::{
     self, AncovaTwoSampleInput, AncovaTwoSampleResult,
 };
+use clinsize_core::methods::continuous::change_from_baseline::{
+    self, ChangeFromBaselineInput, ChangeFromBaselineResult,
+};
+use clinsize_core::methods::continuous::mmrm::{self, MmrmInput, MmrmResult};
+use clinsize_core::methods::continuous::mann_whitney::{self, MannWhitneyInput, MannWhitneyResult};
 use clinsize_core::methods::continuous::one_sample_ttest::{
     self, OneSampleTTestInput, OneSampleTTestResult,
 };
@@ -17,6 +25,15 @@ use clinsize_core::methods::continuous::one_way_anova::{
 use clinsize_core::methods::continuous::paired_ttest::{self, PairedTTestInput, PairedTTestResult};
 use clinsize_core::methods::continuous::two_sample_ttest::{
     self, TwoSampleTTestInput, TwoSampleTTestResult,
+};
+use clinsize_core::methods::continuous::wilcoxon_signed_rank::{
+    self, WilcoxonSignedRankInput, WilcoxonSignedRankResult,
+};
+use clinsize_core::methods::count::negative_binomial::{
+    self, NegativeBinomialInput, NegativeBinomialResult,
+};
+use clinsize_core::methods::ordinal::proportional_odds::{
+    self, ProportionalOddsInput, ProportionalOddsResult,
 };
 use clinsize_core::methods::design::blinded_ssre::{self, BlindedSsreInput, BlindedSsreResult};
 use clinsize_core::methods::design::group_sequential::{
@@ -110,6 +127,26 @@ fn export_two_sample_ttest_markdown(
 }
 
 #[tauri::command]
+fn export_calculation_rationale(
+    method_id: String,
+    input_json: String,
+    result_json: String,
+) -> Result<String, AppError> {
+    clinsize_core::dispatch::rationale_json(&method_id, &input_json, &result_json)
+        .map_err(AppError::from)
+}
+
+#[tauri::command]
+fn export_protocol_text(
+    method_id: String,
+    input_json: String,
+    result_json: String,
+) -> Result<String, AppError> {
+    clinsize_core::dispatch::protocol_text_json(&method_id, &input_json, &result_json)
+        .map_err(AppError::from)
+}
+
+#[tauri::command]
 fn calculate_one_sample_ttest(
     input: OneSampleTTestInput,
 ) -> Result<OneSampleTTestResult, AppError> {
@@ -182,6 +219,80 @@ fn export_ancova_two_sample_markdown(
 }
 
 #[tauri::command]
+fn calculate_change_from_baseline(
+    input: ChangeFromBaselineInput,
+) -> Result<ChangeFromBaselineResult, AppError> {
+    change_from_baseline::calculate(input).map_err(AppError::from)
+}
+
+#[tauri::command]
+fn export_change_from_baseline_markdown(
+    input: ChangeFromBaselineInput,
+    result: ChangeFromBaselineResult,
+) -> Result<String, AppError> {
+    Ok(clinsize_core::reports::change_from_baseline_markdown(
+        &input,
+        &result,
+        clinsize_core::engine_version(),
+    ))
+}
+
+#[tauri::command]
+fn calculate_mmrm(input: MmrmInput) -> Result<MmrmResult, AppError> {
+    mmrm::calculate(input).map_err(AppError::from)
+}
+
+#[tauri::command]
+fn export_mmrm_markdown(
+    input: MmrmInput,
+    result: MmrmResult,
+) -> Result<String, AppError> {
+    Ok(clinsize_core::reports::mmrm_markdown(
+        &input,
+        &result,
+        clinsize_core::engine_version(),
+    ))
+}
+
+#[tauri::command]
+fn calculate_negative_binomial(
+    input: NegativeBinomialInput,
+) -> Result<NegativeBinomialResult, AppError> {
+    negative_binomial::calculate(input).map_err(AppError::from)
+}
+
+#[tauri::command]
+fn export_negative_binomial_markdown(
+    input: NegativeBinomialInput,
+    result: NegativeBinomialResult,
+) -> Result<String, AppError> {
+    Ok(clinsize_core::reports::negative_binomial_markdown(
+        &input,
+        &result,
+        clinsize_core::engine_version(),
+    ))
+}
+
+#[tauri::command]
+fn calculate_proportional_odds(
+    input: ProportionalOddsInput,
+) -> Result<ProportionalOddsResult, AppError> {
+    proportional_odds::calculate(input).map_err(AppError::from)
+}
+
+#[tauri::command]
+fn export_proportional_odds_markdown(
+    input: ProportionalOddsInput,
+    result: ProportionalOddsResult,
+) -> Result<String, AppError> {
+    Ok(clinsize_core::reports::proportional_odds_markdown(
+        &input,
+        &result,
+        clinsize_core::engine_version(),
+    ))
+}
+
+#[tauri::command]
 fn calculate_two_proportion_difference(
     input: TwoProportionDifferenceInput,
 ) -> Result<TwoProportionDifferenceResult, AppError> {
@@ -194,6 +305,61 @@ fn export_two_proportion_difference_markdown(
     result: TwoProportionDifferenceResult,
 ) -> Result<String, AppError> {
     Ok(clinsize_core::reports::two_proportion_difference_markdown(
+        &input,
+        &result,
+        clinsize_core::engine_version(),
+    ))
+}
+
+#[tauri::command]
+fn calculate_one_sample_binomial(
+    input: OneSampleBinomialInput,
+) -> Result<OneSampleBinomialResult, AppError> {
+    one_sample_binomial::calculate(input).map_err(AppError::from)
+}
+
+#[tauri::command]
+fn export_one_sample_binomial_markdown(
+    input: OneSampleBinomialInput,
+    result: OneSampleBinomialResult,
+) -> Result<String, AppError> {
+    Ok(clinsize_core::reports::one_sample_binomial_markdown(
+        &input,
+        &result,
+        clinsize_core::engine_version(),
+    ))
+}
+
+#[tauri::command]
+fn calculate_mann_whitney(input: MannWhitneyInput) -> Result<MannWhitneyResult, AppError> {
+    mann_whitney::calculate(input).map_err(AppError::from)
+}
+
+#[tauri::command]
+fn export_mann_whitney_markdown(
+    input: MannWhitneyInput,
+    result: MannWhitneyResult,
+) -> Result<String, AppError> {
+    Ok(clinsize_core::reports::mann_whitney_markdown(
+        &input,
+        &result,
+        clinsize_core::engine_version(),
+    ))
+}
+
+#[tauri::command]
+fn calculate_wilcoxon_signed_rank(
+    input: WilcoxonSignedRankInput,
+) -> Result<WilcoxonSignedRankResult, AppError> {
+    wilcoxon_signed_rank::calculate(input).map_err(AppError::from)
+}
+
+#[tauri::command]
+fn export_wilcoxon_signed_rank_markdown(
+    input: WilcoxonSignedRankInput,
+    result: WilcoxonSignedRankResult,
+) -> Result<String, AppError> {
+    Ok(clinsize_core::reports::wilcoxon_signed_rank_markdown(
         &input,
         &result,
         clinsize_core::engine_version(),
@@ -374,6 +540,8 @@ pub fn run() {
             generate_validation_report,
             calculate_two_sample_ttest,
             export_two_sample_ttest_markdown,
+            export_calculation_rationale,
+            export_protocol_text,
             calculate_one_sample_ttest,
             export_one_sample_ttest_markdown,
             calculate_paired_ttest,
@@ -382,8 +550,22 @@ pub fn run() {
             export_one_way_anova_markdown,
             calculate_ancova_two_sample,
             export_ancova_two_sample_markdown,
+            calculate_change_from_baseline,
+            export_change_from_baseline_markdown,
+            calculate_mmrm,
+            export_mmrm_markdown,
+            calculate_negative_binomial,
+            export_negative_binomial_markdown,
+            calculate_proportional_odds,
+            export_proportional_odds_markdown,
             calculate_two_proportion_difference,
             export_two_proportion_difference_markdown,
+            calculate_one_sample_binomial,
+            export_one_sample_binomial_markdown,
+            calculate_mann_whitney,
+            export_mann_whitney_markdown,
+            calculate_wilcoxon_signed_rank,
+            export_wilcoxon_signed_rank_markdown,
             calculate_odds_ratio,
             export_odds_ratio_markdown,
             calculate_risk_ratio,

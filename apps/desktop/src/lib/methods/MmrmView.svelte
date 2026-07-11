@@ -13,13 +13,14 @@
   import ResultHero from "$lib/components/ui/ResultHero.svelte";
   import Section from "$lib/components/ui/Section.svelte";
   import WarningList from "$lib/components/ui/WarningList.svelte";
-  import { ancovaSensitivityOptions } from "$lib/sensitivity/configs";
+  import { mmrmSensitivityOptions } from "$lib/sensitivity/configs";
   import { persistCalculation } from "$lib/workflow/record";
   import { fetchCalculationRationale, fetchProtocolText } from "$lib/workflow/rationale";
   import type {
     Alternative,
-    AncovaTwoSampleInput,
-    AncovaTwoSampleResult,
+    CorrelationStructure,
+    MmrmInput,
+    MmrmResult,
     SolveMode,
   } from "$lib/types";
   import { invoke } from "@tauri-apps/api/core";
@@ -27,15 +28,17 @@
   let solveMode = $state<SolveMode>("sample_size");
   let alpha = $state("0.05");
   let power = $state("0.8");
-  let controlN = $state("132");
-  let meanDifference = $state("3");
-  let standardDeviation = $state("10");
-  let baselineOutcomeCorrelation = $state("0.5");
+  let controlN = $state("4");
+  let treatmentEffect = $state("2");
+  let residualStandardDeviation = $state("2");
+  let correlationStructure = $state<CorrelationStructure>("unstructured");
+  let correlation = $state("0.5");
+  let nPostBaselineVisits = $state("3");
+  let perVisitDropoutRate = $state("0.05");
   let allocationRatio = $state("1");
   let alternative = $state<Alternative>("two_sided");
-  let dropoutRate = $state("");
 
-  let result = $state<AncovaTwoSampleResult | null>(null);
+  let result = $state<MmrmResult | null>(null);
   let exportMarkdown = $state<string | null>(null);
   let rationale = $state<string | null>(null);
   let protocolText = $state<string | null>(null);
@@ -49,12 +52,14 @@
       alpha,
       power,
       controlN,
-      meanDifference,
-      standardDeviation,
-      baselineOutcomeCorrelation,
+      treatmentEffect,
+      residualStandardDeviation,
+      correlationStructure,
+      correlation,
+      nPostBaselineVisits,
+      perVisitDropoutRate,
       allocationRatio,
       alternative,
-      dropoutRate,
     }),
   );
 
@@ -65,15 +70,16 @@
   );
 
   const sensitivityOptions = $derived(
-    ancovaSensitivityOptions(
+    mmrmSensitivityOptions(
       solveMode,
-      meanDifference,
-      standardDeviation,
-      baselineOutcomeCorrelation,
+      treatmentEffect,
+      residualStandardDeviation,
+      correlation,
+      nPostBaselineVisits,
       alpha,
       power,
       allocationRatio,
-      dropoutRate,
+      perVisitDropoutRate,
     ),
   );
 
@@ -94,13 +100,13 @@
   );
 
   const heroLabel = $derived(
-    solveMode === "sample_size" ? "Total sample size" : "Achieved power",
+    solveMode === "sample_size" ? "Total enrollable N" : "Achieved power",
   );
 
   const heroValue = $derived(
     result
       ? solveMode === "sample_size"
-        ? String(result.totalN)
+        ? String(result.totalNAdjusted)
         : result.achievedPower.toFixed(4)
       : "—",
   );
@@ -108,33 +114,34 @@
   const resultItems = $derived(
     result
       ? [
-          { label: "Control N", value: String(result.nControl) },
-          { label: "Treatment N", value: String(result.nTreatment) },
-          { label: "Total N", value: String(result.totalN) },
+          { label: "Control N (evaluable)", value: String(result.nControl) },
+          { label: "Treatment N (evaluable)", value: String(result.nTreatment) },
+          { label: "Total N (evaluable)", value: String(result.totalN) },
+          { label: "Enrollable total N", value: String(result.totalNAdjusted), highlight: true },
           { label: "Achieved power", value: result.achievedPower.toFixed(4) },
-          { label: "Effect size (Cohen's d, unadjusted SD)", value: result.effectSize.toFixed(4) },
-          { label: "Adjusted standard deviation", value: result.adjustedStandardDeviation.toFixed(4) },
-          { label: "Variance reduction factor (1 − ρ²)", value: result.varianceReductionFactor.toFixed(4) },
-          ...(result.nControlAdjusted !== result.nControl
-            ? [
-                {
-                  label: "Dropout-adjusted total N",
-                  value: String(result.totalNAdjusted),
-                  highlight: true,
-                },
-              ]
-            : []),
+          {
+            label: "GLS variance efficiency factor",
+            value: result.glsVarianceEfficiencyFactor.toFixed(3),
+          },
+          {
+            label: "Cumulative dropout",
+            value: `${(result.cumulativeDropout * 100).toFixed(1)}%`,
+          },
+          { label: "ρ_final", value: result.rhoFinal.toFixed(4) },
+          { label: "V_eff", value: result.vEff.toFixed(4) },
         ]
       : [],
   );
 
-  function buildInput(): AncovaTwoSampleInput {
-    const input: AncovaTwoSampleInput = {
+  function buildInput(): MmrmInput {
+    const input: MmrmInput = {
       solveMode,
       alpha: Number(alpha),
-      meanDifference: Number(meanDifference),
-      standardDeviation: Number(standardDeviation),
-      baselineOutcomeCorrelation: Number(baselineOutcomeCorrelation),
+      treatmentEffect: Number(treatmentEffect),
+      residualStandardDeviation: Number(residualStandardDeviation),
+      correlationStructure,
+      correlation: Number(correlation),
+      nPostBaselineVisits: Number(nPostBaselineVisits),
       allocationRatio: Number(allocationRatio),
       alternative,
     };
@@ -145,8 +152,8 @@
       input.controlN = Number(controlN);
     }
 
-    if (dropoutRate.trim() !== "") {
-      input.dropoutRate = Number(dropoutRate);
+    if (perVisitDropoutRate.trim() !== "") {
+      input.perVisitDropoutRate = Number(perVisitDropoutRate);
     }
 
     return input;
@@ -158,14 +165,14 @@
 
     try {
       const input = buildInput();
-      result = await invoke<AncovaTwoSampleResult>("calculate_ancova_two_sample", { input });
-      exportMarkdown = await invoke<string>("export_ancova_two_sample_markdown", { input, result });
-      rationale = await fetchCalculationRationale("continuous.ancova_two_sample", input, result);
-      protocolText = await fetchProtocolText("continuous.ancova_two_sample", input, result);
+      result = await invoke<MmrmResult>("calculate_mmrm", { input });
+      exportMarkdown = await invoke<string>("export_mmrm_markdown", { input, result });
+      rationale = await fetchCalculationRationale("continuous.mmrm", input, result);
+      protocolText = await fetchProtocolText("continuous.mmrm", input, result);
       lastCalculatedSignature = inputSignature;
       persistCalculation({
-        methodId: "continuous.ancova_two_sample",
-        methodName: "Two-sample ANCOVA",
+        methodId: "continuous.mmrm",
+        methodName: "MMRM (longitudinal)",
         input,
         result,
       });
@@ -185,8 +192,8 @@
 <MethodPage {resultsStale}>
   {#snippet header()}
     <MethodHeader
-      title="Two-sample ANCOVA"
-      description="Parallel-group comparison with baseline covariate adjustment via approximate variance reduction."
+      title="MMRM (longitudinal)"
+      description="Parallel-group comparison at the final post-baseline visit under a mixed model for repeated measures."
       category="Continuous"
       badges={[solveModeLabel, alternativeLabel, "Superiority"]}
     />
@@ -227,34 +234,48 @@
             {/snippet}
           </Field>
         {:else}
-          <Field label="Control group N">
+          <Field label="Control group N (evaluable)">
             {#snippet control()}
-              <input type="number" min="2" step="1" bind:value={controlN} />
+              <input type="number" min="1" step="1" bind:value={controlN} />
             {/snippet}
           </Field>
         {/if}
 
-        <Field label="Mean difference (treatment − control)">
+        <Field label="Treatment effect δ (final visit)">
           {#snippet control()}
-            <input type="number" step="0.01" bind:value={meanDifference} />
+            <input type="number" step="0.01" bind:value={treatmentEffect} />
           {/snippet}
         </Field>
 
-        <Field label="Unadjusted outcome standard deviation">
+        <Field label="Residual standard deviation (σ)">
           {#snippet control()}
-            <input type="number" min="0" step="0.01" bind:value={standardDeviation} />
+            <input type="number" min="0" step="0.01" bind:value={residualStandardDeviation} />
+          {/snippet}
+        </Field>
+      </Section>
+
+      <Section title="Longitudinal structure">
+        <Field label="Correlation structure">
+          {#snippet control()}
+            <select bind:value={correlationStructure}>
+              <option value="unstructured">Unstructured</option>
+              <option value="ar1">AR(1)</option>
+              <option value="compound_symmetry">Compound symmetry</option>
+              <option value="toeplitz">Toeplitz</option>
+              <option value="csh">CSH</option>
+            </select>
           {/snippet}
         </Field>
 
-        <Field label="Baseline-outcome correlation">
+        <Field label="Correlation (ρ)">
           {#snippet control()}
-            <input
-              type="number"
-              min="-0.99"
-              max="0.99"
-              step="0.01"
-              bind:value={baselineOutcomeCorrelation}
-            />
+            <input type="number" min="-0.99" max="0.99" step="0.01" bind:value={correlation} />
+          {/snippet}
+        </Field>
+
+        <Field label="Post-baseline visits (k)">
+          {#snippet control()}
+            <input type="number" min="1" step="1" bind:value={nPostBaselineVisits} />
           {/snippet}
         </Field>
       </Section>
@@ -266,9 +287,9 @@
           {/snippet}
         </Field>
 
-        <Field label="Dropout rate (optional)">
+        <Field label="Per-visit dropout rate (optional)">
           {#snippet control()}
-            <input type="number" min="0" max="0.99" step="0.01" bind:value={dropoutRate} />
+            <input type="number" min="0" max="0.99" step="0.01" bind:value={perVisitDropoutRate} />
           {/snippet}
         </Field>
       </Section>
@@ -297,23 +318,24 @@
         <WarningList warnings={result.warnings} />
         <AssumptionsCard
           items={[
-            "Baseline covariate measured without error and linearly related to outcome.",
-            "Approximate variance reduction via ρ²; equal within-group variance assumed.",
-            "Independent observations with approximately normal endpoints.",
+            "MMRM with visit as a categorical factor.",
+            "Simplified single-ρ within-subject correlation parameterization.",
+            "Equal residual variance across arms; effect at the final post-baseline visit.",
+            "Independent visit-level dropout with constant per-visit rate.",
           ]}
         />
-        <ExportMenu title="Two-sample ANCOVA" markdown={exportMarkdown} />
+        <ExportMenu title="MMRM (longitudinal)" markdown={exportMarkdown} />
         <SensitivityPanel
           ready={true}
           defaultExpanded={true}
-          chartFileStem="clinsize-sensitivity-ancova-two-sample"
+          chartFileStem="clinsize-sensitivity-mmrm"
           inputSignature={lastCalculatedSignature ?? inputSignature}
-          command="calculate_ancova_two_sample"
+          command="calculate_mmrm"
           buildInput={buildInput}
           options={sensitivityOptions}
           getOutputValue={(value) => {
-            const row = value as AncovaTwoSampleResult;
-            return solveMode === "sample_size" ? row.totalN : row.achievedPower;
+            const row = value as MmrmResult;
+            return solveMode === "sample_size" ? row.totalNAdjusted : row.achievedPower;
           }}
           outputLabel={sensitivityOutputLabel}
         />

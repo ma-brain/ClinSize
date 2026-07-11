@@ -63,6 +63,8 @@ Results should show:
 - Assumptions.
 - Warnings.
 - Method reference.
+- Sample size calculation rationale (narrative text suitable for protocol or SAP drafting; exported with reports).
+- Protocol text (concise, protocol-ready prose distinct from the technical rationale; displayed below rationale and exported with reports).
 
 ## Sensitivity Analysis
 

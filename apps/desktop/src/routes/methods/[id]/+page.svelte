@@ -4,8 +4,15 @@
   import GroupSequentialView from "$lib/methods/GroupSequentialView.svelte";
   import LogRankView from "$lib/methods/LogRankView.svelte";
   import MultiplicityView from "$lib/methods/MultiplicityView.svelte";
+  import MannWhitneyView from "$lib/methods/MannWhitneyView.svelte";
+  import OneSampleBinomialView from "$lib/methods/OneSampleBinomialView.svelte";
   import TwoProportionDifferenceView from "$lib/methods/TwoProportionDifferenceView.svelte";
+  import WilcoxonSignedRankView from "$lib/methods/WilcoxonSignedRankView.svelte";
   import AncovaTwoSampleView from "$lib/methods/AncovaTwoSampleView.svelte";
+  import ChangeFromBaselineView from "$lib/methods/ChangeFromBaselineView.svelte";
+  import MmrmView from "$lib/methods/MmrmView.svelte";
+  import NegativeBinomialView from "$lib/methods/NegativeBinomialView.svelte";
+  import ProportionalOddsView from "$lib/methods/ProportionalOddsView.svelte";
   import OneWayAnovaView from "$lib/methods/OneWayAnovaView.svelte";
   import SingleSampleTTestView from "$lib/methods/SingleSampleTTestView.svelte";
   import TwoSampleTTestView from "$lib/methods/TwoSampleTTestView.svelte";
@@ -36,6 +43,14 @@
   <OneWayAnovaView />
 {:else if methodId === "continuous.ancova_two_sample"}
   <AncovaTwoSampleView />
+{:else if methodId === "continuous.change_from_baseline"}
+  <ChangeFromBaselineView />
+{:else if methodId === "continuous.mmrm"}
+  <MmrmView />
+{:else if methodId === "continuous.mann_whitney"}
+  <MannWhitneyView />
+{:else if methodId === "continuous.wilcoxon_signed_rank"}
+  <WilcoxonSignedRankView />
 {:else if methodId === "binary.two_proportion_difference"}
   <TwoProportionDifferenceView />
 {:else if methodId === "binary.odds_ratio"}
@@ -48,6 +63,8 @@
     exportFilename="clinsize-odds-ratio.md"
     effectLabel="Odds ratio"
   />
+{:else if methodId === "binary.one_sample_binomial"}
+  <OneSampleBinomialView />
 {:else if methodId === "binary.risk_ratio"}
   <BinaryEffectMeasureView
     title="Risk ratio"
@@ -58,6 +75,10 @@
     exportFilename="clinsize-risk-ratio.md"
     effectLabel="Risk ratio"
   />
+{:else if methodId === "count.negative_binomial"}
+  <NegativeBinomialView />
+{:else if methodId === "ordinal.proportional_odds"}
+  <ProportionalOddsView />
 {:else if methodId === "survival.log_rank"}
   <LogRankView />
 {:else if methodId === "design.multiplicity"}
