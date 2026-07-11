@@ -16,6 +16,7 @@ use clinsize_core::methods::continuous::paired_ttest::{self, PairedTTestInput, P
 use clinsize_core::methods::continuous::two_sample_ttest::{
     self, TwoSampleTTestInput, TwoSampleTTestResult,
 };
+use clinsize_core::methods::survival::log_rank::{self, LogRankInput, LogRankResult};
 use clinsize_core::registry::MethodDescriptor;
 use clinsize_core::types::SolveMode;
 use serde::Serialize;
@@ -225,6 +226,23 @@ fn export_risk_ratio_markdown(
     ))
 }
 
+#[tauri::command]
+fn calculate_log_rank(input: LogRankInput) -> Result<LogRankResult, AppError> {
+    log_rank::calculate(input).map_err(AppError::from)
+}
+
+#[tauri::command]
+fn export_log_rank_markdown(
+    input: LogRankInput,
+    result: LogRankResult,
+) -> Result<String, AppError> {
+    Ok(clinsize_core::reports::log_rank_markdown(
+        &input,
+        &result,
+        clinsize_core::engine_version(),
+    ))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -247,7 +265,9 @@ pub fn run() {
             calculate_odds_ratio,
             export_odds_ratio_markdown,
             calculate_risk_ratio,
-            export_risk_ratio_markdown
+            export_risk_ratio_markdown,
+            calculate_log_rank,
+            export_log_rank_markdown
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

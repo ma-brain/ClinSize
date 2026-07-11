@@ -10,6 +10,7 @@ use crate::methods::continuous::one_sample_ttest::{OneSampleTTestInput, OneSampl
 use crate::methods::continuous::one_way_anova::{OneWayAnovaInput, OneWayAnovaResult};
 use crate::methods::continuous::paired_ttest::{PairedTTestInput, PairedTTestResult};
 use crate::methods::continuous::two_sample_ttest::{TwoSampleTTestInput, TwoSampleTTestResult};
+use crate::methods::survival::log_rank::{LogRankInput, LogRankResult};
 use crate::types::SolveMode;
 
 fn append_warnings(lines: &mut Vec<String>, warnings: &[crate::types::CalculationWarning]) {
@@ -462,6 +463,51 @@ fn binary_effect_markdown(ctx: &BinaryEffectReportContext<'_>) -> String {
         "- **Validation source:** {}",
         ctx.validation_source
     ));
+
+    lines.join("\n")
+}
+
+/// Render a log-rank calculation summary as Markdown.
+pub fn log_rank_markdown(
+    input: &LogRankInput,
+    result: &LogRankResult,
+    engine_version: &str,
+) -> String {
+    let mut lines = vec![
+        "# ClinSize calculation summary".into(),
+        String::new(),
+        "## Method".into(),
+        "- **Method:** Two-arm log-rank test".into(),
+        "- **Endpoint:** Survival".into(),
+        format!("- **Solve mode:** {:?}", input.solve_mode),
+        format!("- **Alternative:** {:?}", input.alternative),
+        String::new(),
+        "## Inputs".into(),
+        format!("- **Alpha:** {:.4}", input.alpha),
+        format!(
+            "- **Hazard ratio (treatment / control):** {:.4}",
+            input.hazard_ratio
+        ),
+        format!("- **Allocation ratio:** {:.4}", input.allocation_ratio),
+        String::new(),
+        "## Results".into(),
+        format!("- **Required total events:** {}", result.required_events),
+        format!("- **Expected control events:** {}", result.events_control),
+        format!(
+            "- **Expected treatment events:** {}",
+            result.events_treatment
+        ),
+        format!("- **Achieved power:** {:.4}", result.achieved_power),
+        format!("- **Hazard ratio:** {:.4}", result.hazard_ratio),
+    ];
+
+    append_warnings(&mut lines, &result.warnings);
+    lines.push(String::new());
+    lines.push("## Reproducibility".into());
+    lines.push(format!("- **Engine version:** {engine_version}"));
+    lines.push(
+        "- **Validation source:** R `gsDesign::nEvents` (Schoenfeld 1981 approximation)".into(),
+    );
 
     lines.join("\n")
 }

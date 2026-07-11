@@ -204,3 +204,22 @@ export interface RiskRatioResult {
   riskRatio: number;
   warnings: CalculationWarning[];
 }
+
+export interface LogRankInput {
+  solveMode: SolveMode;
+  alpha: number;
+  power?: number;
+  totalEvents?: number;
+  hazardRatio: number;
+  allocationRatio: number;
+  alternative: Alternative;
+}
+
+export interface LogRankResult {
+  requiredEvents: number;
+  eventsControl: number;
+  eventsTreatment: number;
+  achievedPower: number;
+  hazardRatio: number;
+  warnings: CalculationWarning[];
+}

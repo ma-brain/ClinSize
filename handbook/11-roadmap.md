@@ -36,7 +36,7 @@
 
 ## Phase 4: Survival Endpoints
 
-- Log-rank test. **Done (core)** — `survival.log_rank` Schoenfeld event count and power.
+- Log-rank test. **Done** — `survival.log_rank` with desktop UI and sensitivity analysis.
 - Accrual and follow-up assumptions.
 - Event-driven sample size.
 - Dropout and censoring assumptions.

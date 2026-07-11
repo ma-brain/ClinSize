@@ -35,6 +35,5 @@ just cli -- --help   # run the CLI wrapper
 
 ## Status
 
-Phase 3 (binary endpoints): difference in proportions, odds ratio, and risk ratio
-are implemented with desktop UI and sensitivity analysis. See
-[`handbook/11-roadmap.md`](handbook/11-roadmap.md).
+Phase 4 (survival endpoints): log-rank test is implemented with desktop UI
+and sensitivity analysis. See [`handbook/11-roadmap.md`](handbook/11-roadmap.md).

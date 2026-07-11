@@ -1,5 +1,6 @@
 import type {
   AncovaTwoSampleInput,
+  LogRankInput,
   OddsRatioInput,
   OneSampleTTestInput,
   OneWayAnovaInput,
@@ -495,5 +496,61 @@ export function binaryEffectSensitivityOptions(
     getValues: option.getValues,
     mutate: (input: unknown, value: number) =>
       option.mutate(input as OddsRatioInput, value),
+  }));
+}
+
+export function logRankSensitivityOptions(
+  solveMode: SolveMode,
+  hazardRatio: string,
+  alpha: string,
+  power: string,
+  allocationRatio: string,
+): SensitivityOptionDef[] {
+  const hr = Number(hazardRatio);
+  const alphaValue = Number(alpha);
+  const powerValue = Number(power);
+  const ratio = Number(allocationRatio);
+
+  const options: Array<{
+    id: string;
+    label: string;
+    getValues: () => number[];
+    mutate: (input: LogRankInput, value: number) => LogRankInput;
+  }> = [
+    {
+      id: "hazardRatio",
+      label: "Hazard ratio",
+      getValues: () => centeredRange(hr || 0.5, 0.2, 0.2, 0.95, 9),
+      mutate: (input, value) => ({ ...input, hazardRatio: value }),
+    },
+    {
+      id: "alpha",
+      label: "Type I error (alpha)",
+      getValues: () => centeredRange(alphaValue || 0.05, 0.03, 0.01, 0.1, 9),
+      mutate: (input, value) => ({ ...input, alpha: value }),
+    },
+    {
+      id: "allocationRatio",
+      label: "Allocation ratio",
+      getValues: () => (ratio > 0 ? centeredRange(ratio, 1, 0.5, 3) : linearRange(0.5, 3, 11)),
+      mutate: (input, value) => ({ ...input, allocationRatio: value }),
+    },
+  ];
+
+  if (solveMode === "sample_size") {
+    options.splice(2, 0, {
+      id: "power",
+      label: "Target power",
+      getValues: () => centeredRange(powerValue || 0.8, 0.15, 0.6, 0.95, 8),
+      mutate: (input, value) => ({ ...input, power: value }),
+    });
+  }
+
+  return options.map((option) => ({
+    id: option.id,
+    label: option.label,
+    getValues: option.getValues,
+    mutate: (input: unknown, value: number) =>
+      option.mutate(input as LogRankInput, value),
   }));
 }

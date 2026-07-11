@@ -1,5 +1,6 @@
 <script lang="ts">
   import BinaryEffectMeasureView from "$lib/methods/BinaryEffectMeasureView.svelte";
+  import LogRankView from "$lib/methods/LogRankView.svelte";
   import TwoProportionDifferenceView from "$lib/methods/TwoProportionDifferenceView.svelte";
   import AncovaTwoSampleView from "$lib/methods/AncovaTwoSampleView.svelte";
   import OneWayAnovaView from "$lib/methods/OneWayAnovaView.svelte";
@@ -54,6 +55,8 @@
     exportFilename="clinsize-risk-ratio.md"
     effectLabel="Risk ratio"
   />
+{:else if methodId === "survival.log_rank"}
+  <LogRankView />
 {:else}
   <p class="muted">Select a method from the navigation rail.</p>
 {/if}
