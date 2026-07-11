@@ -312,6 +312,26 @@ mod tests {
     }
 
     #[test]
+    fn obrien_fleming_bounds_match_gsdesign_k3_alpha_025() {
+        // gsDesign(k=3, test.type=1, alpha=0.025, beta=0.2, sfu=sfLDOF)$upper$bound
+        let spends = incremental_spends(0.025, 3, SpendingFunction::ObrienFleming);
+        let bounds = solve_upper_bounds(&spends, &timing(3)).expect("bounds");
+        assert_relative_eq!(bounds[0], 3.710303, epsilon = 0.02);
+        assert_relative_eq!(bounds[1], 2.511427, epsilon = 0.02);
+        assert_relative_eq!(bounds[2], 1.993048, epsilon = 0.02);
+    }
+
+    #[test]
+    fn obrien_fleming_inflation_matches_gsdesign_k3_alpha_025() {
+        let spends = incremental_spends(0.025, 3, SpendingFunction::ObrienFleming);
+        let t = timing(3);
+        let bounds = solve_upper_bounds(&spends, &t).expect("bounds");
+        let drift = fixed_drift_gsdesign(0.025, 0.8);
+        let (_, inflation) = sample_size_inflation(&bounds, &t, drift, 0.8).expect("inflation");
+        assert_relative_eq!(inflation, 1.012795, epsilon = 0.02);
+    }
+
+    #[test]
     fn obrien_fleming_inflation_matches_gsdesign_k3() {
         let spends = incremental_spends(0.05, 3, SpendingFunction::ObrienFleming);
         let t = timing(3);

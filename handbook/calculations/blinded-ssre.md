@@ -45,7 +45,11 @@ error `α` and target power `1 − β` at the planning stage.
 - `sampleSizeInflationFactor`: Re-estimated total N / planned total N.
 - `cappedInflationFactor`: Capped total N / planned total N.
 - `varianceRatio`: `(s_b / σ₀)²`.
-- `achievedPowerAtCapped`: Power at capped allocation using planned `Δ` and `σ₀`.
+- `achievedPowerAtCapped`: Power at capped allocation using planned `Δ` and
+  `σ₀` (optimistic when the interim SD is higher).
+- `achievedPowerAtCappedInterimSd`: Power at capped allocation using planned
+  `Δ` and the blinded interim SD `s_b` — the realistic estimate when the cap
+  binds.
 - `wasCapped`: Whether the cap reduced the re-estimated sample size.
 - `warnings`: Assumption notes.
 
@@ -80,7 +84,10 @@ n_cap = min(n_re, ceil(n₀ × max_multiplier))
 n_interim = ceil(n₀ × τ)
 ```
 
-Achieved power at capped N is recalculated with planned `Δ` and `σ₀`.
+Achieved power at capped N is recalculated twice: with planned `Δ` and `σ₀`,
+and with planned `Δ` and the blinded interim SD `s_b`. When the cap binds,
+the interim-SD power is the realistic estimate and the `cap_applied` warning
+states the shortfall against the target.
 
 ## Assumptions
 
@@ -120,7 +127,14 @@ application. Interim per-arm N rounds up from `τ × n₀`.
 | 20% SD increase | 1 | 1.2 | 17 | 25 | 25 |
 | 50% SD increase, capped | 1 | 1.5 | 17 | 39 | 26 |
 
-Power at capped N (Δ=1, σ₀=1, α=0.05, s_b=1.2): ≈ 0.9337.
+Power at capped/re-estimated N (Δ=1, σ₀=1, α=0.05; R `power.t.test`):
+
+| Scenario | n | SD used | Power |
+| --- | --- | --- | --- |
+| s_b=1.2, not capped | 25 | σ₀=1 | 0.93371 |
+| s_b=1.2, not capped | 25 | s_b=1.2 | 0.82301 |
+| s_b=1.5, capped | 26 | σ₀=1 | 0.94243 |
+| s_b=1.5, capped | 26 | s_b=1.5 | **0.65445** (underpowered vs 0.8 target) |
 
 ## Known Limitations
 

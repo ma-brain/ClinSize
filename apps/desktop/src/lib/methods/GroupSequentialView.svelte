@@ -21,7 +21,7 @@
   } from "$lib/types";
   import { invoke } from "@tauri-apps/api/core";
 
-  let alpha = $state("0.05");
+  let alpha = $state("0.025");
   let targetPower = $state("0.8");
   let numberOfLooks = $state("3");
   let spendingFunction = $state<SpendingFunction>("obrien_fleming");
@@ -116,7 +116,10 @@
   {#snippet parameters()}
     <Panel title="Parameters">
       <Section title="Design">
-        <Field label="Two-sided alpha">
+        <Field
+          label="One-sided alpha (efficacy boundary)"
+          hint="Use 0.025 for a conventional two-sided 0.05 superiority design."
+        >
           {#snippet control()}
             <input type="number" min="0" max="1" step="0.001" bind:value={alpha} />
           {/snippet}
@@ -198,6 +201,7 @@
         <WarningList warnings={result.warnings} />
         <AssumptionsCard
           items={[
+            "Alpha is one-sided and spent entirely on the upper efficacy boundary (no futility bound).",
             "Equally spaced interim looks with Lan-DeMets spending approximation.",
             "Fixed treatment effect and known variance for inflation factor planning.",
             "Boundaries apply to a single primary efficacy comparison.",

@@ -31,7 +31,7 @@
   let controlN = $state("4");
   let treatmentEffect = $state("2");
   let residualStandardDeviation = $state("2");
-  let correlationStructure = $state<CorrelationStructure>("unstructured");
+  let correlationStructure = $state<CorrelationStructure>("compound_symmetry");
   let correlation = $state("0.5");
   let nPostBaselineVisits = $state("3");
   let perVisitDropoutRate = $state("0.05");
@@ -100,13 +100,13 @@
   );
 
   const heroLabel = $derived(
-    solveMode === "sample_size" ? "Total enrollable N" : "Achieved power",
+    solveMode === "sample_size" ? "Total randomized N" : "Achieved power",
   );
 
   const heroValue = $derived(
     result
       ? solveMode === "sample_size"
-        ? String(result.totalNAdjusted)
+        ? String(result.totalN)
         : result.achievedPower.toFixed(4)
       : "—",
   );
@@ -114,21 +114,22 @@
   const resultItems = $derived(
     result
       ? [
-          { label: "Control N (evaluable)", value: String(result.nControl) },
-          { label: "Treatment N (evaluable)", value: String(result.nTreatment) },
-          { label: "Total N (evaluable)", value: String(result.totalN) },
-          { label: "Enrollable total N", value: String(result.totalNAdjusted), highlight: true },
+          { label: "Control N (randomized)", value: String(result.nControl) },
+          { label: "Treatment N (randomized)", value: String(result.nTreatment) },
+          { label: "Total N (randomized)", value: String(result.totalN), highlight: true },
           { label: "Achieved power", value: result.achievedPower.toFixed(4) },
           {
-            label: "GLS variance efficiency factor",
-            value: result.glsVarianceEfficiencyFactor.toFixed(3),
+            label: "Variance factor (φ)",
+            value: result.varianceFactor.toFixed(4),
+          },
+          {
+            label: "Final-visit retention",
+            value: `${(result.finalRetention * 100).toFixed(1)}%`,
           },
           {
             label: "Cumulative dropout",
             value: `${(result.cumulativeDropout * 100).toFixed(1)}%`,
           },
-          { label: "ρ_final", value: result.rhoFinal.toFixed(4) },
-          { label: "V_eff", value: result.vEff.toFixed(4) },
         ]
       : [],
   );
@@ -234,7 +235,7 @@
             {/snippet}
           </Field>
         {:else}
-          <Field label="Control group N (evaluable)">
+          <Field label="Control group N (randomized)">
             {#snippet control()}
               <input type="number" min="1" step="1" bind:value={controlN} />
             {/snippet}
@@ -247,7 +248,7 @@
           {/snippet}
         </Field>
 
-        <Field label="Residual standard deviation (σ)">
+        <Field label="Standard deviation at final visit (σ)">
           {#snippet control()}
             <input type="number" min="0" step="0.01" bind:value={residualStandardDeviation} />
           {/snippet}
@@ -255,14 +256,14 @@
       </Section>
 
       <Section title="Longitudinal structure">
-        <Field label="Correlation structure">
+        <Field
+          label="Correlation structure"
+          hint="Single-ρ structures only; unstructured matrices need more parameters than one ρ."
+        >
           {#snippet control()}
             <select bind:value={correlationStructure}>
-              <option value="unstructured">Unstructured</option>
-              <option value="ar1">AR(1)</option>
               <option value="compound_symmetry">Compound symmetry</option>
-              <option value="toeplitz">Toeplitz</option>
-              <option value="csh">CSH</option>
+              <option value="ar1">AR(1)</option>
             </select>
           {/snippet}
         </Field>
@@ -318,10 +319,10 @@
         <WarningList warnings={result.warnings} />
         <AssumptionsCard
           items={[
-            "MMRM with visit as a categorical factor.",
-            "Simplified single-ρ within-subject correlation parameterization.",
-            "Equal residual variance across arms; effect at the final post-baseline visit.",
-            "Independent visit-level dropout with constant per-visit rate.",
+            "Lu, Luo & Chen (2008) MMRM variance with visit as a categorical factor.",
+            "Single-ρ compound symmetry or AR(1) within-subject correlation.",
+            "Equal variance, correlation, and retention across arms; effect at the final post-baseline visit.",
+            "Monotone dropout with constant per-visit rate; dropouts contribute observed visits (N is randomized count).",
           ]}
         />
         <ExportMenu title="MMRM (longitudinal)" markdown={exportMarkdown} />
@@ -335,7 +336,7 @@
           options={sensitivityOptions}
           getOutputValue={(value) => {
             const row = value as MmrmResult;
-            return solveMode === "sample_size" ? row.totalNAdjusted : row.achievedPower;
+            return solveMode === "sample_size" ? row.totalN : row.achievedPower;
           }}
           outputLabel={sensitivityOutputLabel}
         />

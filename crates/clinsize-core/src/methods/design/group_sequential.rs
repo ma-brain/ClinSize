@@ -13,7 +13,9 @@ use crate::validation;
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GroupSequentialInput {
-    /// Two-sided family-wise Type I error rate.
+    /// One-sided family-wise Type I error rate spent on the upper efficacy
+    /// boundary (gsDesign `test.type = 1` convention). Use 0.025 for the
+    /// conventional "two-sided 0.05" superiority setting.
     pub alpha: f64,
     /// Target power for the group sequential design.
     pub target_power: f64,
@@ -75,8 +77,9 @@ pub fn calculate(input: GroupSequentialInput) -> Result<GroupSequentialResult> {
     let incremental =
         incremental_spends(input.alpha, input.number_of_looks, input.spending_function);
     let bounds = solve_upper_bounds(&incremental, &timing)?;
-    // gsDesign symmetric two-sided convention (test.type = 4): compare against the
-    // one-sided fixed-design drift at the same nominal alpha.
+    // One-sided efficacy-only design (gsDesign test.type = 1): the full alpha
+    // is spent on the upper boundary, so the comparator is the one-sided
+    // fixed-design drift at the same alpha.
     let fixed_design_drift =
         normal::quantile(1.0 - input.alpha) + normal::quantile(input.target_power);
     let (required_drift, inflation) =
@@ -114,15 +117,21 @@ pub fn calculate(input: GroupSequentialInput) -> Result<GroupSequentialResult> {
 }
 
 fn build_warnings(input: &GroupSequentialInput) -> Vec<CalculationWarning> {
-    let mut warnings = vec![CalculationWarning::new(
-        "equally_spaced_looks",
-        "Assumes equally spaced information fractions; custom timing is not yet supported.",
-    )];
+    let mut warnings = vec![
+        CalculationWarning::new(
+            "one_sided_alpha",
+            "Alpha is the one-sided error spent on the upper efficacy boundary only (no futility or lower boundary). For a conventional two-sided 0.05 superiority design, enter 0.025.",
+        ),
+        CalculationWarning::new(
+            "equally_spaced_looks",
+            "Assumes equally spaced information fractions; custom timing is not yet supported.",
+        ),
+    ];
 
     match input.spending_function {
         SpendingFunction::ObrienFleming => warnings.push(CalculationWarning::new(
             "obrien_fleming_spending",
-            "Uses the Lan-DeMets O'Brien-Fleming spending approximation for two-sided efficacy bounds.",
+            "Uses the Lan-DeMets O'Brien-Fleming spending approximation for the one-sided efficacy boundary.",
         )),
         SpendingFunction::Pocock => warnings.push(CalculationWarning::new(
             "pocock_spending",
@@ -155,6 +164,9 @@ mod tests {
     use super::*;
     use approx::assert_relative_eq;
 
+    // Reference values from R gsDesign one-sided designs:
+    //   gsDesign(k, test.type = 1, alpha, beta = 0.2, sfu = sfLDOF | sfLDPocock, n.fix = 1)
+
     #[test]
     fn obrien_fleming_k3_matches_gsdesign_summary() {
         let result = calculate(GroupSequentialInput {
@@ -172,6 +184,53 @@ mod tests {
         );
         assert_relative_eq!(result.looks[0].upper_z_boundary, 3.200102, epsilon = 0.02);
         assert_relative_eq!(result.achieved_power, 0.8, epsilon = 0.02);
+    }
+
+    #[test]
+    fn obrien_fleming_k3_alpha_025_matches_gsdesign() {
+        // gsDesign(k=3, test.type=1, alpha=0.025, beta=0.2, sfu=sfLDOF, n.fix=1)
+        let result = calculate(GroupSequentialInput {
+            alpha: 0.025,
+            target_power: 0.8,
+            number_of_looks: 3,
+            spending_function: SpendingFunction::ObrienFleming,
+        })
+        .expect("calculate");
+
+        assert_relative_eq!(result.looks[0].upper_z_boundary, 3.710303, epsilon = 0.02);
+        assert_relative_eq!(result.looks[1].upper_z_boundary, 2.511427, epsilon = 0.02);
+        assert_relative_eq!(result.looks[2].upper_z_boundary, 1.993048, epsilon = 0.02);
+        assert_relative_eq!(
+            result.sample_size_inflation_factor,
+            1.012795,
+            epsilon = 0.02
+        );
+        assert_relative_eq!(
+            result.looks[2].cumulative_alpha_spent,
+            0.025,
+            epsilon = 1e-6
+        );
+    }
+
+    #[test]
+    fn pocock_k3_alpha_025_matches_gsdesign() {
+        // gsDesign(k=3, test.type=1, alpha=0.025, beta=0.2, sfu=sfLDPocock, n.fix=1)
+        let result = calculate(GroupSequentialInput {
+            alpha: 0.025,
+            target_power: 0.8,
+            number_of_looks: 3,
+            spending_function: SpendingFunction::Pocock,
+        })
+        .expect("calculate");
+
+        assert_relative_eq!(result.looks[0].upper_z_boundary, 2.279428, epsilon = 0.02);
+        assert_relative_eq!(result.looks[1].upper_z_boundary, 2.294910, epsilon = 0.02);
+        assert_relative_eq!(result.looks[2].upper_z_boundary, 2.295939, epsilon = 0.02);
+        assert_relative_eq!(
+            result.sample_size_inflation_factor,
+            1.170419,
+            epsilon = 0.02
+        );
     }
 
     #[test]

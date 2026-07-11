@@ -713,7 +713,10 @@ pub fn group_sequential_markdown(
         format!("- **Spending function:** {:?}", input.spending_function),
         String::new(),
         "## Inputs".into(),
-        format!("- **Two-sided alpha:** {:.6}", input.alpha),
+        format!(
+            "- **One-sided alpha (efficacy boundary):** {:.6}",
+            input.alpha
+        ),
         format!("- **Target power:** {:.6}", input.target_power),
         format!("- **Number of looks:** {}", input.number_of_looks),
         String::new(),
@@ -840,8 +843,12 @@ pub fn blinded_ssre_markdown(
             result.capped_inflation_factor
         ),
         format!(
-            "- **Achieved power at capped N:** {:.4}",
+            "- **Power at capped N (planned SD):** {:.4}",
             result.achieved_power_at_capped
+        ),
+        format!(
+            "- **Power at capped N (blinded interim SD):** {:.4}",
+            result.achieved_power_at_capped_interim_sd
         ),
     ];
 
@@ -1049,23 +1056,15 @@ pub fn mmrm_markdown(input: &MmrmInput, result: &MmrmResult, engine_version: &st
         format!("- **Allocation ratio:** {:.4}", input.allocation_ratio),
         String::new(),
         "## Results".into(),
-        format!("- **Control N (evaluable):** {}", result.n_control),
-        format!("- **Treatment N (evaluable):** {}", result.n_treatment),
-        format!("- **Total N (evaluable):** {}", result.total_n),
-        format!("- **Enrollable control N:** {}", result.n_control_adjusted),
-        format!(
-            "- **Enrollable treatment N:** {}",
-            result.n_treatment_adjusted
-        ),
-        format!("- **Enrollable total N:** {}", result.total_n_adjusted),
+        format!("- **Control N (randomized):** {}", result.n_control),
+        format!("- **Treatment N (randomized):** {}", result.n_treatment),
+        format!("- **Total N (randomized):** {}", result.total_n),
         format!("- **Achieved power:** {:.4}", result.achieved_power),
-        format!("- **ρ_final:** {:.4}", result.rho_final),
-        format!("- **GLS factor:** {:.4}", result.gls_factor),
         format!(
-            "- **GLS variance efficiency factor:** {:.4}",
-            result.gls_variance_efficiency_factor
+            "- **Variance factor (φ, Lu-Luo-Chen):** {:.4}",
+            result.variance_factor
         ),
-        format!("- **V_eff:** {:.4}", result.v_eff),
+        format!("- **Final-visit retention:** {:.4}", result.final_retention),
         format!("- **Cumulative dropout:** {:.4}", result.cumulative_dropout),
     ];
 
@@ -1076,7 +1075,7 @@ pub fn mmrm_markdown(input: &MmrmInput, result: &MmrmResult, engine_version: &st
     lines.push("## Reproducibility".into());
     lines.push(format!("- **Engine version:** {engine_version}"));
     lines.push(
-        "- **Validation source:** Lu–Skellam (1988) GLS efficiency; reference case δ=2, σ=2, UN, ρ=0.5, k=3"
+        "- **Validation source:** Lu, Luo & Chen (2008); cross-checked against R longpower::power.mmrm (see validation/continuous/mmrm/)"
             .into(),
     );
 

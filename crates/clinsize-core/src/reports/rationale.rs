@@ -576,23 +576,23 @@ pub fn mmrm_rationale(input: &MmrmInput, result: &MmrmResult) -> String {
     paragraphs.push(format!(
         "This calculation addresses a two-group parallel longitudinal continuous endpoint analyzed \
          with a mixed model for repeated measures (MMRM). The assumed treatment effect at the \
-         final post-baseline visit is δ = {:.4} (treatment minus control). The residual standard \
-         deviation is σ = {:.4}. With {} correlation structure, ρ = {:.4}, and k = {} \
-         post-baseline visits, ρ_final = {:.4}, the GLS variance efficiency factor is {:.4} and \
-         V_eff = {:.4}.",
+         final post-baseline visit is δ = {:.4} (treatment minus control). The final-visit \
+         standard deviation is σ = {:.4}, with {} correlation structure (ρ = {:.4}) across k = {} \
+         post-baseline visits. Under the Lu, Luo & Chen (2008) method the variance factor for the \
+         final-visit contrast is φ = {:.4} (φ = 1 with complete data).",
         input.treatment_effect,
         input.residual_standard_deviation,
         correlation_structure_label(input.correlation_structure),
         input.correlation,
         input.n_post_baseline_visits,
-        result.rho_final,
-        result.gls_variance_efficiency_factor,
-        result.v_eff,
+        result.variance_factor,
     ));
 
     paragraphs.push(format!(
-        "Sample size uses the Lu–Skellam normal approximation n_arm = (z_α + z_β)² × V_eff / δ². \
-         The Type I error rate is α = {}. The alternative hypothesis is {}.",
+        "Sample size uses the normal approximation n_arm = (z_α + z_β)² × φ × σ² × \
+         (1 + 1/λ) / δ² for the treatment arm (λ = allocation ratio), per Lu, Luo & Chen (2008) \
+         and R longpower::power.mmrm. The Type I error rate is α = {}. The alternative \
+         hypothesis is {}.",
         alpha_phrase(input.alpha, input.alternative),
         alternative_phrase(input.alternative),
     ));
@@ -602,13 +602,13 @@ pub fn mmrm_rationale(input: &MmrmInput, result: &MmrmResult) -> String {
             let target = input.power.expect("validated for sample size mode");
             paragraphs.push(format!(
                 "The target power is {:.0}%. With an allocation ratio of {}, ClinSize identifies \
-                 the smallest integer evaluable control-group size such that the rounded \
+                 the smallest integer randomized control-group size such that the rounded \
                  treatment-group size achieves at least the target power.",
                 target * 100.0,
                 allocation_phrase(input.allocation_ratio),
             ));
             paragraphs.push(format!(
-                "The resulting evaluable per-group sample sizes are {} control and {} treatment \
+                "The resulting randomized per-group sample sizes are {} control and {} treatment \
                  subjects (total N = {}). After integer rounding, the achieved power is {:.2}%.",
                 result.n_control,
                 result.n_treatment,
@@ -619,7 +619,7 @@ pub fn mmrm_rationale(input: &MmrmInput, result: &MmrmResult) -> String {
         SolveMode::Power => {
             let control_n = input.control_n.expect("validated for power mode");
             paragraphs.push(format!(
-                "For a fixed evaluable control-group size of {} and allocation ratio of {}, the \
+                "For a fixed randomized control-group size of {} and allocation ratio of {}, the \
                  rounded treatment-group size is {} (total N = {}). The achieved power under the \
                  stated assumptions is {:.2}%.",
                 control_n,
@@ -634,22 +634,22 @@ pub fn mmrm_rationale(input: &MmrmInput, result: &MmrmResult) -> String {
 
     if let Some(rate) = input.per_visit_dropout_rate {
         paragraphs.push(format!(
-            "A per-visit dropout rate of {:.0}% over {} visits yields cumulative dropout d_cum = \
-             {:.0}%. Evaluable per-arm counts are inflated by 1/(1 − d_cum) and rounded up, \
-             yielding {} control and {} treatment subjects to enroll (total N = {}).",
+            "A per-visit dropout rate of {:.0}% over {} visits yields final-visit retention \
+             {:.1}% (cumulative dropout {:.1}%). Dropout is modeled as monotone missingness \
+             inside the MMRM variance: subjects who discontinue still contribute their observed \
+             visits, so the reported sample sizes are the numbers to randomize and no separate \
+             enrollment inflation applies.",
             rate * 100.0,
             input.n_post_baseline_visits,
+            result.final_retention * 100.0,
             result.cumulative_dropout * 100.0,
-            result.n_control_adjusted,
-            result.n_treatment_adjusted,
-            result.total_n_adjusted,
         ));
     }
 
     paragraphs.push(
-        "This method assumes MMRM with visit as a categorical factor, a simplified single-ρ \
-         within-subject correlation, equal residual variance across arms, and independent \
-         visit-level dropout with a constant per-visit rate."
+        "This method assumes MMRM with visit as a categorical factor, a single-ρ compound \
+         symmetry or AR(1) within-subject correlation, equal variance, correlation, and \
+         retention across arms, and monotone dropout with a constant per-visit rate."
             .into(),
     );
 
@@ -1194,8 +1194,8 @@ pub fn group_sequential_rationale(
 
     paragraphs.push(format!(
         "This calculation plans a group sequential design with {} equally spaced interim looks \
-         (including the final analysis) using the {} spending function. The two-sided family-wise \
-         Type I error rate is {:.6} and the target power is {:.0}%.",
+         (including the final analysis) using the {} spending function. The one-sided family-wise \
+         Type I error rate spent on the efficacy boundary is {:.6} and the target power is {:.0}%.",
         input.number_of_looks,
         spending_function_phrase(input.spending_function),
         input.alpha,
@@ -1286,19 +1286,24 @@ pub fn blinded_ssre_rationale(input: &BlindedSsreInput, result: &BlindedSsreResu
         paragraphs.push(format!(
             "A pre-specified cap of {:.1}× the planned per-arm size was applied. The capped \
              enrollment is {} control and {} treatment subjects (total N = {}), with inflation \
-             factor {:.4}. Achieved power at the capped allocation is {:.2}%.",
+             factor {:.4}. Achieved power at the capped allocation is {:.2}% under the planned \
+             SD, but only {:.2}% under the blinded interim SD — the realistic estimate given \
+             that the interim data motivated the re-estimation. The cap therefore leaves the \
+             design underpowered if the interim SD reflects the true variability.",
             input.max_sample_size_multiplier,
             result.capped_n_control,
             result.capped_n_treatment,
             result.capped_total_n,
             result.capped_inflation_factor,
             result.achieved_power_at_capped * 100.0,
+            result.achieved_power_at_capped_interim_sd * 100.0,
         ));
     } else {
         paragraphs.push(format!(
             "No cap was applied (maximum multiplier {:.1}×). Achieved power at the re-estimated \
-             allocation is {:.2}%.",
+             allocation is {:.2}% under the blinded interim SD ({:.2}% under the planned SD).",
             input.max_sample_size_multiplier,
+            result.achieved_power_at_capped_interim_sd * 100.0,
             result.achieved_power_at_capped * 100.0,
         ));
     }

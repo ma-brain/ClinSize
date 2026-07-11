@@ -1,0 +1,6 @@
+case_id,alpha_one_sided,target_power,number_of_looks,spending_function,expected_look1_z,expected_look2_z,expected_look3_z,expected_inflation,tolerance,reference_source
+of_k3_alpha025,0.025,0.8,3,obrien_fleming,3.710303,2.511427,1.993048,1.012795,0.02,R gsDesign test.type=1 sfLDOF
+pocock_k3_alpha025,0.025,0.8,3,pocock,2.279428,2.294910,2.295939,1.170419,0.02,R gsDesign test.type=1 sfLDPocock
+of_k3_alpha05,0.05,0.8,3,obrien_fleming,3.200102,2.140815,1.694812,1.020305,0.02,R gsDesign test.type=1 sfLDOF
+pocock_k5_alpha025,0.025,0.8,5,pocock,2.437977,2.426814,2.410194,1.212613,0.02,R gsDesign test.type=1 sfLDPocock (looks 1-3 shown)
+of_k4_alpha025,0.025,0.8,4,obrien_fleming,4.332634,2.963131,2.359044,1.019637,0.02,R gsDesign test.type=1 sfLDOF (looks 1-3 shown)
