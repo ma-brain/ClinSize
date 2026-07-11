@@ -35,7 +35,6 @@ just cli -- --help   # run the CLI wrapper
 
 ## Status
 
-Phase 1 (first validated method) is in progress on branch `cursor/phase-1-two-sample-ttest`:
-two-sample t-test sample size and power in `clinsize-core`, reference tests against
-R `power.t.test`, method page, and Markdown export. See
+Phase 2 (continuous endpoints) adds one-sample and paired t-tests alongside the
+two-sample t-test. ANOVA and sensitivity analysis are next on the roadmap. See
 [`handbook/11-roadmap.md`](handbook/11-roadmap.md).

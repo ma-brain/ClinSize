@@ -1,0 +1,4 @@
+case_id,mean_difference,standard_deviation,alpha,power,alternative,type,expected_n,expected_achieved_power,tolerance,reference_source
+one_sample_two_sided,1,1,0.05,0.8,two_sided,one.sample,10,0.8030962,1e-4,R power.t.test
+one_sample_one_sided,1,1,0.05,0.8,greater,one.sample,8,0.8150194,1e-4,R power.t.test alternative=one.sided
+paired_two_sided,1,1,0.05,0.8,two_sided,paired,10,0.8030962,1e-4,R power.t.test type=paired

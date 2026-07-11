@@ -40,3 +40,41 @@ export interface TwoSampleTTestResult {
   effectSize: number;
   warnings: CalculationWarning[];
 }
+
+export interface OneSampleTTestInput {
+  solveMode: SolveMode;
+  alpha: number;
+  power?: number;
+  n?: number;
+  meanDifference: number;
+  standardDeviation: number;
+  alternative: Alternative;
+  dropoutRate?: number;
+}
+
+export interface OneSampleTTestResult {
+  n: number;
+  nAdjusted: number;
+  achievedPower: number;
+  effectSize: number;
+  warnings: CalculationWarning[];
+}
+
+export interface PairedTTestInput {
+  solveMode: SolveMode;
+  alpha: number;
+  power?: number;
+  nPairs?: number;
+  meanDifference: number;
+  standardDeviation: number;
+  alternative: Alternative;
+  dropoutRate?: number;
+}
+
+export interface PairedTTestResult {
+  nPairs: number;
+  nPairsAdjusted: number;
+  achievedPower: number;
+  effectSize: number;
+  warnings: CalculationWarning[];
+}

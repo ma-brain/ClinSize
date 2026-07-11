@@ -4,9 +4,9 @@
 
 Initial methods:
 
-- One-sample t-test.
-- Paired t-test.
-- Two-sample t-test with equal variance assumption.
+- One-sample t-test. **Implemented** (`continuous.one_sample_ttest`).
+- Paired t-test. **Implemented** (`continuous.paired_ttest`).
+- Two-sample t-test with equal variance assumption. **Implemented** (`continuous.two_sample_ttest`).
 
 Later methods:
 

@@ -1,6 +1,22 @@
 //! Report data assembly for exported calculation summaries.
 
+use crate::methods::continuous::one_sample_ttest::{OneSampleTTestInput, OneSampleTTestResult};
+use crate::methods::continuous::paired_ttest::{PairedTTestInput, PairedTTestResult};
 use crate::methods::continuous::two_sample_ttest::{TwoSampleTTestInput, TwoSampleTTestResult};
+
+fn append_warnings(lines: &mut Vec<String>, warnings: &[crate::types::CalculationWarning]) {
+    lines.push("## Assumptions and warnings".into());
+    for warning in warnings {
+        lines.push(format!("- **{}:** {}", warning.code, warning.message));
+    }
+}
+
+fn append_reproducibility(lines: &mut Vec<String>, engine_version: &str) {
+    lines.push(String::new());
+    lines.push("## Reproducibility".into());
+    lines.push(format!("- **Engine version:** {engine_version}"));
+    lines.push("- **Validation source:** R `power.t.test` (stats package)".into());
+}
 
 /// Render a two-sample t-test calculation summary as Markdown.
 pub fn two_sample_ttest_markdown(
@@ -61,18 +77,76 @@ pub fn two_sample_ttest_markdown(
         ),
         format!("- **Achieved power:** {:.4}", result.achieved_power),
         format!("- **Effect size (Cohen's d):** {:.4}", result.effect_size),
-        String::new(),
-        "## Assumptions and warnings".into(),
     ];
 
-    for warning in &result.warnings {
-        lines.push(format!("- **{}:** {}", warning.code, warning.message));
-    }
+    append_warnings(&mut lines, &result.warnings);
+    append_reproducibility(&mut lines, engine_version);
 
-    lines.push(String::new());
-    lines.push("## Reproducibility".into());
-    lines.push(format!("- **Engine version:** {engine_version}"));
-    lines.push("- **Validation source:** R `power.t.test` (stats package)".into());
+    lines.join("\n")
+}
+
+/// Render a one-sample t-test calculation summary as Markdown.
+pub fn one_sample_ttest_markdown(
+    input: &OneSampleTTestInput,
+    result: &OneSampleTTestResult,
+    engine_version: &str,
+) -> String {
+    let mut lines = vec![
+        "# ClinSize calculation summary".into(),
+        String::new(),
+        "## Method".into(),
+        "- **Method:** One-sample t-test".into(),
+        "- **Endpoint:** Continuous".into(),
+        format!("- **Solve mode:** {:?}", input.solve_mode),
+        format!("- **Alternative:** {:?}", input.alternative),
+        String::new(),
+        "## Inputs".into(),
+        format!("- **Alpha:** {:.4}", input.alpha),
+        format!("- **Mean difference:** {:.4}", input.mean_difference),
+        format!("- **Standard deviation:** {:.4}", input.standard_deviation),
+        String::new(),
+        "## Results".into(),
+        format!("- **N:** {}", result.n),
+        format!("- **Dropout-adjusted N:** {}", result.n_adjusted),
+        format!("- **Achieved power:** {:.4}", result.achieved_power),
+        format!("- **Effect size (Cohen's d):** {:.4}", result.effect_size),
+    ];
+
+    append_warnings(&mut lines, &result.warnings);
+    append_reproducibility(&mut lines, engine_version);
+
+    lines.join("\n")
+}
+
+/// Render a paired t-test calculation summary as Markdown.
+pub fn paired_ttest_markdown(
+    input: &PairedTTestInput,
+    result: &PairedTTestResult,
+    engine_version: &str,
+) -> String {
+    let mut lines = vec![
+        "# ClinSize calculation summary".into(),
+        String::new(),
+        "## Method".into(),
+        "- **Method:** Paired t-test".into(),
+        "- **Endpoint:** Continuous".into(),
+        format!("- **Solve mode:** {:?}", input.solve_mode),
+        format!("- **Alternative:** {:?}", input.alternative),
+        String::new(),
+        "## Inputs".into(),
+        format!("- **Alpha:** {:.4}", input.alpha),
+        format!("- **Mean difference:** {:.4}", input.mean_difference),
+        format!("- **Standard deviation:** {:.4}", input.standard_deviation),
+        String::new(),
+        "## Results".into(),
+        format!("- **Pairs:** {}", result.n_pairs),
+        format!("- **Dropout-adjusted pairs:** {}", result.n_pairs_adjusted),
+        format!("- **Achieved power:** {:.4}", result.achieved_power),
+        format!("- **Effect size (Cohen's d):** {:.4}", result.effect_size),
+    ];
+
+    append_warnings(&mut lines, &result.warnings);
+    append_reproducibility(&mut lines, engine_version);
 
     lines.join("\n")
 }

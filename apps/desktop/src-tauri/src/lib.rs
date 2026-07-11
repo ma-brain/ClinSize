@@ -1,3 +1,7 @@
+use clinsize_core::methods::continuous::one_sample_ttest::{
+    self, OneSampleTTestInput, OneSampleTTestResult,
+};
+use clinsize_core::methods::continuous::paired_ttest::{self, PairedTTestInput, PairedTTestResult};
 use clinsize_core::methods::continuous::two_sample_ttest::{
     self, TwoSampleTTestInput, TwoSampleTTestResult,
 };
@@ -85,6 +89,42 @@ fn export_two_sample_ttest_markdown(
     ))
 }
 
+#[tauri::command]
+fn calculate_one_sample_ttest(
+    input: OneSampleTTestInput,
+) -> Result<OneSampleTTestResult, AppError> {
+    one_sample_ttest::calculate(input).map_err(AppError::from)
+}
+
+#[tauri::command]
+fn export_one_sample_ttest_markdown(
+    input: OneSampleTTestInput,
+    result: OneSampleTTestResult,
+) -> Result<String, AppError> {
+    Ok(clinsize_core::reports::one_sample_ttest_markdown(
+        &input,
+        &result,
+        clinsize_core::engine_version(),
+    ))
+}
+
+#[tauri::command]
+fn calculate_paired_ttest(input: PairedTTestInput) -> Result<PairedTTestResult, AppError> {
+    paired_ttest::calculate(input).map_err(AppError::from)
+}
+
+#[tauri::command]
+fn export_paired_ttest_markdown(
+    input: PairedTTestInput,
+    result: PairedTTestResult,
+) -> Result<String, AppError> {
+    Ok(clinsize_core::reports::paired_ttest_markdown(
+        &input,
+        &result,
+        clinsize_core::engine_version(),
+    ))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -93,7 +133,11 @@ pub fn run() {
             engine_info,
             list_methods,
             calculate_two_sample_ttest,
-            export_two_sample_ttest_markdown
+            export_two_sample_ttest_markdown,
+            calculate_one_sample_ttest,
+            export_one_sample_ttest_markdown,
+            calculate_paired_ttest,
+            export_paired_ttest_markdown
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

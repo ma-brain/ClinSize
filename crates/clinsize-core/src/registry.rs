@@ -16,13 +16,29 @@ pub struct MethodDescriptor {
     pub documentation_path: Option<&'static str>,
 }
 
-const METHODS: &[MethodDescriptor] = &[MethodDescriptor {
-    id: "continuous.two_sample_ttest",
-    display_name: "Two-sample t-test",
-    endpoint_category: "Continuous",
-    supported_solve_modes: &[SolveMode::SampleSize, SolveMode::Power],
-    documentation_path: Some("handbook/calculations/continuous-ttest.md"),
-}];
+const METHODS: &[MethodDescriptor] = &[
+    MethodDescriptor {
+        id: "continuous.two_sample_ttest",
+        display_name: "Two-sample t-test",
+        endpoint_category: "Continuous",
+        supported_solve_modes: &[SolveMode::SampleSize, SolveMode::Power],
+        documentation_path: Some("handbook/calculations/continuous-ttest.md"),
+    },
+    MethodDescriptor {
+        id: "continuous.one_sample_ttest",
+        display_name: "One-sample t-test",
+        endpoint_category: "Continuous",
+        supported_solve_modes: &[SolveMode::SampleSize, SolveMode::Power],
+        documentation_path: Some("handbook/calculations/continuous-ttest.md"),
+    },
+    MethodDescriptor {
+        id: "continuous.paired_ttest",
+        display_name: "Paired t-test",
+        endpoint_category: "Continuous",
+        supported_solve_modes: &[SolveMode::SampleSize, SolveMode::Power],
+        documentation_path: Some("handbook/calculations/continuous-ttest.md"),
+    },
+];
 
 /// Return all registered methods.
 pub fn list_methods() -> &'static [MethodDescriptor] {
@@ -34,9 +50,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn list_methods_includes_two_sample_ttest() {
+    fn list_methods_includes_continuous_ttests() {
         let methods = list_methods();
-        assert_eq!(methods.len(), 1);
+        assert_eq!(methods.len(), 3);
         assert_eq!(methods[0].id, "continuous.two_sample_ttest");
+        assert_eq!(methods[1].id, "continuous.one_sample_ttest");
+        assert_eq!(methods[2].id, "continuous.paired_ttest");
     }
 }
