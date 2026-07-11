@@ -21,3 +21,6 @@ apps/desktop/src-tauri/target/
 # Env
 .env
 .env.local
+
+# R artifacts
+Rplots.pdf
