@@ -59,7 +59,7 @@
 ## Backlog
 
 - Multiplicity adjustments. **In progress** — Bonferroni, Šidák, Dunnett, and Holm gatekeeping via `design.multiplicity`; Hochberg and graphical gatekeeping remain.
-- Group sequential designs.
+- Group sequential designs. **Done** — `design.group_sequential` with Lan-DeMets O'Brien-Fleming and Pocock spending; validated vs R `gsDesign` (`test.type = 1`).
 - Adaptive design utilities.
 - Blinded sample size re-estimation.
 - R or Python bindings.

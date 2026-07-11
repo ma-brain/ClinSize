@@ -1,0 +1,6 @@
+{
+  "alpha": 0.05,
+  "targetPower": 0.8,
+  "numberOfLooks": 3,
+  "spendingFunction": "obrien_fleming"
+}

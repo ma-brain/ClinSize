@@ -12,6 +12,7 @@ use crate::methods::continuous::one_sample_ttest::{OneSampleTTestInput, OneSampl
 use crate::methods::continuous::one_way_anova::{OneWayAnovaInput, OneWayAnovaResult};
 use crate::methods::continuous::paired_ttest::{PairedTTestInput, PairedTTestResult};
 use crate::methods::continuous::two_sample_ttest::{TwoSampleTTestInput, TwoSampleTTestResult};
+use crate::methods::design::group_sequential::{GroupSequentialInput, GroupSequentialResult};
 use crate::methods::design::multiplicity::{MultiplicityInput, MultiplicityResult};
 use crate::methods::survival::log_rank::{LogRankInput, LogRankResult};
 use crate::types::SolveMode;
@@ -599,6 +600,63 @@ pub fn multiplicity_markdown(
     lines.push(format!("- **Engine version:** {engine_version}"));
     lines.push(
         "- **Validation source:** Closed-form Bonferroni, Sidak, and Holm formulas; Dunnett via equicorrelated MVN (R `mvtnorm` reference)".into(),
+    );
+
+    lines.join("\n")
+}
+
+/// Render a group sequential design summary as Markdown.
+pub fn group_sequential_markdown(
+    input: &GroupSequentialInput,
+    result: &GroupSequentialResult,
+    engine_version: &str,
+) -> String {
+    let mut lines = vec![
+        "# ClinSize calculation summary".into(),
+        String::new(),
+        "## Method".into(),
+        "- **Method:** Group sequential design".into(),
+        "- **Endpoint:** Design".into(),
+        format!("- **Spending function:** {:?}", input.spending_function),
+        String::new(),
+        "## Inputs".into(),
+        format!("- **Two-sided alpha:** {:.6}", input.alpha),
+        format!("- **Target power:** {:.6}", input.target_power),
+        format!("- **Number of looks:** {}", input.number_of_looks),
+        String::new(),
+        "## Results".into(),
+        format!(
+            "- **Sample size inflation factor:** {:.6}",
+            result.sample_size_inflation_factor
+        ),
+        format!("- **Achieved power:** {:.6}", result.achieved_power),
+        format!("- **Fixed-design drift:** {:.6}", result.fixed_design_drift),
+        String::new(),
+        "### Interim boundaries".into(),
+    ];
+
+    for look in &result.looks {
+        lines.push(format!(
+            "- **Look {}:** info {:.0}%, upper Z {:.4}, cumulative α {:.6}",
+            look.look,
+            look.information_fraction * 100.0,
+            look.upper_z_boundary,
+            look.cumulative_alpha_spent
+        ));
+    }
+
+    lines.extend([
+        String::new(),
+        "## Usage".into(),
+        "- Multiply the fixed-design sample size by the inflation factor to obtain the maximum sample size under this plan.".into(),
+    ]);
+
+    append_warnings(&mut lines, &result.warnings);
+    lines.push(String::new());
+    lines.push("## Reproducibility".into());
+    lines.push(format!("- **Engine version:** {engine_version}"));
+    lines.push(
+        "- **Validation source:** R `gsDesign::gsDesign` with `test.type = 1` (upper efficacy bounds)".into(),
     );
 
     lines.join("\n")

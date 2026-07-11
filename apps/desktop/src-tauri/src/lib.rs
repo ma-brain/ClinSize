@@ -18,6 +18,9 @@ use clinsize_core::methods::continuous::paired_ttest::{self, PairedTTestInput, P
 use clinsize_core::methods::continuous::two_sample_ttest::{
     self, TwoSampleTTestInput, TwoSampleTTestResult,
 };
+use clinsize_core::methods::design::group_sequential::{
+    self, GroupSequentialInput, GroupSequentialResult,
+};
 use clinsize_core::methods::design::multiplicity::{self, MultiplicityInput, MultiplicityResult};
 use clinsize_core::methods::survival::log_rank::{self, LogRankInput, LogRankResult};
 use clinsize_core::registry::MethodDescriptor;
@@ -265,6 +268,25 @@ fn export_multiplicity_markdown(
 }
 
 #[tauri::command]
+fn calculate_group_sequential(
+    input: GroupSequentialInput,
+) -> Result<GroupSequentialResult, AppError> {
+    group_sequential::calculate(input).map_err(AppError::from)
+}
+
+#[tauri::command]
+fn export_group_sequential_markdown(
+    input: GroupSequentialInput,
+    result: GroupSequentialResult,
+) -> Result<String, AppError> {
+    Ok(clinsize_core::reports::group_sequential_markdown(
+        &input,
+        &result,
+        clinsize_core::engine_version(),
+    ))
+}
+
+#[tauri::command]
 fn create_project(name: String) -> ProjectFile {
     ProjectFile::new(name)
 }
@@ -345,7 +367,9 @@ pub fn run() {
             calculate_log_rank,
             export_log_rank_markdown,
             calculate_multiplicity,
-            export_multiplicity_markdown
+            export_multiplicity_markdown,
+            calculate_group_sequential,
+            export_group_sequential_markdown
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

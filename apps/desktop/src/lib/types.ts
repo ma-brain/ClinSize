@@ -251,3 +251,30 @@ export interface MultiplicityResult {
   alphaReductionFactor: number;
   warnings: CalculationWarning[];
 }
+
+export type SpendingFunction = "obrien_fleming" | "pocock";
+
+export interface GroupSequentialInput {
+  alpha: number;
+  targetPower: number;
+  numberOfLooks: number;
+  spendingFunction: SpendingFunction;
+}
+
+export interface GroupSequentialLookResult {
+  look: number;
+  informationFraction: number;
+  incrementalAlphaSpent: number;
+  cumulativeAlphaSpent: number;
+  upperZBoundary: number;
+}
+
+export interface GroupSequentialResult {
+  looks: GroupSequentialLookResult[];
+  sampleSizeInflationFactor: number;
+  requiredDrift: number;
+  fixedDesignDrift: number;
+  achievedPower: number;
+  spendingFunction: SpendingFunction;
+  warnings: CalculationWarning[];
+}

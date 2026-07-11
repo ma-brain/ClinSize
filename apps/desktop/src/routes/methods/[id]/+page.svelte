@@ -1,5 +1,6 @@
 <script lang="ts">
   import BinaryEffectMeasureView from "$lib/methods/BinaryEffectMeasureView.svelte";
+  import GroupSequentialView from "$lib/methods/GroupSequentialView.svelte";
   import LogRankView from "$lib/methods/LogRankView.svelte";
   import MultiplicityView from "$lib/methods/MultiplicityView.svelte";
   import TwoProportionDifferenceView from "$lib/methods/TwoProportionDifferenceView.svelte";
@@ -60,6 +61,8 @@
   <LogRankView />
 {:else if methodId === "design.multiplicity"}
   <MultiplicityView />
+{:else if methodId === "design.group_sequential"}
+  <GroupSequentialView />
 {:else}
   <p class="muted">Select a method from the navigation rail.</p>
 {/if}

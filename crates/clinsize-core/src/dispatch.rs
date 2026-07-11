@@ -22,6 +22,7 @@ use crate::methods::continuous::paired_ttest::{self, PairedTTestInput, PairedTTe
 use crate::methods::continuous::two_sample_ttest::{
     self, TwoSampleTTestInput, TwoSampleTTestResult,
 };
+use crate::methods::design::group_sequential::{self, GroupSequentialInput, GroupSequentialResult};
 use crate::methods::design::multiplicity::{self, MultiplicityInput, MultiplicityResult};
 use crate::methods::survival::log_rank::{self, LogRankInput, LogRankResult};
 use crate::reports;
@@ -71,6 +72,7 @@ pub fn calculate_json(method_id: &str, input_json: &str) -> Result<String> {
         "binary.risk_ratio" => calculate(input_json, risk_ratio::calculate),
         "survival.log_rank" => calculate(input_json, log_rank::calculate),
         "design.multiplicity" => calculate(input_json, multiplicity::calculate),
+        "design.group_sequential" => calculate(input_json, group_sequential::calculate),
         other => Err(Error::UnsupportedMethod(other.into())),
     }
 }
@@ -136,6 +138,11 @@ pub fn report_markdown_json(
             let input = parse_input_json::<MultiplicityInput>(input_json)?;
             let result = parse_result_json::<MultiplicityResult>(result_json)?;
             Ok(reports::multiplicity_markdown(&input, &result, version))
+        }
+        "design.group_sequential" => {
+            let input = parse_input_json::<GroupSequentialInput>(input_json)?;
+            let result = parse_result_json::<GroupSequentialResult>(result_json)?;
+            Ok(reports::group_sequential_markdown(&input, &result, version))
         }
         other => Err(Error::UnsupportedMethod(other.into())),
     }
