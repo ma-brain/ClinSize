@@ -4,6 +4,7 @@
 //! handbook's `04-rust-engine-standards.md`. This crate should be usable
 //! standalone from the desktop app, the CLI, and tests.
 
+pub mod dispatch;
 pub mod distributions;
 pub mod error;
 pub mod methods;

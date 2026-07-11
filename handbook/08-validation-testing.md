@@ -82,5 +82,6 @@ pnpm check
 pnpm test
 ```
 
-Release CI should also build platform installers.
+Release CI should also build platform installers. See
+`handbook/extended-platforms.md` and `.github/workflows/release.yml`.
 

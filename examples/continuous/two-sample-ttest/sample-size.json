@@ -1,0 +1,9 @@
+{
+  "solveMode": "sample_size",
+  "alpha": 0.05,
+  "power": 0.8,
+  "meanDifference": 1,
+  "standardDeviation": 1,
+  "allocationRatio": 1,
+  "alternative": "two_sided"
+}

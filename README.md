@@ -30,11 +30,14 @@ just dev     # pnpm tauri dev
 just test    # cargo test --workspace + pnpm check
 just lint    # cargo fmt --check + cargo clippy -D warnings + pnpm check
 just build   # release build (Rust + Tauri installer)
-just cli -- --help   # run the CLI wrapper
+just cli list   # list registered methods
+just cli calculate --method continuous.two_sample_ttest \
+  --input examples/continuous/two-sample-ttest/sample-size.json
 ```
 
 ## Status
 
-Phase 5 (professional workflow): calculation history, project files,
-scenario comparison, multi-format export, and validation report generation
-are available in the desktop app. See [`handbook/11-roadmap.md`](handbook/11-roadmap.md).
+Phase 6 (extended platforms): Windows and Linux installers via Tauri,
+GitHub Actions release builds, and a scriptable `clinsize` CLI are
+available. See [`handbook/11-roadmap.md`](handbook/11-roadmap.md) and
+[`handbook/extended-platforms.md`](handbook/extended-platforms.md).

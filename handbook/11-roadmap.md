@@ -51,10 +51,10 @@
 
 ## Phase 6: Extended Platforms
 
-- Windows installer.
-- Linux package.
-- CLI tool.
-- Potential mobile or web prototype using the same core engine.
+- Windows installer. **Done** — NSIS bundle via Tauri; release workflow on `windows-latest`.
+- Linux package. **Done** — `.deb` and AppImage via Tauri; release workflow on `ubuntu-22.04`.
+- CLI tool. **Done** — `clinsize` binary with `list`, `calculate`, `report`, and `validation-report`.
+- Potential mobile or web prototype using the same core engine. **Deferred** — documented in `handbook/extended-platforms.md`.
 
 ## Backlog
 
