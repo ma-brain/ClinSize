@@ -40,6 +40,17 @@ pub fn validate_positive(field: &str, value: f64) -> Result<()> {
     }
 }
 
+pub fn validate_probability(field: &str, value: f64) -> Result<()> {
+    if value > 0.0 && value < 1.0 {
+        Ok(())
+    } else {
+        Err(Error::InvalidInput {
+            field: field.into(),
+            message: "must be greater than 0 and less than 1".into(),
+        })
+    }
+}
+
 pub fn validate_correlation(correlation: f64) -> Result<()> {
     if correlation > -1.0 && correlation < 1.0 {
         Ok(())
@@ -86,6 +97,13 @@ mod tests {
         assert!(validate_positive("standard_deviation", 1.0).is_ok());
         assert!(validate_positive("standard_deviation", 0.0).is_err());
         assert!(validate_positive("standard_deviation", -1.0).is_err());
+    }
+
+    #[test]
+    fn probability_rejects_boundary_values() {
+        assert!(validate_probability("control_rate", 0.3).is_ok());
+        assert!(validate_probability("control_rate", 0.0).is_err());
+        assert!(validate_probability("control_rate", 1.0).is_err());
     }
 
     #[test]

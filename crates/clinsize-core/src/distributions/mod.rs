@@ -3,4 +3,5 @@
 pub mod f_distribution;
 pub mod noncentral_f;
 pub mod noncentral_t;
+pub mod normal;
 pub mod student_t;

@@ -14,7 +14,7 @@ pub mod types;
 pub mod validation;
 
 pub use error::{Error, Result};
-pub use types::{Alternative, CalculationWarning, SolveMode};
+pub use types::{Alternative, CalculationWarning, SolveMode, StudyObjective};
 
 /// The `clinsize-core` crate version, for embedding in exported reports
 /// per `10-release-distribution.md` ("Result Reproducibility").

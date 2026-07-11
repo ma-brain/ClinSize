@@ -6,4 +6,5 @@
 //! reference examples. See `templates/new-calculation-method.md` before
 //! adding a method here.
 
+pub mod binary;
 pub mod continuous;

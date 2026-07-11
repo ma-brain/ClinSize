@@ -9,6 +9,14 @@ pub enum Alternative {
     Greater,
 }
 
+/// Clinical study objective for binary endpoint methods.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum StudyObjective {
+    Superiority,
+    NonInferiority,
+}
+
 /// Which quantity a method should solve for.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
