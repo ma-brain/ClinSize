@@ -233,13 +233,20 @@ export interface LogRankResult {
   warnings: CalculationWarning[];
 }
 
-export type MultiplicityMethod = "bonferroni" | "sidak" | "dunnett" | "holm";
+export type MultiplicityMethod =
+  | "bonferroni"
+  | "sidak"
+  | "dunnett"
+  | "holm"
+  | "hochberg"
+  | "graphical";
 
 export interface MultiplicityInput {
   familyWiseAlpha: number;
   numberOfComparisons: number;
   adjustmentMethod: MultiplicityMethod;
   gatePosition?: number;
+  comparisonWeights?: number[];
 }
 
 export interface MultiplicityResult {
@@ -248,6 +255,7 @@ export interface MultiplicityResult {
   numberOfComparisons: number;
   adjustmentMethod: MultiplicityMethod;
   gatePosition?: number;
+  comparisonWeight?: number;
   alphaReductionFactor: number;
   warnings: CalculationWarning[];
 }

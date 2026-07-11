@@ -579,6 +579,10 @@ pub fn multiplicity_markdown(
         lines.push(format!("- **Gate position:** {gate_position}"));
     }
 
+    if let Some(comparison_weight) = result.comparison_weight {
+        lines.push(format!("- **Comparison weight:** {comparison_weight:.6}"));
+    }
+
     lines.extend([
         String::new(),
         "## Results".into(),
@@ -600,7 +604,7 @@ pub fn multiplicity_markdown(
     lines.push("## Reproducibility".into());
     lines.push(format!("- **Engine version:** {engine_version}"));
     lines.push(
-        "- **Validation source:** Closed-form Bonferroni, Sidak, and Holm formulas; Dunnett via equicorrelated MVN (R `mvtnorm` reference)".into(),
+        "- **Validation source:** Closed-form Bonferroni, Sidak, Holm, Hochberg, and graphical gatekeeping formulas; Dunnett via equicorrelated MVN (R `mvtnorm` reference)".into(),
     );
 
     lines.join("\n")

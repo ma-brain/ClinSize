@@ -95,6 +95,25 @@ pub fn validate_gate_position(gate_position: u32, number_of_comparisons: u32) ->
     }
 }
 
+pub fn validate_comparison_weights(weights: &[f64], number_of_comparisons: u32) -> Result<()> {
+    let expected = usize::try_from(number_of_comparisons).unwrap_or(usize::MAX);
+    if weights.len() != expected {
+        return Err(Error::InvalidInput {
+            field: "comparison_weights".into(),
+            message: format!("must contain exactly {number_of_comparisons} values"),
+        });
+    }
+    for (index, &weight) in weights.iter().enumerate() {
+        if weight <= 0.0 || !weight.is_finite() {
+            return Err(Error::InvalidInput {
+                field: "comparison_weights".into(),
+                message: format!("entry {} must be a positive finite number", index + 1),
+            });
+        }
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -158,5 +177,12 @@ mod tests {
         assert!(validate_gate_position(5, 5).is_ok());
         assert!(validate_gate_position(0, 5).is_err());
         assert!(validate_gate_position(6, 5).is_err());
+    }
+
+    #[test]
+    fn comparison_weights_must_match_family_size() {
+        assert!(validate_comparison_weights(&[0.5, 0.5], 2).is_ok());
+        assert!(validate_comparison_weights(&[0.5, 0.5], 3).is_err());
+        assert!(validate_comparison_weights(&[0.0, 1.0], 2).is_err());
     }
 }

@@ -12,6 +12,7 @@
   let numberOfComparisons = $state("2");
   let adjustmentMethod = $state<MultiplicityMethod>("bonferroni");
   let gatePosition = $state("1");
+  let comparisonWeights = $state("");
 
   let result = $state<MultiplicityResult | null>(null);
   let exportMarkdown = $state<string | null>(null);
@@ -22,7 +23,21 @@
       ? "Number of treatment arms (vs control)"
       : "Number of comparisons",
   );
-  const showGatePosition = $derived(adjustmentMethod === "holm");
+  const showGatePosition = $derived(
+    adjustmentMethod === "holm" ||
+      adjustmentMethod === "hochberg" ||
+      adjustmentMethod === "graphical",
+  );
+  const showComparisonWeights = $derived(adjustmentMethod === "graphical");
+
+  function parseComparisonWeights(): number[] | undefined {
+    const trimmed = comparisonWeights.trim();
+    if (!trimmed) {
+      return undefined;
+    }
+
+    return trimmed.split(",").map((part) => Number(part.trim()));
+  }
 
   function buildInput(): MultiplicityInput {
     const input: MultiplicityInput = {
@@ -31,8 +46,15 @@
       adjustmentMethod,
     };
 
-    if (adjustmentMethod === "holm") {
+    if (showGatePosition) {
       input.gatePosition = Number(gatePosition);
+    }
+
+    if (showComparisonWeights) {
+      const weights = parseComparisonWeights();
+      if (weights) {
+        input.comparisonWeights = weights;
+      }
     }
 
     return input;
@@ -95,6 +117,8 @@
           <option value="sidak">Šidák (Sidak)</option>
           <option value="dunnett">Dunnett (arms vs control)</option>
           <option value="holm">Holm gatekeeping</option>
+          <option value="hochberg">Hochberg gatekeeping</option>
+          <option value="graphical">Graphical gatekeeping</option>
         </select>
       </label>
 
@@ -102,6 +126,17 @@
         <label>
           Gate position (1 = first hypothesis)
           <input type="number" min="1" step="1" bind:value={gatePosition} />
+        </label>
+      {/if}
+
+      {#if showComparisonWeights}
+        <label>
+          Comparison weights (comma-separated, optional)
+          <input
+            type="text"
+            placeholder="0.5, 0.3, 0.2"
+            bind:value={comparisonWeights}
+          />
         </label>
       {/if}
 
@@ -128,6 +163,10 @@
           {#if result.gatePosition}
             <dt>Gate position</dt>
             <dd>{result.gatePosition}</dd>
+          {/if}
+          {#if result.comparisonWeight}
+            <dt>Comparison weight</dt>
+            <dd>{result.comparisonWeight.toFixed(4)}</dd>
           {/if}
           <dt>Alpha reduction factor</dt>
           <dd>{result.alphaReductionFactor.toFixed(4)}</dd>

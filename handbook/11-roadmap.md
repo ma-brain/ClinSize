@@ -58,7 +58,7 @@
 
 ## Backlog
 
-- Multiplicity adjustments. **In progress** — Bonferroni, Šidák, Dunnett, and Holm gatekeeping via `design.multiplicity`; Hochberg and graphical gatekeeping remain.
+- Multiplicity adjustments. **Done** — Bonferroni, Šidák, Dunnett, Holm, Hochberg, and graphical gatekeeping (initial weights) via `design.multiplicity`.
 - Group sequential designs. **Done** — `design.group_sequential` with Lan-DeMets O'Brien-Fleming and Pocock spending; validated vs R `gsDesign` (`test.type = 1`).
 - Adaptive design utilities.
 - Blinded sample size re-estimation. **Done** — `design.blinded_ssre` with Friede-Kieser blinded variance re-estimation for continuous two-sample t-test; binary/survival and CHW/CROS procedures remain.

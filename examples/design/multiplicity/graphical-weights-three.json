@@ -1,0 +1,7 @@
+{
+  "familyWiseAlpha": 0.05,
+  "numberOfComparisons": 3,
+  "adjustmentMethod": "graphical",
+  "gatePosition": 2,
+  "comparisonWeights": [0.5, 0.3, 0.2]
+}
