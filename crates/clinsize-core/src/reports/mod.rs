@@ -1,5 +1,6 @@
 //! Report data assembly for exported calculation summaries.
 
+use crate::methods::continuous::ancova_two_sample::{AncovaTwoSampleInput, AncovaTwoSampleResult};
 use crate::methods::continuous::one_sample_ttest::{OneSampleTTestInput, OneSampleTTestResult};
 use crate::methods::continuous::one_way_anova::{OneWayAnovaInput, OneWayAnovaResult};
 use crate::methods::continuous::paired_ttest::{PairedTTestInput, PairedTTestResult};
@@ -195,6 +196,94 @@ pub fn one_way_anova_markdown(
     lines.push("## Reproducibility".into());
     lines.push(format!("- **Engine version:** {engine_version}"));
     lines.push("- **Validation source:** R `power.anova.test` (stats package)".into());
+
+    lines.join("\n")
+}
+
+/// Render a two-sample ANCOVA calculation summary as Markdown.
+pub fn ancova_two_sample_markdown(
+    input: &AncovaTwoSampleInput,
+    result: &AncovaTwoSampleResult,
+    engine_version: &str,
+) -> String {
+    let dropout = input
+        .dropout_rate
+        .map(|rate| format!("{rate:.4}"))
+        .unwrap_or_else(|| "none".into());
+
+    let mut lines = vec![
+        "# ClinSize calculation summary".into(),
+        String::new(),
+        "## Method".into(),
+        "- **Method:** Two-sample ANCOVA (approximate variance reduction)".into(),
+        "- **Endpoint:** Continuous".into(),
+        format!("- **Solve mode:** {:?}", input.solve_mode),
+        format!("- **Alternative:** {:?}", input.alternative),
+        String::new(),
+        "## Inputs".into(),
+        format!("- **Alpha:** {:.4}", input.alpha),
+        format!(
+            "- **Target power:** {}",
+            input
+                .power
+                .map(|p| format!("{p:.4}"))
+                .unwrap_or_else(|| "n/a".into())
+        ),
+        format!(
+            "- **Control N (given):** {}",
+            input
+                .control_n
+                .map(|n| n.to_string())
+                .unwrap_or_else(|| "n/a".into())
+        ),
+        format!("- **Mean difference:** {:.4}", input.mean_difference),
+        format!(
+            "- **Unadjusted standard deviation:** {:.4}",
+            input.standard_deviation
+        ),
+        format!(
+            "- **Baseline-outcome correlation:** {:.4}",
+            input.baseline_outcome_correlation
+        ),
+        format!("- **Allocation ratio:** {:.4}", input.allocation_ratio),
+        format!("- **Dropout rate:** {dropout}"),
+        String::new(),
+        "## Results".into(),
+        format!("- **Control N:** {}", result.n_control),
+        format!("- **Treatment N:** {}", result.n_treatment),
+        format!("- **Total N:** {}", result.total_n),
+        format!(
+            "- **Dropout-adjusted control N:** {}",
+            result.n_control_adjusted
+        ),
+        format!(
+            "- **Dropout-adjusted treatment N:** {}",
+            result.n_treatment_adjusted
+        ),
+        format!(
+            "- **Dropout-adjusted total N:** {}",
+            result.total_n_adjusted
+        ),
+        format!("- **Achieved power:** {:.4}", result.achieved_power),
+        format!(
+            "- **Effect size (Cohen's d, unadjusted SD):** {:.4}",
+            result.effect_size
+        ),
+        format!(
+            "- **Adjusted standard deviation:** {:.4}",
+            result.adjusted_standard_deviation
+        ),
+        format!(
+            "- **Variance reduction factor (1 − ρ²):** {:.4}",
+            result.variance_reduction_factor
+        ),
+    ];
+
+    append_warnings(&mut lines, &result.warnings);
+    lines.push(String::new());
+    lines.push("## Reproducibility".into());
+    lines.push(format!("- **Engine version:** {engine_version}"));
+    lines.push("- **Validation source:** R `power.t.test` with σ_adj = σ_y × √(1 − ρ²)".into());
 
     lines.join("\n")
 }

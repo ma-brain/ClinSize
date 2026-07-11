@@ -1,3 +1,6 @@
+use clinsize_core::methods::continuous::ancova_two_sample::{
+    self, AncovaTwoSampleInput, AncovaTwoSampleResult,
+};
 use clinsize_core::methods::continuous::one_sample_ttest::{
     self, OneSampleTTestInput, OneSampleTTestResult,
 };
@@ -145,6 +148,25 @@ fn export_one_way_anova_markdown(
     ))
 }
 
+#[tauri::command]
+fn calculate_ancova_two_sample(
+    input: AncovaTwoSampleInput,
+) -> Result<AncovaTwoSampleResult, AppError> {
+    ancova_two_sample::calculate(input).map_err(AppError::from)
+}
+
+#[tauri::command]
+fn export_ancova_two_sample_markdown(
+    input: AncovaTwoSampleInput,
+    result: AncovaTwoSampleResult,
+) -> Result<String, AppError> {
+    Ok(clinsize_core::reports::ancova_two_sample_markdown(
+        &input,
+        &result,
+        clinsize_core::engine_version(),
+    ))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -159,7 +181,9 @@ pub fn run() {
             calculate_paired_ttest,
             export_paired_ttest_markdown,
             calculate_one_way_anova,
-            export_one_way_anova_markdown
+            export_one_way_anova_markdown,
+            calculate_ancova_two_sample,
+            export_ancova_two_sample_markdown
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

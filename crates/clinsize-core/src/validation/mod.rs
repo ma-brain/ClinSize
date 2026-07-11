@@ -40,6 +40,17 @@ pub fn validate_positive(field: &str, value: f64) -> Result<()> {
     }
 }
 
+pub fn validate_correlation(correlation: f64) -> Result<()> {
+    if correlation > -1.0 && correlation < 1.0 {
+        Ok(())
+    } else {
+        Err(Error::InvalidInput {
+            field: "baseline_outcome_correlation".into(),
+            message: "must be greater than -1 and less than 1".into(),
+        })
+    }
+}
+
 pub fn validate_dropout_rate(dropout_rate: f64) -> Result<()> {
     if (0.0..1.0).contains(&dropout_rate) {
         Ok(())
@@ -75,6 +86,15 @@ mod tests {
         assert!(validate_positive("standard_deviation", 1.0).is_ok());
         assert!(validate_positive("standard_deviation", 0.0).is_err());
         assert!(validate_positive("standard_deviation", -1.0).is_err());
+    }
+
+    #[test]
+    fn correlation_rejects_boundary_values() {
+        assert!(validate_correlation(0.5).is_ok());
+        assert!(validate_correlation(-0.99).is_ok());
+        assert!(validate_correlation(0.99).is_ok());
+        assert!(validate_correlation(-1.0).is_err());
+        assert!(validate_correlation(1.0).is_err());
     }
 
     #[test]

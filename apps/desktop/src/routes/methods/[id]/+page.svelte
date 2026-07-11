@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AncovaTwoSampleView from "$lib/methods/AncovaTwoSampleView.svelte";
   import OneWayAnovaView from "$lib/methods/OneWayAnovaView.svelte";
   import SingleSampleTTestView from "$lib/methods/SingleSampleTTestView.svelte";
   import TwoSampleTTestView from "$lib/methods/TwoSampleTTestView.svelte";
@@ -27,6 +28,8 @@
   />
 {:else if methodId === "continuous.one_way_anova"}
   <OneWayAnovaView />
+{:else if methodId === "continuous.ancova_two_sample"}
+  <AncovaTwoSampleView />
 {:else}
   <p class="muted">Select a method from the navigation rail.</p>
 {/if}

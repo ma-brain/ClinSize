@@ -99,3 +99,32 @@ export interface OneWayAnovaResult {
   effectSize: number;
   warnings: CalculationWarning[];
 }
+
+export interface AncovaTwoSampleInput {
+  solveMode: SolveMode;
+  alpha: number;
+  power?: number;
+  controlN?: number;
+  meanDifference: number;
+  standardDeviation: number;
+  baselineOutcomeCorrelation: number;
+  allocationRatio: number;
+  alternative: Alternative;
+  dropoutRate?: number;
+}
+
+export interface AncovaTwoSampleResult {
+  nControl: number;
+  nTreatment: number;
+  totalN: number;
+  nControlAdjusted: number;
+  nTreatmentAdjusted: number;
+  totalNAdjusted: number;
+  achievedPower: number;
+  effectSize: number;
+  unadjustedStandardDeviation: number;
+  adjustedStandardDeviation: number;
+  baselineOutcomeCorrelation: number;
+  varianceReductionFactor: number;
+  warnings: CalculationWarning[];
+}

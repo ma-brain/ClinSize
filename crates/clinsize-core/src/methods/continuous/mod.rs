@@ -1,3 +1,4 @@
+pub mod ancova_two_sample;
 pub mod one_sample_ttest;
 pub mod one_way_anova;
 pub mod paired_ttest;

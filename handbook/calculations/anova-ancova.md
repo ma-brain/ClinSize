@@ -44,7 +44,21 @@ Validation reference: R `power.anova.test`.
 
 ## ANCOVA Scope
 
-ANCOVA should not be rushed. The first ANCOVA version may support a simple variance reduction adjustment based on correlation between baseline and outcome.
+**Implemented** as `continuous.ancova_two_sample` for parallel two-group designs with one baseline covariate.
+
+The first version uses an approximate variance reduction formula rather than a full model-based ANCOVA calculation.
+
+## ANCOVA Formula Or Algorithm
+
+Adjusted residual standard deviation:
+
+`σ_adj = σ_y × √(1 − ρ²)`
+
+where `σ_y` is the unadjusted outcome standard deviation and `ρ` is the baseline-outcome correlation.
+
+Sample size and power then follow the equal-variance two-sample t-test using `σ_adj`. Cohen's d in outputs uses the unadjusted `σ_y`.
+
+Validation reference: R `power.t.test` with `sd = σ_y × √(1 − ρ²)`.
 
 ## ANCOVA Inputs
 

@@ -1,0 +1,4 @@
+case_id,solve_mode,mean_difference,standard_deviation,baseline_outcome_correlation,alpha,power,control_n,allocation_ratio,alternative,expected_n_control,expected_n_treatment,expected_achieved_power,reference
+ancova_sd10_rho05,sample_size,3,10,0.5,0.05,0.8,,1,two_sided,132,132,0.80065,R power.t.test with sd_adj=8.660254
+ancova_sd1_rho03,sample_size,0.5,1,0.3,0.05,0.8,,1,two_sided,59,59,0.8059902,R power.t.test with sd_adj=0.9539392
+ancova_power_mode,power,3,10,0.5,0.05,,132,1,two_sided,,,0.80065,R power.t.test n=132 sd_adj=8.660254
