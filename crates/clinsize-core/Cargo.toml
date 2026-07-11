@@ -12,7 +12,9 @@ thiserror.workspace = true
 r_mathlib = "0.2"
 markdown2pdf = "1.5.0"
 pulldown-cmark = { version = "0.13", default-features = false, features = ["html"] }
-docx = "1.1.2"
+# Maintained fork of the unmaintained `docx` crate; the original pulled in
+# jetscii 0.4, which no longer compiles on x86_64 stable Rust.
+docx-rust = { version = "0.1.11", default-features = false }
 
 [dev-dependencies]
 approx.workspace = true
