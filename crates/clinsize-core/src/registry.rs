@@ -73,6 +73,13 @@ const METHODS: &[MethodDescriptor] = &[
         supported_solve_modes: &[SolveMode::SampleSize, SolveMode::Power],
         documentation_path: Some("handbook/calculations/binary-endpoints.md"),
     },
+    MethodDescriptor {
+        id: "survival.log_rank",
+        display_name: "Log-rank test",
+        endpoint_category: "Survival",
+        supported_solve_modes: &[SolveMode::SampleSize, SolveMode::Power],
+        documentation_path: Some("handbook/calculations/survival-endpoints.md"),
+    },
 ];
 
 /// Return all registered methods.
@@ -87,10 +94,11 @@ mod tests {
     #[test]
     fn list_methods_includes_continuous_ttests() {
         let methods = list_methods();
-        assert_eq!(methods.len(), 8);
+        assert_eq!(methods.len(), 9);
         assert_eq!(methods[0].id, "continuous.two_sample_ttest");
         assert_eq!(methods[5].id, "binary.two_proportion_difference");
         assert_eq!(methods[6].id, "binary.odds_ratio");
         assert_eq!(methods[7].id, "binary.risk_ratio");
+        assert_eq!(methods[8].id, "survival.log_rank");
     }
 }
