@@ -1,5 +1,15 @@
 <script lang="ts">
   import ExportMenu from "$lib/components/ExportMenu.svelte";
+  import MethodPage from "$lib/components/MethodPage.svelte";
+  import AssumptionsCard from "$lib/components/ui/AssumptionsCard.svelte";
+  import Field from "$lib/components/ui/Field.svelte";
+  import MethodHeader from "$lib/components/ui/MethodHeader.svelte";
+  import Panel from "$lib/components/ui/Panel.svelte";
+  import PrimaryButton from "$lib/components/ui/PrimaryButton.svelte";
+  import ResultGrid from "$lib/components/ui/ResultGrid.svelte";
+  import ResultHero from "$lib/components/ui/ResultHero.svelte";
+  import Section from "$lib/components/ui/Section.svelte";
+  import WarningList from "$lib/components/ui/WarningList.svelte";
   import { persistCalculation } from "$lib/workflow/record";
   import type {
     GroupSequentialInput,
@@ -17,6 +27,34 @@
   let exportMarkdown = $state<string | null>(null);
   let errorMessage = $state<string | null>(null);
   let calculating = $state(false);
+  let lastCalculatedSignature = $state<string | null>(null);
+
+  const inputSignature = $derived(
+    JSON.stringify({ alpha, targetPower, numberOfLooks, spendingFunction }),
+  );
+
+  const resultsStale = $derived(
+    result !== null &&
+      lastCalculatedSignature !== null &&
+      lastCalculatedSignature !== inputSignature,
+  );
+
+  const spendingLabel = $derived(
+    spendingFunction === "obrien_fleming" ? "O'Brien-Fleming" : "Pocock",
+  );
+
+  const resultItems = $derived(
+    result
+      ? [
+          {
+            label: "Sample size inflation factor",
+            value: result.sampleSizeInflationFactor.toFixed(4),
+          },
+          { label: "Achieved power", value: result.achievedPower.toFixed(4) },
+          { label: "Fixed-design drift", value: result.fixedDesignDrift.toFixed(4) },
+        ]
+      : [],
+  );
 
   function buildInput(): GroupSequentialInput {
     return {
@@ -38,6 +76,7 @@
         input,
         result,
       });
+      lastCalculatedSignature = inputSignature;
       persistCalculation({
         methodId: "design.group_sequential",
         methodName: "Group sequential design",
@@ -47,6 +86,7 @@
     } catch (error) {
       result = null;
       exportMarkdown = null;
+      lastCalculatedSignature = null;
       errorMessage = String(error);
     } finally {
       calculating = false;
@@ -54,63 +94,65 @@
   }
 </script>
 
-<div class="method-page">
-  <header class="page-header">
-    <h2>Group sequential design</h2>
-    <p>
-      Plan interim efficacy boundaries and sample size inflation for equally
-      spaced looks using Lan-DeMets alpha spending.
-    </p>
-  </header>
+<MethodPage {resultsStale}>
+  {#snippet header()}
+    <MethodHeader
+      title="Group sequential design"
+      description="Plan interim efficacy boundaries and sample size inflation for equally spaced looks using Lan-DeMets alpha spending."
+      category="Design"
+      badges={[spendingLabel, `${numberOfLooks} looks`]}
+    />
+  {/snippet}
 
-  <div class="panels">
-    <section class="panel">
-      <h3>Parameters</h3>
+  {#snippet parameters()}
+    <Panel title="Parameters">
+      <Section title="Design">
+        <Field label="Two-sided alpha">
+          {#snippet control()}
+            <input type="number" min="0" max="1" step="0.001" bind:value={alpha} />
+          {/snippet}
+        </Field>
 
-      <label>
-        Two-sided alpha
-        <input type="number" min="0" max="1" step="0.001" bind:value={alpha} />
-      </label>
+        <Field label="Target power">
+          {#snippet control()}
+            <input type="number" min="0" max="1" step="0.01" bind:value={targetPower} />
+          {/snippet}
+        </Field>
 
-      <label>
-        Target power
-        <input type="number" min="0" max="1" step="0.01" bind:value={targetPower} />
-      </label>
+        <Field label="Number of looks">
+          {#snippet control()}
+            <input type="number" min="2" max="10" step="1" bind:value={numberOfLooks} />
+          {/snippet}
+        </Field>
 
-      <label>
-        Number of looks
-        <input type="number" min="2" max="10" step="1" bind:value={numberOfLooks} />
-      </label>
+        <Field label="Spending function">
+          {#snippet control()}
+            <select bind:value={spendingFunction}>
+              <option value="obrien_fleming">O'Brien-Fleming</option>
+              <option value="pocock">Pocock</option>
+            </select>
+          {/snippet}
+        </Field>
+      </Section>
 
-      <label>
-        Spending function
-        <select bind:value={spendingFunction}>
-          <option value="obrien_fleming">O'Brien-Fleming</option>
-          <option value="pocock">Pocock</option>
-        </select>
-      </label>
-
-      <button onclick={calculate} disabled={calculating}>
+      <PrimaryButton fullWidth disabled={calculating} onclick={calculate}>
         {calculating ? "Calculating…" : "Calculate"}
-      </button>
+      </PrimaryButton>
 
       {#if errorMessage}
-        <p class="error">{errorMessage}</p>
+        <p class="error text-danger">{errorMessage}</p>
       {/if}
-    </section>
+    </Panel>
+  {/snippet}
 
-    <section class="panel">
-      <h3>Results</h3>
-
+  {#snippet results()}
+    <Panel title="Results">
       {#if result}
-        <dl class="results">
-          <dt>Sample size inflation factor</dt>
-          <dd>{result.sampleSizeInflationFactor.toFixed(4)}</dd>
-          <dt>Achieved power</dt>
-          <dd>{result.achievedPower.toFixed(4)}</dd>
-          <dt>Fixed-design drift</dt>
-          <dd>{result.fixedDesignDrift.toFixed(4)}</dd>
-        </dl>
+        <ResultHero
+          label="Sample size inflation factor"
+          value={result.sampleSizeInflationFactor.toFixed(4)}
+        />
+        <ResultGrid items={resultItems} />
 
         <table class="looks">
           <thead>
@@ -134,128 +176,35 @@
         </table>
 
         <p class="hint">
-          Multiply the fixed-design sample size by the inflation factor to
-          obtain the maximum sample size under this group sequential plan.
+          Multiply the fixed-design sample size by the inflation factor to obtain the maximum
+          sample size under this group sequential plan.
         </p>
 
-        {#if result.warnings.length > 0}
-          <div class="warnings">
-            <h4>Warnings</h4>
-            <ul>
-              {#each result.warnings as warning}
-                <li><strong>{warning.code}:</strong> {warning.message}</li>
-              {/each}
-            </ul>
-          </div>
-        {/if}
-
+        <WarningList warnings={result.warnings} />
+        <AssumptionsCard
+          items={[
+            "Equally spaced interim looks with Lan-DeMets spending approximation.",
+            "Fixed treatment effect and known variance for inflation factor planning.",
+            "Boundaries apply to a single primary efficacy comparison.",
+          ]}
+        />
         <ExportMenu
           title="Group sequential design"
           markdown={exportMarkdown}
           disabled={calculating}
         />
       {:else}
-        <p class="muted">Run a calculation to see interim boundaries.</p>
+        <p class="empty text-muted">Run a calculation to see interim boundaries.</p>
       {/if}
-    </section>
-  </div>
-</div>
+    </Panel>
+  {/snippet}
+</MethodPage>
 
 <style>
-  .method-page {
-    padding: 1.5rem;
-  }
-
-  .page-header {
-    margin-bottom: 1.25rem;
-  }
-
-  .page-header h2 {
-    margin: 0 0 0.35rem;
-    font-size: 1.125rem;
-    font-weight: 600;
-  }
-
-  .page-header p {
-    margin: 0;
-    color: var(--muted);
-    font-size: 0.875rem;
-    line-height: 1.5;
-    max-width: 42rem;
-  }
-
-  .panels {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
-    gap: 1rem;
-  }
-
-  .panel {
-    padding: 1.25rem;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    background: var(--panel);
-  }
-
-  .panel h3 {
-    margin: 0 0 1rem;
-    font-size: 0.9375rem;
-    font-weight: 600;
-  }
-
-  label {
-    display: grid;
-    gap: 0.35rem;
-    margin-bottom: 0.85rem;
-    font-size: 0.8125rem;
-    font-weight: 500;
-  }
-
-  input,
-  select {
-    padding: 0.45rem 0.55rem;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    font: inherit;
-  }
-
-  button {
-    margin-top: 0.25rem;
-    padding: 0.5rem 0.85rem;
-    border: none;
-    border-radius: 4px;
-    background: var(--accent);
-    color: #fff;
-    font: inherit;
-    font-weight: 500;
-    cursor: pointer;
-  }
-
-  button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  .results {
-    margin: 0 0 1rem;
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 0.35rem 1rem;
-    font-size: 0.875rem;
-  }
-
-  dt {
-    color: var(--muted);
-  }
-
-  dd {
-    margin: 0;
-    font-weight: 500;
-  }
-
   .looks {
     width: 100%;
     border-collapse: collapse;
+    margin-top: 1rem;
     font-size: 0.8125rem;
   }
 
@@ -267,42 +216,24 @@
   }
 
   .looks th {
-    color: var(--muted);
+    color: var(--text-muted);
     font-weight: 500;
   }
 
   .hint {
     margin: 1rem 0 0;
     font-size: 0.8125rem;
-    color: var(--muted);
+    color: var(--text-muted);
     line-height: 1.5;
-  }
-
-  .warnings {
-    margin-top: 1rem;
-    font-size: 0.8125rem;
-  }
-
-  .warnings h4 {
-    margin: 0 0 0.5rem;
-    font-size: 0.8125rem;
-  }
-
-  .warnings ul {
-    margin: 0;
-    padding-left: 1.1rem;
-    color: var(--muted);
   }
 
   .error {
     margin: 0.75rem 0 0;
-    color: #b42318;
     font-size: 0.8125rem;
   }
 
-  .muted {
+  .empty {
     margin: 0;
-    color: var(--muted);
     font-size: 0.875rem;
   }
 </style>

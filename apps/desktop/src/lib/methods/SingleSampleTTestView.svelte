@@ -1,6 +1,16 @@
 <script lang="ts">
   import ExportMenu from "$lib/components/ExportMenu.svelte";
+  import MethodPage from "$lib/components/MethodPage.svelte";
   import SensitivityPanel from "$lib/components/SensitivityPanel.svelte";
+  import AssumptionsCard from "$lib/components/ui/AssumptionsCard.svelte";
+  import Field from "$lib/components/ui/Field.svelte";
+  import MethodHeader from "$lib/components/ui/MethodHeader.svelte";
+  import Panel from "$lib/components/ui/Panel.svelte";
+  import PrimaryButton from "$lib/components/ui/PrimaryButton.svelte";
+  import ResultGrid from "$lib/components/ui/ResultGrid.svelte";
+  import ResultHero from "$lib/components/ui/ResultHero.svelte";
+  import Section from "$lib/components/ui/Section.svelte";
+  import WarningList from "$lib/components/ui/WarningList.svelte";
   import {
     oneSampleSensitivityOptions,
     pairedSensitivityOptions,
@@ -46,8 +56,9 @@
   let exportMarkdown = $state<string | null>(null);
   let errorMessage = $state<string | null>(null);
   let calculating = $state(false);
+  let lastCalculatedSignature = $state<string | null>(null);
 
-  const sensitivitySignature = $derived(
+  const inputSignature = $derived(
     JSON.stringify({
       variant,
       solveMode,
@@ -61,8 +72,26 @@
     }),
   );
 
+  const resultsStale = $derived(
+    (oneSampleResult !== null || pairedResult !== null) &&
+      lastCalculatedSignature !== null &&
+      lastCalculatedSignature !== inputSignature,
+  );
+
   const sensitivityOutputLabel = $derived(
-    solveMode === "sample_size" ? "Sample size" : "Achieved power",
+    solveMode === "sample_size" ? sizeLabel : "Achieved power",
+  );
+
+  const solveModeLabel = $derived(
+    solveMode === "sample_size" ? "Sample size" : "Power",
+  );
+
+  const alternativeLabel = $derived(
+    alternative === "two_sided"
+      ? "Two-sided"
+      : alternative === "greater"
+        ? "Greater"
+        : "Less",
   );
 
   const oneSampleSensitivity = $derived(
@@ -85,6 +114,60 @@
       power,
       dropoutRate,
     ),
+  );
+
+  const heroLabel = $derived(
+    solveMode === "sample_size" ? sizeLabel : "Achieved power",
+  );
+
+  const heroValue = $derived(
+    oneSampleResult
+      ? solveMode === "sample_size"
+        ? String(oneSampleResult.n)
+        : oneSampleResult.achievedPower.toFixed(4)
+      : pairedResult
+        ? solveMode === "sample_size"
+          ? String(pairedResult.nPairs)
+          : pairedResult.achievedPower.toFixed(4)
+        : "—",
+  );
+
+  const resultItems = $derived(
+    oneSampleResult
+      ? [
+          { label: sizeLabel, value: String(oneSampleResult.n) },
+          { label: "Achieved power", value: oneSampleResult.achievedPower.toFixed(4) },
+          { label: "Effect size (Cohen's d)", value: oneSampleResult.effectSize.toFixed(4) },
+          ...(oneSampleResult.nAdjusted !== oneSampleResult.n
+            ? [
+                {
+                  label: "Dropout-adjusted N",
+                  value: String(oneSampleResult.nAdjusted),
+                  highlight: true,
+                },
+              ]
+            : []),
+        ]
+      : pairedResult
+        ? [
+            { label: sizeLabel, value: String(pairedResult.nPairs) },
+            { label: "Achieved power", value: pairedResult.achievedPower.toFixed(4) },
+            { label: "Effect size (Cohen's d)", value: pairedResult.effectSize.toFixed(4) },
+            ...(pairedResult.nPairsAdjusted !== pairedResult.nPairs
+              ? [
+                  {
+                    label: "Dropout-adjusted pairs",
+                    value: String(pairedResult.nPairsAdjusted),
+                    highlight: true,
+                  },
+                ]
+              : []),
+          ]
+        : [],
+  );
+
+  const activeWarnings = $derived(
+    oneSampleResult?.warnings ?? pairedResult?.warnings ?? [],
   );
 
   function buildOneSampleInput(): OneSampleTTestInput {
@@ -133,6 +216,7 @@
           input,
           result: oneSampleResult,
         });
+        lastCalculatedSignature = inputSignature;
         persistCalculation({
           methodId: "continuous.one_sample_ttest",
           methodName: title,
@@ -148,6 +232,7 @@
           input,
           result: pairedResult,
         });
+        lastCalculatedSignature = inputSignature;
         persistCalculation({
           methodId: "continuous.paired_ttest",
           methodName: title,
@@ -156,276 +241,163 @@
         });
       }
     } catch (error) {
+      lastCalculatedSignature = null;
       errorMessage = String(error);
     } finally {
       calculating = false;
     }
   }
-
 </script>
 
-<div class="method-page">
-  <header class="page-header">
-    <h2>{title}</h2>
-    <p>{description}</p>
-  </header>
+<MethodPage {resultsStale}>
+  {#snippet header()}
+    <MethodHeader
+      {title}
+      {description}
+      category="Continuous"
+      badges={[solveModeLabel, alternativeLabel, "Superiority"]}
+    />
+  {/snippet}
 
-  <div class="panels">
-    <section class="panel">
-      <h3>Parameters</h3>
+  {#snippet parameters()}
+    <Panel title="Parameters">
+      <Section title="Design">
+        <Field label="Solve mode">
+          {#snippet control()}
+            <select bind:value={solveMode}>
+              <option value="sample_size">Sample size</option>
+              <option value="power">Power</option>
+            </select>
+          {/snippet}
+        </Field>
 
-      <label>
-        Solve mode
-        <select bind:value={solveMode}>
-          <option value="sample_size">Sample size</option>
-          <option value="power">Power</option>
-        </select>
-      </label>
+        <Field label="Alternative hypothesis">
+          {#snippet control()}
+            <select bind:value={alternative}>
+              <option value="two_sided">Two-sided</option>
+              <option value="greater">Greater</option>
+              <option value="less">Less</option>
+            </select>
+          {/snippet}
+        </Field>
 
-      <label>
-        Alternative hypothesis
-        <select bind:value={alternative}>
-          <option value="two_sided">Two-sided</option>
-          <option value="greater">Greater</option>
-          <option value="less">Less</option>
-        </select>
-      </label>
+        <Field label="Type I error (alpha)">
+          {#snippet control()}
+            <input type="number" min="0" max="1" step="0.001" bind:value={alpha} />
+          {/snippet}
+        </Field>
 
-      <label>
-        Type I error (alpha)
-        <input type="number" min="0" max="1" step="0.001" bind:value={alpha} />
-      </label>
+        {#if solveMode === "sample_size"}
+          <Field label="Target power">
+            {#snippet control()}
+              <input type="number" min="0" max="1" step="0.01" bind:value={power} />
+            {/snippet}
+          </Field>
+        {:else}
+          <Field label={sizeLabel}>
+            {#snippet control()}
+              <input type="number" min="2" step="1" bind:value={size} />
+            {/snippet}
+          </Field>
+        {/if}
 
-      {#if solveMode === "sample_size"}
-        <label>
-          Target power
-          <input type="number" min="0" max="1" step="0.01" bind:value={power} />
-        </label>
-      {:else}
-        <label>
-          {sizeLabel}
-          <input type="number" min="2" step="1" bind:value={size} />
-        </label>
-      {/if}
+        <Field label={meanDifferenceLabel}>
+          {#snippet control()}
+            <input type="number" step="0.01" bind:value={meanDifference} />
+          {/snippet}
+        </Field>
 
-      <label>
-        {meanDifferenceLabel}
-        <input type="number" step="0.01" bind:value={meanDifference} />
-      </label>
+        <Field label="Standard deviation">
+          {#snippet control()}
+            <input type="number" min="0" step="0.01" bind:value={standardDeviation} />
+          {/snippet}
+        </Field>
+      </Section>
 
-      <label>
-        Standard deviation
-        <input type="number" min="0" step="0.01" bind:value={standardDeviation} />
-      </label>
+      <Section title="Advanced" collapsible defaultCollapsed={true}>
+        <Field label="Dropout rate (optional)">
+          {#snippet control()}
+            <input type="number" min="0" max="0.99" step="0.01" bind:value={dropoutRate} />
+          {/snippet}
+        </Field>
+      </Section>
 
-      <label>
-        Dropout rate (optional)
-        <input type="number" min="0" max="0.99" step="0.01" bind:value={dropoutRate} />
-      </label>
-
-      <button onclick={calculate} disabled={calculating}>
+      <PrimaryButton fullWidth disabled={calculating} onclick={calculate}>
         {calculating ? "Calculating…" : "Calculate"}
-      </button>
+      </PrimaryButton>
 
       {#if errorMessage}
-        <p class="error">{errorMessage}</p>
+        <p class="error text-danger">{errorMessage}</p>
       {/if}
-    </section>
+    </Panel>
+  {/snippet}
 
-    <section class="panel">
-      <h3>Results</h3>
-
-      {#if oneSampleResult}
-        <dl class="results">
-          <dt>{sizeLabel}</dt>
-          <dd>{oneSampleResult.n}</dd>
-          <dt>Achieved power</dt>
-          <dd>{oneSampleResult.achievedPower.toFixed(4)}</dd>
-          <dt>Effect size (Cohen's d)</dt>
-          <dd>{oneSampleResult.effectSize.toFixed(4)}</dd>
-          {#if oneSampleResult.nAdjusted !== oneSampleResult.n}
-            <dt>Dropout-adjusted N</dt>
-            <dd>{oneSampleResult.nAdjusted}</dd>
-          {/if}
-        </dl>
-        {#if oneSampleResult.warnings.length > 0}
-          <div class="warnings">
-            <h4>Warnings</h4>
-            <ul>
-              {#each oneSampleResult.warnings as warning}
-                <li><strong>{warning.code}:</strong> {warning.message}</li>
-              {/each}
-            </ul>
-          </div>
-        {/if}
-        <ExportMenu {title} markdown={exportMarkdown} />
-        <SensitivityPanel
-          ready={true}
-          inputSignature={sensitivitySignature}
-          command="calculate_one_sample_ttest"
-          buildInput={buildOneSampleInput}
-          options={oneSampleSensitivity}
-          getOutputValue={(value) => {
-            const result = value as OneSampleTTestResult;
-            return solveMode === "sample_size" ? result.n : result.achievedPower;
-          }}
-          outputLabel={sensitivityOutputLabel}
+  {#snippet results()}
+    <Panel title="Results">
+      {#if oneSampleResult || pairedResult}
+        <ResultHero label={heroLabel} value={heroValue} />
+        <ResultGrid items={resultItems} />
+        <WarningList warnings={activeWarnings} />
+        <AssumptionsCard
+          items={variant === "one_sample"
+            ? [
+                "Independent observations with approximately normal endpoints.",
+                "Known or estimated standard deviation held fixed for planning.",
+                "Superiority design; use adjusted alpha from multiplicity tools when applicable.",
+              ]
+            : [
+                "Paired differences are approximately normally distributed.",
+                "Independence across subject pairs; correlation structure captured by paired SD.",
+                "Superiority design; use adjusted alpha from multiplicity tools when applicable.",
+              ]}
         />
-      {:else if pairedResult}
-        <dl class="results">
-          <dt>{sizeLabel}</dt>
-          <dd>{pairedResult.nPairs}</dd>
-          <dt>Achieved power</dt>
-          <dd>{pairedResult.achievedPower.toFixed(4)}</dd>
-          <dt>Effect size (Cohen's d)</dt>
-          <dd>{pairedResult.effectSize.toFixed(4)}</dd>
-          {#if pairedResult.nPairsAdjusted !== pairedResult.nPairs}
-            <dt>Dropout-adjusted pairs</dt>
-            <dd>{pairedResult.nPairsAdjusted}</dd>
-          {/if}
-        </dl>
-        {#if pairedResult.warnings.length > 0}
-          <div class="warnings">
-            <h4>Warnings</h4>
-            <ul>
-              {#each pairedResult.warnings as warning}
-                <li><strong>{warning.code}:</strong> {warning.message}</li>
-              {/each}
-            </ul>
-          </div>
-        {/if}
         <ExportMenu {title} markdown={exportMarkdown} />
-        <SensitivityPanel
-          ready={true}
-          inputSignature={sensitivitySignature}
-          command="calculate_paired_ttest"
-          buildInput={buildPairedInput}
-          options={pairedSensitivity}
-          getOutputValue={(value) => {
-            const result = value as PairedTTestResult;
-            return solveMode === "sample_size" ? result.nPairs : result.achievedPower;
-          }}
-          outputLabel={sensitivityOutputLabel}
-        />
+        {#if oneSampleResult}
+          <SensitivityPanel
+            ready={true}
+            defaultExpanded={true}
+            chartFileStem="clinsize-sensitivity-one-sample-ttest"
+            inputSignature={lastCalculatedSignature ?? inputSignature}
+            command="calculate_one_sample_ttest"
+            buildInput={buildOneSampleInput}
+            options={oneSampleSensitivity}
+            getOutputValue={(value) => {
+              const row = value as OneSampleTTestResult;
+              return solveMode === "sample_size" ? row.n : row.achievedPower;
+            }}
+            outputLabel={sensitivityOutputLabel}
+          />
+        {:else if pairedResult}
+          <SensitivityPanel
+            ready={true}
+            defaultExpanded={true}
+            chartFileStem="clinsize-sensitivity-paired-ttest"
+            inputSignature={lastCalculatedSignature ?? inputSignature}
+            command="calculate_paired_ttest"
+            buildInput={buildPairedInput}
+            options={pairedSensitivity}
+            getOutputValue={(value) => {
+              const row = value as PairedTTestResult;
+              return solveMode === "sample_size" ? row.nPairs : row.achievedPower;
+            }}
+            outputLabel={sensitivityOutputLabel}
+          />
+        {/if}
       {:else}
-        <p class="muted">Enter parameters and calculate to see results.</p>
+        <p class="empty text-muted">Enter parameters and calculate to see results.</p>
       {/if}
-    </section>
-  </div>
-</div>
+    </Panel>
+  {/snippet}
+</MethodPage>
 
 <style>
-  .method-page {
-    padding: 1.5rem;
-  }
-
-  .page-header h2 {
-    margin: 0;
-    font-size: 1.125rem;
-    font-weight: 600;
-  }
-
-  .page-header p {
-    margin: 0.35rem 0 0;
-    color: var(--muted);
-    font-size: 0.875rem;
-  }
-
-  .panels {
-    display: grid;
-    grid-template-columns: 20rem 1fr;
-    gap: 1rem;
-    margin-top: 1.25rem;
-  }
-
-  .panel {
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    background: var(--panel);
-    padding: 1rem;
-  }
-
-  h3 {
-    margin: 0 0 0.75rem;
-    font-size: 0.9375rem;
-    font-weight: 600;
-  }
-
-  label {
-    display: grid;
-    gap: 0.25rem;
-    margin-bottom: 0.75rem;
-    font-size: 0.8125rem;
-  }
-
-  input,
-  select {
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 0.35rem 0.5rem;
-    font-size: 0.875rem;
-    background: var(--background);
-  }
-
-  button {
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 0.45rem 0.75rem;
-    background: var(--background);
-    cursor: pointer;
-    font-size: 0.875rem;
-  }
-
-  button.secondary {
-    margin-top: 1rem;
-  }
-
-  button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  .results {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 0.35rem 1rem;
-    font-size: 0.875rem;
-    margin: 0;
-  }
-
-  dt {
-    color: var(--muted);
-  }
-
-  dd {
-    margin: 0;
-    font-weight: 500;
-  }
-
-  .warnings {
-    margin-top: 1rem;
-    font-size: 0.8125rem;
-  }
-
-  .warnings h4 {
-    margin: 0 0 0.35rem;
-    font-size: 0.8125rem;
-  }
-
-  .warnings ul {
-    margin: 0;
-    padding-left: 1.1rem;
-    color: var(--muted);
-  }
-
   .error {
-    color: #9b1c1c;
-    font-size: 0.8125rem;
     margin: 0.75rem 0 0;
+    font-size: 0.8125rem;
   }
 
-  .muted {
-    color: var(--muted);
+  .empty {
+    margin: 0;
     font-size: 0.875rem;
   }
 </style>

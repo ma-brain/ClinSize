@@ -26,14 +26,14 @@ The left side should help users choose endpoint category and method. The center 
 
 Use a restrained professional style:
 
-- Neutral background.
-- Clear typography.
-- Compact panels.
+- Neutral background with a shared design token layer (`apps/desktop/src/app.css`).
+- Source Serif 4 for method titles and primary results; IBM Plex Sans for UI text.
+- Compact panels with a dedicated results column on method screens.
 - Tables where comparison matters.
-- Charts with readable axes and labels.
-- Minimal decoration.
+- Charts with readable axes and labels; a single accent gradient on sensitivity lines only.
+- Minimal decoration on chrome; no marketing hero pages.
 
-Avoid marketing-style hero pages, oversized cards, decorative gradients, and layouts that waste space.
+Avoid marketing-style hero pages, oversized cards, decorative gradients on navigation or panels, and layouts that waste space.
 
 ## Calculation Form Pattern
 

@@ -13,6 +13,8 @@
     outputLabel,
     formatParameterValue,
     formatOutputValue,
+    defaultExpanded = false,
+    chartFileStem,
   }: {
     ready: boolean;
     inputSignature: string;
@@ -23,9 +25,12 @@
     outputLabel: string;
     formatParameterValue?: (parameterId: string, value: number) => string;
     formatOutputValue?: (value: number) => string;
+    defaultExpanded?: boolean;
+    chartFileStem?: string;
   } = $props();
 
-  let expanded = $state(false);
+  const initialExpanded = defaultExpanded;
+  let expanded = $state(initialExpanded);
   let selectedOptionId = $state("");
   let points = $state<SensitivityPoint[]>([]);
   let running = $state(false);
@@ -91,7 +96,7 @@
     if (outputLabel.toLowerCase().includes("power")) {
       return value.toFixed(3);
     }
-    return Number.isInteger(value) ? String(value) : value.toFixed(1);
+    return String(Math.ceil(value));
   }
 
   const formatParameter = (parameterId: string, value: number) =>
@@ -99,6 +104,14 @@
 
   const formatOutput = (value: number) =>
     formatOutputValue?.(value) ?? defaultFormatOutput(value);
+
+  const chartStem = $derived(
+    chartFileStem ??
+      `clinsize-sensitivity-${(selectedOption?.label ?? "chart")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "")}`,
+  );
 </script>
 
 <section class="sensitivity">
@@ -127,7 +140,7 @@
           </select>
         </label>
 
-        <button type="button" onclick={runSensitivity} disabled={running || !selectedOption}>
+        <button type="button" class="run-button" onclick={runSensitivity} disabled={running || !selectedOption}>
           {running ? "Running…" : "Run sensitivity"}
         </button>
       </div>
@@ -141,8 +154,9 @@
           {points}
           parameterLabel={selectedOption.label}
           {outputLabel}
+          fileStem={chartStem}
           formatParameterValue={(value) => formatParameter(selectedOption.id, value)}
-          {formatOutputValue}
+          formatOutputValue={formatOutput}
         />
 
         <table class="table">
@@ -193,35 +207,61 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.75rem;
-    align-items: end;
+    align-items: flex-end;
     margin-top: 0.75rem;
   }
 
   label {
     display: grid;
-    gap: 0.25rem;
+    gap: 0.35rem;
     font-size: 0.8125rem;
+    font-weight: 500;
   }
 
-  select {
+  .controls select,
+  .run-button {
+    box-sizing: border-box;
+    min-height: 2.375rem;
+    padding: 0.5rem 0.75rem;
     border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 0.35rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font: inherit;
     font-size: 0.875rem;
-    background: var(--background);
+    line-height: 1.2;
+    color: var(--text-primary);
+  }
+
+  .run-button {
+    background: var(--bg-panel);
+  }
+
+  .controls select {
     min-width: 12rem;
+    appearance: none;
+    background-color: var(--bg-panel);
+    background-image: linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+      linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+    background-position:
+      calc(100% - 1.1rem) calc(50% - 0.15rem),
+      calc(100% - 0.8rem) calc(50% - 0.15rem);
+    background-size:
+      0.35rem 0.35rem,
+      0.35rem 0.35rem;
+    background-repeat: no-repeat;
+    padding-right: 2rem;
   }
 
-  button:not(.toggle) {
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 0.45rem 0.75rem;
-    background: var(--background);
+  .run-button {
     cursor: pointer;
-    font-size: 0.875rem;
+    white-space: nowrap;
   }
 
-  button:disabled {
+  .run-button:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .run-button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
   }

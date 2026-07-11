@@ -339,8 +339,13 @@ fn export_markdown_as_html(markdown: String, title: String) -> String {
 }
 
 #[tauri::command]
-fn export_markdown_as_word_html(markdown: String, title: String) -> String {
-    clinsize_core::reports::html::markdown_to_word_html_document(&markdown, &title)
+fn export_markdown_as_docx(markdown: String, title: String) -> Result<Vec<u8>, AppError> {
+    clinsize_core::reports::docx::markdown_to_docx_bytes(&markdown, &title).map_err(AppError::from)
+}
+
+#[tauri::command]
+fn export_markdown_as_pdf(markdown: String, title: String) -> Result<Vec<u8>, AppError> {
+    clinsize_core::reports::pdf::markdown_to_pdf_bytes(&markdown, &title).map_err(AppError::from)
 }
 
 #[tauri::command]
@@ -364,7 +369,8 @@ pub fn run() {
             read_project_file,
             write_project_file,
             export_markdown_as_html,
-            export_markdown_as_word_html,
+            export_markdown_as_docx,
+            export_markdown_as_pdf,
             generate_validation_report,
             calculate_two_sample_ttest,
             export_two_sample_ttest_markdown,

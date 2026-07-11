@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { SensitivityPoint } from "$lib/sensitivity/types";
+  import { exportChartAsPng, exportChartAsSvg } from "$lib/workflow/chartExport";
 
   let {
     points,
@@ -7,13 +8,19 @@
     outputLabel,
     formatParameterValue = (value: number) => value.toFixed(3),
     formatOutputValue = (value: number) => value.toFixed(2),
+    fileStem = "clinsize-sensitivity-chart",
   }: {
     points: SensitivityPoint[];
     parameterLabel: string;
     outputLabel: string;
     formatParameterValue?: (value: number) => string;
     formatOutputValue?: (value: number) => string;
+    fileStem?: string;
   } = $props();
+
+  let svgElement = $state<SVGSVGElement | null>(null);
+  let exporting = $state(false);
+  let exportMessage = $state<string | null>(null);
 
   const width = 520;
   const height = 220;
@@ -37,16 +44,20 @@
     const xSpan = xMax - xMin || 1;
     const ySpan = yMax - yMin || 1;
     const yPadding = ySpan * 0.08;
+    const rawYMin = yMin - yPadding;
+    const yAxisMin = yMin >= 0 ? Math.max(0, rawYMin) : rawYMin;
+    const yAxisMax = yMax + yPadding;
+    const yAxisSpan = yAxisMax - yAxisMin || 1;
 
     return {
       xMin,
       xMax,
-      yMin: yMin - yPadding,
-      yMax: yMax + yPadding,
+      yAxisMin,
+      yAxisMax,
       xToPx: (value: number) => margin.left + ((value - xMin) / xSpan) * plotWidth,
       yToPx: (value: number) =>
-        margin.top + plotHeight - ((value - (yMin - yPadding)) / (ySpan + 2 * yPadding)) * plotHeight,
-      yTicks: [yMin - yPadding, (yMin + yMax) / 2, yMax + yPadding],
+        margin.top + plotHeight - ((value - yAxisMin) / yAxisSpan) * plotHeight,
+      yTicks: [yAxisMin, (yAxisMin + yAxisMax) / 2, yAxisMax],
       xTicks: [xMin, (xMin + xMax) / 2, xMax],
     };
   });
@@ -57,13 +68,44 @@
       .map((point) => `${scales.xToPx(point.parameterValue)},${scales.yToPx(point.outputValue as number)}`)
       .join(" ");
   });
+
+  async function saveChart(format: "png" | "svg") {
+    if (!svgElement) return;
+
+    exporting = true;
+    exportMessage = null;
+    try {
+      const saved =
+        format === "png"
+          ? await exportChartAsPng(svgElement, fileStem)
+          : await exportChartAsSvg(svgElement, fileStem);
+      if (saved) {
+        exportMessage = `Chart saved as ${format.toUpperCase()}.`;
+      }
+    } catch (error) {
+      exportMessage = String(error);
+    } finally {
+      exporting = false;
+    }
+  }
 </script>
 
 {#if validPoints.length === 0}
   <p class="muted">No valid sensitivity points to plot.</p>
 {:else if scales}
   <figure class="chart">
-    <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Sensitivity chart">
+    <svg
+      bind:this={svgElement}
+      viewBox={`0 0 ${width} ${height}`}
+      role="img"
+      aria-label="Sensitivity chart"
+    >
+      <defs>
+        <linearGradient id="sensitivity-line-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="var(--accent)" />
+          <stop offset="100%" stop-color="var(--accent-gradient-end)" />
+        </linearGradient>
+      </defs>
       <line
         x1={margin.left}
         y1={margin.top + plotHeight}
@@ -103,7 +145,7 @@
         </text>
       {/each}
 
-      <polyline points={polyline} class="line" />
+      <polyline points={polyline} class="line" fill="none" />
       {#each validPoints as point}
         <circle
           cx={scales.xToPx(point.parameterValue)}
@@ -131,6 +173,18 @@
         {outputLabel}
       </text>
     </svg>
+
+    <div class="chart-actions">
+      <button type="button" disabled={exporting} onclick={() => saveChart("png")}>
+        Save as PNG
+      </button>
+      <button type="button" disabled={exporting} onclick={() => saveChart("svg")}>
+        Save as SVG
+      </button>
+      {#if exportMessage}
+        <p class="export-message">{exportMessage}</p>
+      {/if}
+    </div>
   </figure>
 {/if}
 
@@ -138,6 +192,42 @@
   .chart {
     margin: 0;
     width: 100%;
+  }
+
+  .chart-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    margin-top: 0.65rem;
+  }
+
+  .chart-actions button {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.4rem 0.7rem;
+    background: var(--bg-panel);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 0.8125rem;
+    cursor: pointer;
+  }
+
+  .chart-actions button:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .chart-actions button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .export-message {
+    width: 100%;
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--text-muted);
   }
 
   svg {
@@ -158,12 +248,12 @@
 
   .line {
     fill: none;
-    stroke: var(--accent);
+    stroke: url(#sensitivity-line-gradient);
     stroke-width: 2;
   }
 
   .point {
-    fill: var(--accent);
+    fill: var(--accent-gradient-end);
   }
 
   .tick {
