@@ -1,5 +1,15 @@
 <script lang="ts">
   import ExportMenu from "$lib/components/ExportMenu.svelte";
+  import MethodPage from "$lib/components/MethodPage.svelte";
+  import AssumptionsCard from "$lib/components/ui/AssumptionsCard.svelte";
+  import Field from "$lib/components/ui/Field.svelte";
+  import MethodHeader from "$lib/components/ui/MethodHeader.svelte";
+  import Panel from "$lib/components/ui/Panel.svelte";
+  import PrimaryButton from "$lib/components/ui/PrimaryButton.svelte";
+  import ResultGrid from "$lib/components/ui/ResultGrid.svelte";
+  import ResultHero from "$lib/components/ui/ResultHero.svelte";
+  import Section from "$lib/components/ui/Section.svelte";
+  import WarningList from "$lib/components/ui/WarningList.svelte";
   import { persistCalculation } from "$lib/workflow/record";
   import type {
     Alternative,
@@ -22,6 +32,73 @@
   let exportMarkdown = $state<string | null>(null);
   let errorMessage = $state<string | null>(null);
   let calculating = $state(false);
+  let lastCalculatedSignature = $state<string | null>(null);
+
+  const inputSignature = $derived(
+    JSON.stringify({
+      alpha,
+      targetPower,
+      meanDifference,
+      plannedStandardDeviation,
+      blindedInterimStandardDeviation,
+      interimFraction,
+      allocationRatio,
+      maxSampleSizeMultiplier,
+      alternative,
+    }),
+  );
+
+  const resultsStale = $derived(
+    result !== null &&
+      lastCalculatedSignature !== null &&
+      lastCalculatedSignature !== inputSignature,
+  );
+
+  const alternativeLabel = $derived(
+    alternative === "two_sided"
+      ? "Two-sided"
+      : alternative === "greater"
+        ? "Greater"
+        : "Less",
+  );
+
+  const resultItems = $derived(
+    result
+      ? [
+          {
+            label: "Planned per-arm N",
+            value: `${result.plannedNControl} / ${result.plannedNTreatment}`,
+          },
+          { label: "Planned total N", value: String(result.plannedTotalN) },
+          {
+            label: "Interim per-arm N",
+            value: `${result.interimNControl} / ${result.interimNTreatment}`,
+          },
+          { label: "Variance ratio (s_b/σ₀)²", value: result.varianceRatio.toFixed(4) },
+          {
+            label: "Re-estimated per-arm N",
+            value: `${result.reEstimatedNControl} / ${result.reEstimatedNTreatment}`,
+          },
+          {
+            label: "Inflation factor",
+            value: result.sampleSizeInflationFactor.toFixed(4),
+          },
+          {
+            label: "Capped per-arm N",
+            value: `${result.cappedNControl} / ${result.cappedNTreatment}`,
+          },
+          { label: "Capped total N", value: String(result.cappedTotalN) },
+          {
+            label: "Capped inflation factor",
+            value: result.cappedInflationFactor.toFixed(4),
+          },
+          {
+            label: "Achieved power at capped N",
+            value: result.achievedPowerAtCapped.toFixed(4),
+          },
+        ]
+      : [],
+  );
 
   function buildInput(): BlindedSsreInput {
     const input: BlindedSsreInput = {
@@ -54,6 +131,7 @@
         input,
         result,
       });
+      lastCalculatedSignature = inputSignature;
       persistCalculation({
         methodId: "design.blinded_ssre",
         methodName: "Blinded sample size re-estimation",
@@ -63,6 +141,7 @@
     } catch (error) {
       result = null;
       exportMarkdown = null;
+      lastCalculatedSignature = null;
       errorMessage = String(error);
     } finally {
       calculating = false;
@@ -70,265 +149,144 @@
   }
 </script>
 
-<div class="method-page">
-  <header class="page-header">
-    <h2>Blinded sample size re-estimation</h2>
-    <p>
-      Plan a two-sample t-test with blinded variance re-estimation at an interim
-      look. Uses the Friede-Kieser rule: update sample size from the blinded
-      pooled interim SD while holding the planned treatment effect fixed.
-    </p>
-  </header>
+<MethodPage {resultsStale}>
+  {#snippet header()}
+    <MethodHeader
+      title="Blinded sample size re-estimation"
+      description="Plan a two-sample t-test with blinded variance re-estimation at an interim look. Uses the Friede-Kieser rule: update sample size from the blinded pooled interim SD while holding the planned treatment effect fixed."
+      category="Design"
+      badges={[alternativeLabel, "Friede-Kieser"]}
+    />
+  {/snippet}
 
-  <div class="panels">
-    <section class="panel">
-      <h3>Parameters</h3>
+  {#snippet parameters()}
+    <Panel title="Parameters">
+      <Section title="Design">
+        <Field label="Alpha">
+          {#snippet control()}
+            <input type="number" min="0" max="1" step="0.001" bind:value={alpha} />
+          {/snippet}
+        </Field>
 
-      <label>
-        Alpha
-        <input type="number" min="0" max="1" step="0.001" bind:value={alpha} />
-      </label>
+        <Field label="Target power">
+          {#snippet control()}
+            <input type="number" min="0" max="1" step="0.01" bind:value={targetPower} />
+          {/snippet}
+        </Field>
 
-      <label>
-        Target power
-        <input type="number" min="0" max="1" step="0.01" bind:value={targetPower} />
-      </label>
+        <Field label="Mean difference (treatment − control)">
+          {#snippet control()}
+            <input type="number" step="0.1" bind:value={meanDifference} />
+          {/snippet}
+        </Field>
 
-      <label>
-        Mean difference (treatment − control)
-        <input type="number" step="0.1" bind:value={meanDifference} />
-      </label>
+        <Field label="Planned standard deviation (σ₀)">
+          {#snippet control()}
+            <input type="number" min="0" step="0.1" bind:value={plannedStandardDeviation} />
+          {/snippet}
+        </Field>
 
-      <label>
-        Planned standard deviation (σ₀)
-        <input type="number" min="0" step="0.1" bind:value={plannedStandardDeviation} />
-      </label>
+        <Field label="Alternative">
+          {#snippet control()}
+            <select bind:value={alternative}>
+              <option value="two_sided">Two-sided</option>
+              <option value="greater">Greater (one-sided)</option>
+              <option value="less">Less (one-sided)</option>
+            </select>
+          {/snippet}
+        </Field>
+      </Section>
 
-      <label>
-        Blinded interim SD (s_b, optional)
-        <input
-          type="number"
-          min="0"
-          step="0.1"
-          bind:value={blindedInterimStandardDeviation}
-          placeholder="Defaults to planned SD"
-        />
-      </label>
+      <Section title="Interim re-estimation" collapsible defaultCollapsed={false}>
+        <Field label="Blinded interim SD (s_b, optional)" hint="Defaults to planned SD when blank.">
+          {#snippet control()}
+            <input
+              type="number"
+              min="0"
+              step="0.1"
+              bind:value={blindedInterimStandardDeviation}
+              placeholder="Defaults to planned SD"
+            />
+          {/snippet}
+        </Field>
 
-      <label>
-        Interim fraction (τ)
-        <input type="number" min="0" max="1" step="0.05" bind:value={interimFraction} />
-      </label>
+        <Field label="Interim fraction (τ)">
+          {#snippet control()}
+            <input type="number" min="0" max="1" step="0.05" bind:value={interimFraction} />
+          {/snippet}
+        </Field>
 
-      <label>
-        Allocation ratio (treatment / control)
-        <input type="number" min="0" step="0.1" bind:value={allocationRatio} />
-      </label>
+        <Field label="Allocation ratio (treatment / control)">
+          {#snippet control()}
+            <input type="number" min="0" step="0.1" bind:value={allocationRatio} />
+          {/snippet}
+        </Field>
 
-      <label>
-        Maximum sample size multiplier
-        <input type="number" min="1" step="0.1" bind:value={maxSampleSizeMultiplier} />
-      </label>
+        <Field label="Maximum sample size multiplier">
+          {#snippet control()}
+            <input type="number" min="1" step="0.1" bind:value={maxSampleSizeMultiplier} />
+          {/snippet}
+        </Field>
+      </Section>
 
-      <label>
-        Alternative
-        <select bind:value={alternative}>
-          <option value="two_sided">Two-sided</option>
-          <option value="greater">Greater (one-sided)</option>
-          <option value="less">Less (one-sided)</option>
-        </select>
-      </label>
-
-      <button onclick={calculate} disabled={calculating}>
+      <PrimaryButton fullWidth disabled={calculating} onclick={calculate}>
         {calculating ? "Calculating…" : "Calculate"}
-      </button>
+      </PrimaryButton>
 
       {#if errorMessage}
-        <p class="error">{errorMessage}</p>
+        <p class="error text-danger">{errorMessage}</p>
       {/if}
-    </section>
+    </Panel>
+  {/snippet}
 
-    <section class="panel">
-      <h3>Results</h3>
-
+  {#snippet results()}
+    <Panel title="Results">
       {#if result}
-        <dl class="results">
-          <dt>Planned per-arm N</dt>
-          <dd>{result.plannedNControl} / {result.plannedNTreatment}</dd>
-          <dt>Planned total N</dt>
-          <dd>{result.plannedTotalN}</dd>
-          <dt>Interim per-arm N</dt>
-          <dd>{result.interimNControl} / {result.interimNTreatment}</dd>
-          <dt>Variance ratio (s_b/σ₀)²</dt>
-          <dd>{result.varianceRatio.toFixed(4)}</dd>
-          <dt>Re-estimated per-arm N</dt>
-          <dd>{result.reEstimatedNControl} / {result.reEstimatedNTreatment}</dd>
-          <dt>Inflation factor</dt>
-          <dd>{result.sampleSizeInflationFactor.toFixed(4)}</dd>
-          <dt>Capped per-arm N</dt>
-          <dd>{result.cappedNControl} / {result.cappedNTreatment}</dd>
-          <dt>Capped total N</dt>
-          <dd>{result.cappedTotalN}</dd>
-          <dt>Capped inflation factor</dt>
-          <dd>{result.cappedInflationFactor.toFixed(4)}</dd>
-          <dt>Achieved power at capped N</dt>
-          <dd>{result.achievedPowerAtCapped.toFixed(4)}</dd>
-        </dl>
+        <ResultHero label="Capped total N" value={String(result.cappedTotalN)} />
+        <ResultGrid items={resultItems} />
 
         {#if result.wasCapped}
           <p class="hint">
-            Re-estimated sample size exceeded the maximum multiplier and was
-            reduced to the pre-specified cap.
+            Re-estimated sample size exceeded the maximum multiplier and was reduced to the
+            pre-specified cap.
           </p>
         {/if}
 
-        {#if result.warnings.length > 0}
-          <div class="warnings">
-            <h4>Warnings</h4>
-            <ul>
-              {#each result.warnings as warning}
-                <li><strong>{warning.code}:</strong> {warning.message}</li>
-              {/each}
-            </ul>
-          </div>
-        {/if}
-
+        <WarningList warnings={result.warnings} />
+        <AssumptionsCard
+          items={[
+            "Blinded pooled interim SD used for variance re-estimation (Friede-Kieser).",
+            "Treatment effect held fixed at the planned value.",
+            "Two-sample t-test with equal variance and pre-specified maximum inflation cap.",
+          ]}
+        />
         <ExportMenu
           title="Blinded sample size re-estimation"
           markdown={exportMarkdown}
           disabled={calculating}
         />
       {:else}
-        <p class="muted">Run a calculation to see re-estimated sample sizes.</p>
+        <p class="empty text-muted">Run a calculation to see re-estimated sample sizes.</p>
       {/if}
-    </section>
-  </div>
-</div>
+    </Panel>
+  {/snippet}
+</MethodPage>
 
 <style>
-  .method-page {
-    padding: 1.5rem;
-  }
-
-  .page-header {
-    margin-bottom: 1.25rem;
-  }
-
-  .page-header h2 {
-    margin: 0 0 0.35rem;
-    font-size: 1.125rem;
-    font-weight: 600;
-  }
-
-  .page-header p {
-    margin: 0;
-    color: var(--muted);
-    font-size: 0.875rem;
-    line-height: 1.5;
-    max-width: 42rem;
-  }
-
-  .panels {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
-    gap: 1rem;
-  }
-
-  .panel {
-    padding: 1.25rem;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    background: var(--panel);
-  }
-
-  .panel h3 {
-    margin: 0 0 1rem;
-    font-size: 0.9375rem;
-    font-weight: 600;
-  }
-
-  label {
-    display: grid;
-    gap: 0.35rem;
-    margin-bottom: 0.85rem;
-    font-size: 0.8125rem;
-    font-weight: 500;
-  }
-
-  input,
-  select {
-    padding: 0.45rem 0.55rem;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    font: inherit;
-  }
-
-  button {
-    margin-top: 0.25rem;
-    padding: 0.5rem 0.85rem;
-    border: none;
-    border-radius: 4px;
-    background: var(--accent);
-    color: #fff;
-    font: inherit;
-    font-weight: 500;
-    cursor: pointer;
-  }
-
-  button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  .results {
-    margin: 0;
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 0.35rem 1rem;
-    font-size: 0.875rem;
-  }
-
-  dt {
-    color: var(--muted);
-  }
-
-  dd {
-    margin: 0;
-    font-weight: 500;
-  }
-
   .hint {
     margin: 1rem 0 0;
     font-size: 0.8125rem;
-    color: var(--muted);
+    color: var(--text-muted);
     line-height: 1.5;
-  }
-
-  .warnings {
-    margin-top: 1rem;
-    font-size: 0.8125rem;
-  }
-
-  .warnings h4 {
-    margin: 0 0 0.5rem;
-    font-size: 0.8125rem;
-  }
-
-  .warnings ul {
-    margin: 0;
-    padding-left: 1.1rem;
-    color: var(--muted);
   }
 
   .error {
     margin: 0.75rem 0 0;
-    color: #b42318;
     font-size: 0.8125rem;
   }
 
-  .muted {
+  .empty {
     margin: 0;
-    color: var(--muted);
     font-size: 0.875rem;
   }
 </style>

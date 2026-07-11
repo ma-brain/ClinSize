@@ -1,14 +1,21 @@
 import { invoke } from "@tauri-apps/api/core";
 import { save } from "@tauri-apps/plugin-dialog";
-import { writeTextFile } from "@tauri-apps/plugin-fs";
+import { writeFile, writeTextFile } from "@tauri-apps/plugin-fs";
 
 export type ExportFormat = "markdown" | "html" | "word" | "pdf";
 
 const EXTENSIONS: Record<ExportFormat, string> = {
   markdown: "md",
   html: "html",
-  word: "doc",
-  pdf: "html",
+  word: "docx",
+  pdf: "pdf",
+};
+
+const FILTER_NAMES: Record<ExportFormat, string> = {
+  markdown: "Markdown",
+  html: "HTML",
+  word: "Word document",
+  pdf: "PDF",
 };
 
 export async function exportCalculationSummary(options: {
@@ -19,18 +26,31 @@ export async function exportCalculationSummary(options: {
   const extension = EXTENSIONS[options.format];
   const path = await save({
     defaultPath: `clinsize-${slugify(options.title)}.${extension}`,
-    filters: [{ name: options.format.toUpperCase(), extensions: [extension] }],
+    filters: [{ name: FILTER_NAMES[options.format], extensions: [extension] }],
   });
   if (!path) return;
 
-  let contents = options.markdown;
-  if (options.format === "html" || options.format === "pdf") {
-    contents = await invoke<string>("export_markdown_as_html", {
+  if (options.format === "pdf") {
+    const pdfBytes = await invoke<number[]>("export_markdown_as_pdf", {
       markdown: options.markdown,
       title: options.title,
     });
-  } else if (options.format === "word") {
-    contents = await invoke<string>("export_markdown_as_word_html", {
+    await writeFile(path, new Uint8Array(pdfBytes));
+    return;
+  }
+
+  if (options.format === "word") {
+    const docxBytes = await invoke<number[]>("export_markdown_as_docx", {
+      markdown: options.markdown,
+      title: options.title,
+    });
+    await writeFile(path, new Uint8Array(docxBytes));
+    return;
+  }
+
+  let contents = options.markdown;
+  if (options.format === "html") {
+    contents = await invoke<string>("export_markdown_as_html", {
       markdown: options.markdown,
       title: options.title,
     });

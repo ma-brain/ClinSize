@@ -1,0 +1,79 @@
+:root {
+  --bg-canvas: #f5f6f8;
+  --bg-panel: #ffffff;
+  --bg-subtle: #eef0f4;
+  --bg-rail: #ffffff;
+  --text-primary: #14171c;
+  --text-muted: #5b6470;
+  --border: #d9dee6;
+  --accent: #3b5bdb;
+  --accent-soft: #e8edff;
+  --accent-gradient-end: #6c7ae6;
+  --success: #2f6b4f;
+  --warning: #9a6700;
+  --danger: #b42318;
+  --rail-width: 15rem;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --shadow-panel: 0 1px 2px rgba(20, 23, 28, 0.06);
+  --font-ui: "IBM Plex Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  --font-display: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --transition-fast: 120ms ease;
+
+  /* Legacy aliases for views not yet migrated */
+  --background: var(--bg-canvas);
+  --panel: var(--bg-panel);
+  --text: var(--text-primary);
+  --muted: var(--text-muted);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  background: var(--bg-canvas);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+.text-danger {
+  color: var(--danger);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

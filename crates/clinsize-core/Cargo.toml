@@ -10,6 +10,9 @@ serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
 r_mathlib = "0.2"
+markdown2pdf = "1.5.0"
+pulldown-cmark = { version = "0.13", default-features = false, features = ["html"] }
+docx = "1.1.2"
 
 [dev-dependencies]
 approx.workspace = true

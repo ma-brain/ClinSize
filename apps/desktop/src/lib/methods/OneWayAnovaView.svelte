@@ -1,6 +1,16 @@
 <script lang="ts">
   import ExportMenu from "$lib/components/ExportMenu.svelte";
+  import MethodPage from "$lib/components/MethodPage.svelte";
   import SensitivityPanel from "$lib/components/SensitivityPanel.svelte";
+  import AssumptionsCard from "$lib/components/ui/AssumptionsCard.svelte";
+  import Field from "$lib/components/ui/Field.svelte";
+  import MethodHeader from "$lib/components/ui/MethodHeader.svelte";
+  import Panel from "$lib/components/ui/Panel.svelte";
+  import PrimaryButton from "$lib/components/ui/PrimaryButton.svelte";
+  import ResultGrid from "$lib/components/ui/ResultGrid.svelte";
+  import ResultHero from "$lib/components/ui/ResultHero.svelte";
+  import Section from "$lib/components/ui/Section.svelte";
+  import WarningList from "$lib/components/ui/WarningList.svelte";
   import { oneWayAnovaSensitivityOptions } from "$lib/sensitivity/configs";
   import { persistCalculation } from "$lib/workflow/record";
   import type { OneWayAnovaInput, OneWayAnovaResult, SolveMode } from "$lib/types";
@@ -19,19 +29,9 @@
   let exportMarkdown = $state<string | null>(null);
   let errorMessage = $state<string | null>(null);
   let calculating = $state(false);
+  let lastCalculatedSignature = $state<string | null>(null);
 
-  const sensitivityOptions = $derived(
-    oneWayAnovaSensitivityOptions(
-      solveMode,
-      betweenVariance,
-      withinSd,
-      alpha,
-      power,
-      dropoutRate,
-    ),
-  );
-
-  const sensitivitySignature = $derived(
+  const inputSignature = $derived(
     JSON.stringify({
       solveMode,
       alpha,
@@ -44,8 +44,61 @@
     }),
   );
 
+  const resultsStale = $derived(
+    result !== null &&
+      lastCalculatedSignature !== null &&
+      lastCalculatedSignature !== inputSignature,
+  );
+
+  const sensitivityOptions = $derived(
+    oneWayAnovaSensitivityOptions(
+      solveMode,
+      betweenVariance,
+      withinSd,
+      alpha,
+      power,
+      dropoutRate,
+    ),
+  );
+
+  const solveModeLabel = $derived(
+    solveMode === "sample_size" ? "Sample size" : "Power",
+  );
+
   const sensitivityOutputLabel = $derived(
     solveMode === "sample_size" ? "Total sample size" : "Achieved power",
+  );
+
+  const heroLabel = $derived(
+    solveMode === "sample_size" ? "Total sample size" : "Achieved power",
+  );
+
+  const heroValue = $derived(
+    result
+      ? solveMode === "sample_size"
+        ? String(result.totalN)
+        : result.achievedPower.toFixed(4)
+      : "—",
+  );
+
+  const resultItems = $derived(
+    result
+      ? [
+          { label: "N per group", value: String(result.nPerGroup) },
+          { label: "Total N", value: String(result.totalN) },
+          { label: "Achieved power", value: result.achievedPower.toFixed(4) },
+          { label: "Effect size (Cohen's f)", value: result.effectSize.toFixed(4) },
+          ...(result.nPerGroupAdjusted !== result.nPerGroup
+            ? [
+                {
+                  label: "Dropout-adjusted total N",
+                  value: String(result.totalNAdjusted),
+                  highlight: true,
+                },
+              ]
+            : []),
+        ]
+      : [],
   );
 
   function buildInput(): OneWayAnovaInput {
@@ -74,12 +127,12 @@
   async function calculate() {
     calculating = true;
     errorMessage = null;
-    result = null;
 
     try {
       const input = buildInput();
       result = await invoke<OneWayAnovaResult>("calculate_one_way_anova", { input });
       exportMarkdown = await invoke<string>("export_one_way_anova_markdown", { input, result });
+      lastCalculatedSignature = inputSignature;
       persistCalculation({
         methodId: "continuous.one_way_anova",
         methodName: "One-way ANOVA",
@@ -87,114 +140,114 @@
         result,
       });
     } catch (error) {
-      errorMessage = String(error);
+      result = null;
       exportMarkdown = null;
+      lastCalculatedSignature = null;
+      errorMessage = String(error);
     } finally {
       calculating = false;
     }
   }
-
 </script>
 
-<div class="method-page">
-  <header class="page-header">
-    <h2>One-way ANOVA</h2>
-    <p>Balanced fixed-effect comparison of means across multiple groups.</p>
-  </header>
+<MethodPage {resultsStale}>
+  {#snippet header()}
+    <MethodHeader
+      title="One-way ANOVA"
+      description="Balanced fixed-effect comparison of means across multiple groups."
+      category="Continuous"
+      badges={[solveModeLabel, "Balanced groups"]}
+    />
+  {/snippet}
 
-  <div class="panels">
-    <section class="panel">
-      <h3>Parameters</h3>
+  {#snippet parameters()}
+    <Panel title="Parameters">
+      <Section title="Design">
+        <Field label="Solve mode">
+          {#snippet control()}
+            <select bind:value={solveMode}>
+              <option value="sample_size">Sample size</option>
+              <option value="power">Power</option>
+            </select>
+          {/snippet}
+        </Field>
 
-      <label>
-        Solve mode
-        <select bind:value={solveMode}>
-          <option value="sample_size">Sample size</option>
-          <option value="power">Power</option>
-        </select>
-      </label>
+        <Field label="Number of groups">
+          {#snippet control()}
+            <input type="number" min="2" step="1" bind:value={nGroups} />
+          {/snippet}
+        </Field>
 
-      <label>
-        Number of groups
-        <input type="number" min="2" step="1" bind:value={nGroups} />
-      </label>
+        <Field label="Type I error (alpha)">
+          {#snippet control()}
+            <input type="number" min="0" max="1" step="0.001" bind:value={alpha} />
+          {/snippet}
+        </Field>
 
-      <label>
-        Type I error (alpha)
-        <input type="number" min="0" max="1" step="0.001" bind:value={alpha} />
-      </label>
-
-      {#if solveMode === "sample_size"}
-        <label>
-          Target power
-          <input type="number" min="0" max="1" step="0.01" bind:value={power} />
-        </label>
-      {:else}
-        <label>
-          N per group
-          <input type="number" min="2" step="1" bind:value={nPerGroup} />
-        </label>
-      {/if}
-
-      <label>
-        Between-group variance
-        <input type="number" min="0" step="0.01" bind:value={betweenVariance} />
-      </label>
-
-      <label>
-        Within-group SD (σ)
-        <input type="number" min="0" step="0.01" bind:value={withinSd} />
-      </label>
-
-      <label>
-        Dropout rate (optional)
-        <input type="number" min="0" max="0.99" step="0.01" bind:value={dropoutRate} />
-      </label>
-
-      <button onclick={calculate} disabled={calculating}>
-        {calculating ? "Calculating…" : "Calculate"}
-      </button>
-
-      {#if errorMessage}
-        <p class="error">{errorMessage}</p>
-      {/if}
-    </section>
-
-    <section class="panel">
-      <h3>Results</h3>
-
-      {#if result}
-        <dl class="results">
-          <dt>N per group</dt>
-          <dd>{result.nPerGroup}</dd>
-          <dt>Total N</dt>
-          <dd>{result.totalN}</dd>
-          <dt>Achieved power</dt>
-          <dd>{result.achievedPower.toFixed(4)}</dd>
-          <dt>Effect size (Cohen's f)</dt>
-          <dd>{result.effectSize.toFixed(4)}</dd>
-          {#if result.nPerGroupAdjusted !== result.nPerGroup}
-            <dt>Dropout-adjusted total N</dt>
-            <dd>{result.totalNAdjusted}</dd>
-          {/if}
-        </dl>
-
-        {#if result.warnings.length > 0}
-          <div class="warnings">
-            <h4>Warnings</h4>
-            <ul>
-              {#each result.warnings as warning}
-                <li><strong>{warning.code}:</strong> {warning.message}</li>
-              {/each}
-            </ul>
-          </div>
+        {#if solveMode === "sample_size"}
+          <Field label="Target power">
+            {#snippet control()}
+              <input type="number" min="0" max="1" step="0.01" bind:value={power} />
+            {/snippet}
+          </Field>
+        {:else}
+          <Field label="N per group">
+            {#snippet control()}
+              <input type="number" min="2" step="1" bind:value={nPerGroup} />
+            {/snippet}
+          </Field>
         {/if}
 
-        <ExportMenu title="One-way ANOVA" markdown={exportMarkdown} />
+        <Field label="Between-group variance">
+          {#snippet control()}
+            <input type="number" min="0" step="0.01" bind:value={betweenVariance} />
+          {/snippet}
+        </Field>
 
+        <Field label="Within-group SD (σ)">
+          {#snippet control()}
+            <input type="number" min="0" step="0.01" bind:value={withinSd} />
+          {/snippet}
+        </Field>
+      </Section>
+
+      <Section title="Advanced" collapsible defaultCollapsed={true}>
+        <Field label="Dropout rate (optional)">
+          {#snippet control()}
+            <input type="number" min="0" max="0.99" step="0.01" bind:value={dropoutRate} />
+          {/snippet}
+        </Field>
+      </Section>
+
+      <PrimaryButton fullWidth disabled={calculating} onclick={calculate}>
+        {calculating ? "Calculating…" : "Calculate"}
+      </PrimaryButton>
+
+      {#if errorMessage}
+        <p class="error text-danger">{errorMessage}</p>
+      {/if}
+    </Panel>
+  {/snippet}
+
+  {#snippet results()}
+    <Panel title="Results">
+      {#if result}
+        <ResultHero label={heroLabel} value={heroValue} />
+        <ResultGrid items={resultItems} />
+        <WarningList warnings={result.warnings} />
+        <AssumptionsCard
+          items={[
+            "Balanced allocation with equal N per group.",
+            "Independent observations with approximately normal endpoints.",
+            "Homogeneous within-group variance across arms.",
+          ]}
+        />
+        <ExportMenu title="One-way ANOVA" markdown={exportMarkdown} />
         <SensitivityPanel
           ready={true}
-          inputSignature={sensitivitySignature}
+          defaultExpanded={true}
+          chartFileStem="clinsize-sensitivity-one-way-anova"
+          inputSignature={lastCalculatedSignature ?? inputSignature}
           command="calculate_one_way_anova"
           buildInput={buildInput}
           options={sensitivityOptions}
@@ -205,124 +258,20 @@
           outputLabel={sensitivityOutputLabel}
         />
       {:else}
-        <p class="muted">Enter parameters and calculate to see results.</p>
+        <p class="empty text-muted">Enter parameters and calculate to see results.</p>
       {/if}
-    </section>
-  </div>
-</div>
+    </Panel>
+  {/snippet}
+</MethodPage>
 
 <style>
-  .method-page {
-    padding: 1.5rem;
-  }
-
-  .page-header h2 {
-    margin: 0;
-    font-size: 1.125rem;
-    font-weight: 600;
-  }
-
-  .page-header p {
-    margin: 0.35rem 0 0;
-    color: var(--muted);
-    font-size: 0.875rem;
-  }
-
-  .panels {
-    display: grid;
-    grid-template-columns: 20rem 1fr;
-    gap: 1rem;
-    margin-top: 1.25rem;
-  }
-
-  .panel {
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    background: var(--panel);
-    padding: 1rem;
-  }
-
-  h3 {
-    margin: 0 0 0.75rem;
-    font-size: 0.9375rem;
-    font-weight: 600;
-  }
-
-  label {
-    display: grid;
-    gap: 0.25rem;
-    margin-bottom: 0.75rem;
-    font-size: 0.8125rem;
-  }
-
-  input,
-  select {
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 0.35rem 0.5rem;
-    font-size: 0.875rem;
-    background: var(--background);
-  }
-
-  button {
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 0.45rem 0.75rem;
-    background: var(--background);
-    cursor: pointer;
-    font-size: 0.875rem;
-  }
-
-  button.secondary {
-    margin-top: 1rem;
-  }
-
-  button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  .results {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 0.35rem 1rem;
-    font-size: 0.875rem;
-    margin: 0;
-  }
-
-  dt {
-    color: var(--muted);
-  }
-
-  dd {
-    margin: 0;
-    font-weight: 500;
-  }
-
-  .warnings {
-    margin-top: 1rem;
-    font-size: 0.8125rem;
-  }
-
-  .warnings h4 {
-    margin: 0 0 0.35rem;
-    font-size: 0.8125rem;
-  }
-
-  .warnings ul {
-    margin: 0;
-    padding-left: 1.1rem;
-    color: var(--muted);
-  }
-
   .error {
-    color: #9b1c1c;
-    font-size: 0.8125rem;
     margin: 0.75rem 0 0;
+    font-size: 0.8125rem;
   }
 
-  .muted {
-    color: var(--muted);
+  .empty {
+    margin: 0;
     font-size: 0.875rem;
   }
 </style>

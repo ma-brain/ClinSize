@@ -1,6 +1,16 @@
 <script lang="ts">
   import ExportMenu from "$lib/components/ExportMenu.svelte";
+  import MethodPage from "$lib/components/MethodPage.svelte";
   import SensitivityPanel from "$lib/components/SensitivityPanel.svelte";
+  import AssumptionsCard from "$lib/components/ui/AssumptionsCard.svelte";
+  import Field from "$lib/components/ui/Field.svelte";
+  import MethodHeader from "$lib/components/ui/MethodHeader.svelte";
+  import Panel from "$lib/components/ui/Panel.svelte";
+  import PrimaryButton from "$lib/components/ui/PrimaryButton.svelte";
+  import ResultGrid from "$lib/components/ui/ResultGrid.svelte";
+  import ResultHero from "$lib/components/ui/ResultHero.svelte";
+  import Section from "$lib/components/ui/Section.svelte";
+  import WarningList from "$lib/components/ui/WarningList.svelte";
   import { twoProportionSensitivityOptions } from "$lib/sensitivity/configs";
   import { persistCalculation } from "$lib/workflow/record";
   import type {
@@ -28,22 +38,9 @@
   let exportMarkdown = $state<string | null>(null);
   let errorMessage = $state<string | null>(null);
   let calculating = $state(false);
+  let lastCalculatedSignature = $state<string | null>(null);
 
-  const sensitivityOptions = $derived(
-    twoProportionSensitivityOptions(
-      solveMode,
-      studyObjective,
-      controlRate,
-      treatmentRate,
-      alpha,
-      power,
-      allocationRatio,
-      dropoutRate,
-      noninferiorityMargin,
-    ),
-  );
-
-  const sensitivitySignature = $derived(
+  const inputSignature = $derived(
     JSON.stringify({
       solveMode,
       studyObjective,
@@ -59,8 +56,79 @@
     }),
   );
 
+  const resultsStale = $derived(
+    result !== null &&
+      lastCalculatedSignature !== null &&
+      lastCalculatedSignature !== inputSignature,
+  );
+
+  const sensitivityOptions = $derived(
+    twoProportionSensitivityOptions(
+      solveMode,
+      studyObjective,
+      controlRate,
+      treatmentRate,
+      alpha,
+      power,
+      allocationRatio,
+      dropoutRate,
+      noninferiorityMargin,
+    ),
+  );
+
+  const objectiveLabel = $derived(
+    studyObjective === "superiority" ? "Superiority" : "Non-inferiority",
+  );
+
+  const solveModeLabel = $derived(
+    solveMode === "sample_size" ? "Sample size" : "Power",
+  );
+
+  const alternativeLabel = $derived(
+    studyObjective === "non_inferiority"
+      ? "One-sided (greater)"
+      : alternative === "two_sided"
+        ? "Two-sided"
+        : alternative === "greater"
+          ? "Greater"
+          : "Less",
+  );
+
   const sensitivityOutputLabel = $derived(
     solveMode === "sample_size" ? "Total sample size" : "Achieved power",
+  );
+
+  const heroLabel = $derived(
+    solveMode === "sample_size" ? "Total sample size" : "Achieved power",
+  );
+
+  const heroValue = $derived(
+    result
+      ? solveMode === "sample_size"
+        ? String(result.totalN)
+        : result.achievedPower.toFixed(4)
+      : "—",
+  );
+
+  const resultItems = $derived(
+    result
+      ? [
+          { label: "Control N", value: String(result.nControl) },
+          { label: "Treatment N", value: String(result.nTreatment) },
+          { label: "Total N", value: String(result.totalN) },
+          { label: "Achieved power", value: result.achievedPower.toFixed(4) },
+          { label: "Rate difference (treatment − control)", value: result.rateDifference.toFixed(4) },
+          ...(result.nControlAdjusted !== result.nControl
+            ? [
+                {
+                  label: "Dropout-adjusted total N",
+                  value: String(result.totalNAdjusted),
+                  highlight: true,
+                },
+              ]
+            : []),
+        ]
+      : [],
   );
 
   function buildInput(): TwoProportionDifferenceInput {
@@ -90,7 +158,6 @@
   async function calculate() {
     calculating = true;
     errorMessage = null;
-    result = null;
 
     try {
       const input = buildInput();
@@ -102,6 +169,7 @@
         input,
         result,
       });
+      lastCalculatedSignature = inputSignature;
       persistCalculation({
         methodId: "binary.two_proportion_difference",
         methodName: "Difference in proportions",
@@ -109,142 +177,143 @@
         result,
       });
     } catch (error) {
-      errorMessage = String(error);
+      result = null;
       exportMarkdown = null;
+      lastCalculatedSignature = null;
+      errorMessage = String(error);
     } finally {
       calculating = false;
     }
   }
-
 </script>
 
-<div class="method-page">
-  <header class="page-header">
-    <h2>Difference in proportions</h2>
-    <p>Compare event rates between treatment and control using a normal approximation.</p>
-  </header>
+<MethodPage {resultsStale}>
+  {#snippet header()}
+    <MethodHeader
+      title="Difference in proportions"
+      description="Compare event rates between treatment and control using a normal approximation."
+      category="Binary"
+      badges={[objectiveLabel, solveModeLabel, alternativeLabel]}
+    />
+  {/snippet}
 
-  <div class="panels">
-    <section class="panel">
-      <h3>Parameters</h3>
+  {#snippet parameters()}
+    <Panel title="Parameters">
+      <Section title="Design">
+        <Field label="Study objective">
+          {#snippet control()}
+            <select bind:value={studyObjective}>
+              <option value="superiority">Superiority</option>
+              <option value="non_inferiority">Non-inferiority</option>
+            </select>
+          {/snippet}
+        </Field>
 
-      <label>
-        Study objective
-        <select bind:value={studyObjective}>
-          <option value="superiority">Superiority</option>
-          <option value="non_inferiority">Non-inferiority</option>
-        </select>
-      </label>
+        <Field label="Solve mode">
+          {#snippet control()}
+            <select bind:value={solveMode}>
+              <option value="sample_size">Sample size</option>
+              <option value="power">Power</option>
+            </select>
+          {/snippet}
+        </Field>
 
-      <label>
-        Solve mode
-        <select bind:value={solveMode}>
-          <option value="sample_size">Sample size</option>
-          <option value="power">Power</option>
-        </select>
-      </label>
-
-      {#if studyObjective === "superiority"}
-        <label>
-          Alternative hypothesis
-          <select bind:value={alternative}>
-            <option value="two_sided">Two-sided</option>
-            <option value="greater">Greater (treatment &gt; control)</option>
-            <option value="less">Less (treatment &lt; control)</option>
-          </select>
-        </label>
-      {/if}
-
-      <label>
-        Type I error (alpha)
-        <input type="number" min="0" max="1" step="0.001" bind:value={alpha} />
-      </label>
-
-      {#if solveMode === "sample_size"}
-        <label>
-          Target power
-          <input type="number" min="0" max="1" step="0.01" bind:value={power} />
-        </label>
-      {:else}
-        <label>
-          Control group N
-          <input type="number" min="2" step="1" bind:value={controlN} />
-        </label>
-      {/if}
-
-      <label>
-        Control event rate
-        <input type="number" min="0" max="1" step="0.01" bind:value={controlRate} />
-      </label>
-
-      <label>
-        Treatment event rate
-        <input type="number" min="0" max="1" step="0.01" bind:value={treatmentRate} />
-      </label>
-
-      {#if studyObjective === "non_inferiority"}
-        <label>
-          Non-inferiority margin (max acceptable deficit)
-          <input type="number" min="0" max="0.99" step="0.01" bind:value={noninferiorityMargin} />
-        </label>
-      {/if}
-
-      <label>
-        Allocation ratio (treatment / control)
-        <input type="number" min="0" step="0.01" bind:value={allocationRatio} />
-      </label>
-
-      <label>
-        Dropout rate (optional)
-        <input type="number" min="0" max="0.99" step="0.01" bind:value={dropoutRate} />
-      </label>
-
-      <button onclick={calculate} disabled={calculating}>
-        {calculating ? "Calculating…" : "Calculate"}
-      </button>
-
-      {#if errorMessage}
-        <p class="error">{errorMessage}</p>
-      {/if}
-    </section>
-
-    <section class="panel">
-      <h3>Results</h3>
-
-      {#if result}
-        <dl class="results">
-          <dt>Control N</dt>
-          <dd>{result.nControl}</dd>
-          <dt>Treatment N</dt>
-          <dd>{result.nTreatment}</dd>
-          <dt>Total N</dt>
-          <dd>{result.totalN}</dd>
-          <dt>Achieved power</dt>
-          <dd>{result.achievedPower.toFixed(4)}</dd>
-          <dt>Rate difference (treatment − control)</dt>
-          <dd>{result.rateDifference.toFixed(4)}</dd>
-          {#if result.nControlAdjusted !== result.nControl}
-            <dt>Dropout-adjusted total N</dt>
-            <dd>{result.totalNAdjusted}</dd>
-          {/if}
-        </dl>
-
-        {#if result.warnings.length > 0}
-          <div class="warnings">
-            <h4>Warnings</h4>
-            <ul>
-              {#each result.warnings as warning}
-                <li><strong>{warning.code}:</strong> {warning.message}</li>
-              {/each}
-            </ul>
-          </div>
+        {#if studyObjective === "superiority"}
+          <Field label="Alternative hypothesis">
+            {#snippet control()}
+              <select bind:value={alternative}>
+                <option value="two_sided">Two-sided</option>
+                <option value="greater">Greater (treatment &gt; control)</option>
+                <option value="less">Less (treatment &lt; control)</option>
+              </select>
+            {/snippet}
+          </Field>
         {/if}
 
-        <ExportMenu title="Difference in proportions" markdown={exportMarkdown} />
+        <Field label="Type I error (alpha)">
+          {#snippet control()}
+            <input type="number" min="0" max="1" step="0.001" bind:value={alpha} />
+          {/snippet}
+        </Field>
 
+        {#if solveMode === "sample_size"}
+          <Field label="Target power">
+            {#snippet control()}
+              <input type="number" min="0" max="1" step="0.01" bind:value={power} />
+            {/snippet}
+          </Field>
+        {:else}
+          <Field label="Control group N">
+            {#snippet control()}
+              <input type="number" min="2" step="1" bind:value={controlN} />
+            {/snippet}
+          </Field>
+        {/if}
+
+        <Field label="Control event rate">
+          {#snippet control()}
+            <input type="number" min="0" max="1" step="0.01" bind:value={controlRate} />
+          {/snippet}
+        </Field>
+
+        <Field label="Treatment event rate">
+          {#snippet control()}
+            <input type="number" min="0" max="1" step="0.01" bind:value={treatmentRate} />
+          {/snippet}
+        </Field>
+
+        {#if studyObjective === "non_inferiority"}
+          <Field label="Non-inferiority margin (max acceptable deficit)">
+            {#snippet control()}
+              <input type="number" min="0" max="0.99" step="0.01" bind:value={noninferiorityMargin} />
+            {/snippet}
+          </Field>
+        {/if}
+      </Section>
+
+      <Section title="Advanced" collapsible defaultCollapsed={true}>
+        <Field label="Allocation ratio (treatment / control)">
+          {#snippet control()}
+            <input type="number" min="0" step="0.01" bind:value={allocationRatio} />
+          {/snippet}
+        </Field>
+
+        <Field label="Dropout rate (optional)">
+          {#snippet control()}
+            <input type="number" min="0" max="0.99" step="0.01" bind:value={dropoutRate} />
+          {/snippet}
+        </Field>
+      </Section>
+
+      <PrimaryButton fullWidth disabled={calculating} onclick={calculate}>
+        {calculating ? "Calculating…" : "Calculate"}
+      </PrimaryButton>
+
+      {#if errorMessage}
+        <p class="error text-danger">{errorMessage}</p>
+      {/if}
+    </Panel>
+  {/snippet}
+
+  {#snippet results()}
+    <Panel title="Results">
+      {#if result}
+        <ResultHero label={heroLabel} value={heroValue} />
+        <ResultGrid items={resultItems} />
+        <WarningList warnings={result.warnings} />
+        <AssumptionsCard
+          items={[
+            "Normal approximation to the difference in binomial proportions.",
+            "Independent observations with fixed follow-up or event ascertainment.",
+            "Rates sufficiently away from 0 and 1 for asymptotic validity.",
+          ]}
+        />
+        <ExportMenu title="Difference in proportions" markdown={exportMarkdown} />
         <SensitivityPanel
           ready={true}
-          inputSignature={sensitivitySignature}
+          defaultExpanded={true}
+          chartFileStem="clinsize-sensitivity-two-proportion-difference"
+          inputSignature={lastCalculatedSignature ?? inputSignature}
           command="calculate_two_proportion_difference"
           buildInput={buildInput}
           options={sensitivityOptions}
@@ -255,124 +324,20 @@
           outputLabel={sensitivityOutputLabel}
         />
       {:else}
-        <p class="muted">Enter parameters and calculate to see results.</p>
+        <p class="empty text-muted">Enter parameters and calculate to see results.</p>
       {/if}
-    </section>
-  </div>
-</div>
+    </Panel>
+  {/snippet}
+</MethodPage>
 
 <style>
-  .method-page {
-    padding: 1.5rem;
-  }
-
-  .page-header h2 {
-    margin: 0;
-    font-size: 1.125rem;
-    font-weight: 600;
-  }
-
-  .page-header p {
-    margin: 0.35rem 0 0;
-    color: var(--muted);
-    font-size: 0.875rem;
-  }
-
-  .panels {
-    display: grid;
-    grid-template-columns: 20rem 1fr;
-    gap: 1rem;
-    margin-top: 1.25rem;
-  }
-
-  .panel {
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    background: var(--panel);
-    padding: 1rem;
-  }
-
-  h3 {
-    margin: 0 0 0.75rem;
-    font-size: 0.9375rem;
-    font-weight: 600;
-  }
-
-  label {
-    display: grid;
-    gap: 0.25rem;
-    margin-bottom: 0.75rem;
-    font-size: 0.8125rem;
-  }
-
-  input,
-  select {
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 0.35rem 0.5rem;
-    font-size: 0.875rem;
-    background: var(--background);
-  }
-
-  button {
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 0.45rem 0.75rem;
-    background: var(--background);
-    cursor: pointer;
-    font-size: 0.875rem;
-  }
-
-  button.secondary {
-    margin-top: 1rem;
-  }
-
-  button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  .results {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 0.35rem 1rem;
-    font-size: 0.875rem;
-    margin: 0;
-  }
-
-  dt {
-    color: var(--muted);
-  }
-
-  dd {
-    margin: 0;
-    font-weight: 500;
-  }
-
-  .warnings {
-    margin-top: 1rem;
-    font-size: 0.8125rem;
-  }
-
-  .warnings h4 {
-    margin: 0 0 0.35rem;
-    font-size: 0.8125rem;
-  }
-
-  .warnings ul {
-    margin: 0;
-    padding-left: 1.1rem;
-    color: var(--muted);
-  }
-
   .error {
-    color: #9b1c1c;
-    font-size: 0.8125rem;
     margin: 0.75rem 0 0;
+    font-size: 0.8125rem;
   }
 
-  .muted {
-    color: var(--muted);
+  .empty {
+    margin: 0;
     font-size: 0.875rem;
   }
 </style>

@@ -1,6 +1,9 @@
 //! Report data assembly for exported calculation summaries.
 
+pub mod docx;
 pub mod html;
+pub mod markdown_render;
+pub mod pdf;
 
 use crate::methods::binary::odds_ratio::{OddsRatioInput, OddsRatioResult};
 use crate::methods::binary::risk_ratio::{RiskRatioInput, RiskRatioResult};

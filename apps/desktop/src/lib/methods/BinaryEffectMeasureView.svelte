@@ -1,6 +1,16 @@
 <script lang="ts">
   import ExportMenu from "$lib/components/ExportMenu.svelte";
+  import MethodPage from "$lib/components/MethodPage.svelte";
   import SensitivityPanel from "$lib/components/SensitivityPanel.svelte";
+  import AssumptionsCard from "$lib/components/ui/AssumptionsCard.svelte";
+  import Field from "$lib/components/ui/Field.svelte";
+  import MethodHeader from "$lib/components/ui/MethodHeader.svelte";
+  import Panel from "$lib/components/ui/Panel.svelte";
+  import PrimaryButton from "$lib/components/ui/PrimaryButton.svelte";
+  import ResultGrid from "$lib/components/ui/ResultGrid.svelte";
+  import ResultHero from "$lib/components/ui/ResultHero.svelte";
+  import Section from "$lib/components/ui/Section.svelte";
+  import WarningList from "$lib/components/ui/WarningList.svelte";
   import { binaryEffectSensitivityOptions } from "$lib/sensitivity/configs";
   import { persistCalculation } from "$lib/workflow/record";
   import type {
@@ -21,7 +31,6 @@
     variant,
     calculateCommand,
     exportCommand,
-    exportFilename,
     effectLabel,
   }: {
     title: string;
@@ -48,20 +57,9 @@
   let exportMarkdown = $state<string | null>(null);
   let errorMessage = $state<string | null>(null);
   let calculating = $state(false);
+  let lastCalculatedSignature = $state<string | null>(null);
 
-  const sensitivityOptions = $derived(
-    binaryEffectSensitivityOptions(
-      solveMode,
-      controlRate,
-      treatmentRate,
-      alpha,
-      power,
-      allocationRatio,
-      dropoutRate,
-    ),
-  );
-
-  const sensitivitySignature = $derived(
+  const inputSignature = $derived(
     JSON.stringify({
       variant,
       solveMode,
@@ -76,8 +74,73 @@
     }),
   );
 
+  const resultsStale = $derived(
+    (oddsResult !== null || riskResult !== null) &&
+      lastCalculatedSignature !== null &&
+      lastCalculatedSignature !== inputSignature,
+  );
+
+  const sensitivityOptions = $derived(
+    binaryEffectSensitivityOptions(
+      solveMode,
+      controlRate,
+      treatmentRate,
+      alpha,
+      power,
+      allocationRatio,
+      dropoutRate,
+    ),
+  );
+
+  const solveModeLabel = $derived(
+    solveMode === "sample_size" ? "Sample size" : "Power",
+  );
+
+  const alternativeLabel = $derived(
+    alternative === "two_sided"
+      ? "Two-sided"
+      : alternative === "greater"
+        ? "Greater"
+        : "Less",
+  );
+
   const sensitivityOutputLabel = $derived(
     solveMode === "sample_size" ? "Total sample size" : "Achieved power",
+  );
+
+  const activeResult = $derived(oddsResult ?? riskResult);
+
+  const heroLabel = $derived(
+    solveMode === "sample_size" ? "Total sample size" : "Achieved power",
+  );
+
+  const heroValue = $derived(
+    activeResult
+      ? solveMode === "sample_size"
+        ? String(activeResult.totalN)
+        : activeResult.achievedPower.toFixed(4)
+      : "—",
+  );
+
+  const resultItems = $derived(
+    activeResult
+      ? [
+          { label: "Control N", value: String(activeResult.nControl) },
+          { label: "Treatment N", value: String(activeResult.nTreatment) },
+          { label: "Total N", value: String(activeResult.totalN) },
+          { label: "Achieved power", value: activeResult.achievedPower.toFixed(4) },
+          { label: effectLabel, value: effectValue()?.toFixed(4) ?? "—" },
+          ...(activeResult.nControlAdjusted !== activeResult.nControl
+            ? [
+                {
+                  label: "Dropout-adjusted total N",
+                  value: String(activeResult.totalNAdjusted),
+                  highlight: true,
+                },
+              ]
+            : []),
+        ]
+      : [],
   );
 
   function buildOddsInput(): OddsRatioInput {
@@ -132,6 +195,7 @@
         const input = buildOddsInput();
         oddsResult = await invoke<OddsRatioResult>(calculateCommand, { input });
         exportMarkdown = await invoke<string>(exportCommand, { input, result: oddsResult });
+        lastCalculatedSignature = inputSignature;
         persistCalculation({
           methodId: "binary.odds_ratio",
           methodName: title,
@@ -142,6 +206,7 @@
         const input = buildRiskInput();
         riskResult = await invoke<RiskRatioResult>(calculateCommand, { input });
         exportMarkdown = await invoke<string>(exportCommand, { input, result: riskResult });
+        lastCalculatedSignature = inputSignature;
         persistCalculation({
           methodId: "binary.risk_ratio",
           methodName: title,
@@ -150,125 +215,122 @@
         });
       }
     } catch (error) {
+      lastCalculatedSignature = null;
       errorMessage = String(error);
     } finally {
       calculating = false;
     }
   }
-
 </script>
 
-<div class="method-page">
-  <header class="page-header">
-    <h2>{title}</h2>
-    <p>{description}</p>
-  </header>
+<MethodPage {resultsStale}>
+  {#snippet header()}
+    <MethodHeader
+      {title}
+      {description}
+      category="Binary"
+      badges={[solveModeLabel, alternativeLabel, "Superiority"]}
+    />
+  {/snippet}
 
-  <div class="panels">
-    <section class="panel">
-      <h3>Parameters</h3>
+  {#snippet parameters()}
+    <Panel title="Parameters">
+      <Section title="Design">
+        <Field label="Solve mode">
+          {#snippet control()}
+            <select bind:value={solveMode}>
+              <option value="sample_size">Sample size</option>
+              <option value="power">Power</option>
+            </select>
+          {/snippet}
+        </Field>
 
-      <label>
-        Solve mode
-        <select bind:value={solveMode}>
-          <option value="sample_size">Sample size</option>
-          <option value="power">Power</option>
-        </select>
-      </label>
+        <Field label="Alternative hypothesis">
+          {#snippet control()}
+            <select bind:value={alternative}>
+              <option value="two_sided">Two-sided</option>
+              <option value="greater">Greater (treatment &gt; control)</option>
+              <option value="less">Less (treatment &lt; control)</option>
+            </select>
+          {/snippet}
+        </Field>
 
-      <label>
-        Alternative hypothesis
-        <select bind:value={alternative}>
-          <option value="two_sided">Two-sided</option>
-          <option value="greater">Greater (treatment &gt; control)</option>
-          <option value="less">Less (treatment &lt; control)</option>
-        </select>
-      </label>
+        <Field label="Type I error (alpha)">
+          {#snippet control()}
+            <input type="number" min="0" max="1" step="0.001" bind:value={alpha} />
+          {/snippet}
+        </Field>
 
-      <label>
-        Type I error (alpha)
-        <input type="number" min="0" max="1" step="0.001" bind:value={alpha} />
-      </label>
-
-      {#if solveMode === "sample_size"}
-        <label>
-          Target power
-          <input type="number" min="0" max="1" step="0.01" bind:value={power} />
-        </label>
-      {:else}
-        <label>
-          Control group N
-          <input type="number" min="2" step="1" bind:value={controlN} />
-        </label>
-      {/if}
-
-      <label>
-        Control event rate
-        <input type="number" min="0" max="1" step="0.01" bind:value={controlRate} />
-      </label>
-
-      <label>
-        Treatment event rate
-        <input type="number" min="0" max="1" step="0.01" bind:value={treatmentRate} />
-      </label>
-
-      <label>
-        Allocation ratio (treatment / control)
-        <input type="number" min="0" step="0.01" bind:value={allocationRatio} />
-      </label>
-
-      <label>
-        Dropout rate (optional)
-        <input type="number" min="0" max="0.99" step="0.01" bind:value={dropoutRate} />
-      </label>
-
-      <button onclick={calculate} disabled={calculating}>
-        {calculating ? "Calculating…" : "Calculate"}
-      </button>
-
-      {#if errorMessage}
-        <p class="error">{errorMessage}</p>
-      {/if}
-    </section>
-
-    <section class="panel">
-      <h3>Results</h3>
-
-      {#if oddsResult || riskResult}
-        {@const active = oddsResult ?? riskResult}
-        <dl class="results">
-          <dt>Control N</dt>
-          <dd>{active?.nControl}</dd>
-          <dt>Treatment N</dt>
-          <dd>{active?.nTreatment}</dd>
-          <dt>Total N</dt>
-          <dd>{active?.totalN}</dd>
-          <dt>Achieved power</dt>
-          <dd>{active?.achievedPower.toFixed(4)}</dd>
-          <dt>{effectLabel}</dt>
-          <dd>{effectValue()?.toFixed(4)}</dd>
-          {#if active && active.nControlAdjusted !== active.nControl}
-            <dt>Dropout-adjusted total N</dt>
-            <dd>{active.totalNAdjusted}</dd>
-          {/if}
-        </dl>
-
-        {#if active && active.warnings.length > 0}
-          <div class="warnings">
-            <h4>Warnings</h4>
-            <ul>
-              {#each active.warnings as warning}
-                <li><strong>{warning.code}:</strong> {warning.message}</li>
-              {/each}
-            </ul>
-          </div>
+        {#if solveMode === "sample_size"}
+          <Field label="Target power">
+            {#snippet control()}
+              <input type="number" min="0" max="1" step="0.01" bind:value={power} />
+            {/snippet}
+          </Field>
+        {:else}
+          <Field label="Control group N">
+            {#snippet control()}
+              <input type="number" min="2" step="1" bind:value={controlN} />
+            {/snippet}
+          </Field>
         {/if}
 
-        <ExportMenu {title} markdown={exportMarkdown} />
+        <Field label="Control event rate">
+          {#snippet control()}
+            <input type="number" min="0" max="1" step="0.01" bind:value={controlRate} />
+          {/snippet}
+        </Field>
 
+        <Field label="Treatment event rate">
+          {#snippet control()}
+            <input type="number" min="0" max="1" step="0.01" bind:value={treatmentRate} />
+          {/snippet}
+        </Field>
+      </Section>
+
+      <Section title="Advanced" collapsible defaultCollapsed={true}>
+        <Field label="Allocation ratio (treatment / control)">
+          {#snippet control()}
+            <input type="number" min="0" step="0.01" bind:value={allocationRatio} />
+          {/snippet}
+        </Field>
+
+        <Field label="Dropout rate (optional)">
+          {#snippet control()}
+            <input type="number" min="0" max="0.99" step="0.01" bind:value={dropoutRate} />
+          {/snippet}
+        </Field>
+      </Section>
+
+      <PrimaryButton fullWidth disabled={calculating} onclick={calculate}>
+        {calculating ? "Calculating…" : "Calculate"}
+      </PrimaryButton>
+
+      {#if errorMessage}
+        <p class="error text-danger">{errorMessage}</p>
+      {/if}
+    </Panel>
+  {/snippet}
+
+  {#snippet results()}
+    <Panel title="Results">
+      {#if activeResult}
+        <ResultHero label={heroLabel} value={heroValue} />
+        <ResultGrid items={resultItems} />
+        <WarningList warnings={activeResult.warnings} />
+        <AssumptionsCard
+          items={[
+            `Log-${variant === "odds_ratio" ? "odds" : "risk"}-ratio normal approximation.`,
+            "Independent observations with fixed follow-up or event ascertainment.",
+            "Rates sufficiently away from 0 and 1 for asymptotic validity.",
+          ]}
+        />
+        <ExportMenu {title} markdown={exportMarkdown} />
         <SensitivityPanel
           ready={true}
-          inputSignature={sensitivitySignature}
+          defaultExpanded={true}
+          chartFileStem={`clinsize-sensitivity-${variant.replace("_", "-")}`}
+          inputSignature={lastCalculatedSignature ?? inputSignature}
           command={calculateCommand}
           buildInput={buildInput}
           options={sensitivityOptions}
@@ -279,124 +341,20 @@
           outputLabel={sensitivityOutputLabel}
         />
       {:else}
-        <p class="muted">Enter parameters and calculate to see results.</p>
+        <p class="empty text-muted">Enter parameters and calculate to see results.</p>
       {/if}
-    </section>
-  </div>
-</div>
+    </Panel>
+  {/snippet}
+</MethodPage>
 
 <style>
-  .method-page {
-    padding: 1.5rem;
-  }
-
-  .page-header h2 {
-    margin: 0;
-    font-size: 1.125rem;
-    font-weight: 600;
-  }
-
-  .page-header p {
-    margin: 0.35rem 0 0;
-    color: var(--muted);
-    font-size: 0.875rem;
-  }
-
-  .panels {
-    display: grid;
-    grid-template-columns: 20rem 1fr;
-    gap: 1rem;
-    margin-top: 1.25rem;
-  }
-
-  .panel {
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    background: var(--panel);
-    padding: 1rem;
-  }
-
-  h3 {
-    margin: 0 0 0.75rem;
-    font-size: 0.9375rem;
-    font-weight: 600;
-  }
-
-  label {
-    display: grid;
-    gap: 0.25rem;
-    margin-bottom: 0.75rem;
-    font-size: 0.8125rem;
-  }
-
-  input,
-  select {
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 0.35rem 0.5rem;
-    font-size: 0.875rem;
-    background: var(--background);
-  }
-
-  button {
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 0.45rem 0.75rem;
-    background: var(--background);
-    cursor: pointer;
-    font-size: 0.875rem;
-  }
-
-  button.secondary {
-    margin-top: 1rem;
-  }
-
-  button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  .results {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 0.35rem 1rem;
-    font-size: 0.875rem;
-    margin: 0;
-  }
-
-  dt {
-    color: var(--muted);
-  }
-
-  dd {
-    margin: 0;
-    font-weight: 500;
-  }
-
-  .warnings {
-    margin-top: 1rem;
-    font-size: 0.8125rem;
-  }
-
-  .warnings h4 {
-    margin: 0 0 0.35rem;
-    font-size: 0.8125rem;
-  }
-
-  .warnings ul {
-    margin: 0;
-    padding-left: 1.1rem;
-    color: var(--muted);
-  }
-
   .error {
-    color: #9b1c1c;
-    font-size: 0.8125rem;
     margin: 0.75rem 0 0;
+    font-size: 0.8125rem;
   }
 
-  .muted {
-    color: var(--muted);
+  .empty {
+    margin: 0;
     font-size: 0.875rem;
   }
 </style>

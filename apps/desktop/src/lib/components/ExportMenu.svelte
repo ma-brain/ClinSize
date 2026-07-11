@@ -19,8 +19,10 @@
       await exportCalculationSummary({ markdown, title, format });
       message =
         format === "pdf"
-          ? "Saved printable HTML. Open it and use Print to PDF."
-          : "Export saved.";
+          ? "PDF saved."
+          : format === "word"
+            ? "Word document saved."
+            : "Export saved.";
     } catch (error) {
       message = String(error);
     } finally {
