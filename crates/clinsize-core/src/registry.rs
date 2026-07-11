@@ -94,6 +94,13 @@ const METHODS: &[MethodDescriptor] = &[
         supported_solve_modes: &[],
         documentation_path: Some("handbook/calculations/group-sequential.md"),
     },
+    MethodDescriptor {
+        id: "design.blinded_ssre",
+        display_name: "Blinded sample size re-estimation",
+        endpoint_category: "Design",
+        supported_solve_modes: &[],
+        documentation_path: Some("handbook/calculations/blinded-ssre.md"),
+    },
 ];
 
 /// Return all registered methods.
@@ -108,7 +115,7 @@ mod tests {
     #[test]
     fn list_methods_includes_continuous_ttests() {
         let methods = list_methods();
-        assert_eq!(methods.len(), 11);
+        assert_eq!(methods.len(), 12);
         assert_eq!(methods[0].id, "continuous.two_sample_ttest");
         assert_eq!(methods[5].id, "binary.two_proportion_difference");
         assert_eq!(methods[6].id, "binary.odds_ratio");
@@ -116,5 +123,6 @@ mod tests {
         assert_eq!(methods[8].id, "survival.log_rank");
         assert_eq!(methods[9].id, "design.multiplicity");
         assert_eq!(methods[10].id, "design.group_sequential");
+        assert_eq!(methods[11].id, "design.blinded_ssre");
     }
 }

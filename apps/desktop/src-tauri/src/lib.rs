@@ -18,6 +18,7 @@ use clinsize_core::methods::continuous::paired_ttest::{self, PairedTTestInput, P
 use clinsize_core::methods::continuous::two_sample_ttest::{
     self, TwoSampleTTestInput, TwoSampleTTestResult,
 };
+use clinsize_core::methods::design::blinded_ssre::{self, BlindedSsreInput, BlindedSsreResult};
 use clinsize_core::methods::design::group_sequential::{
     self, GroupSequentialInput, GroupSequentialResult,
 };
@@ -287,6 +288,23 @@ fn export_group_sequential_markdown(
 }
 
 #[tauri::command]
+fn calculate_blinded_ssre(input: BlindedSsreInput) -> Result<BlindedSsreResult, AppError> {
+    blinded_ssre::calculate(input).map_err(AppError::from)
+}
+
+#[tauri::command]
+fn export_blinded_ssre_markdown(
+    input: BlindedSsreInput,
+    result: BlindedSsreResult,
+) -> Result<String, AppError> {
+    Ok(clinsize_core::reports::blinded_ssre_markdown(
+        &input,
+        &result,
+        clinsize_core::engine_version(),
+    ))
+}
+
+#[tauri::command]
 fn create_project(name: String) -> ProjectFile {
     ProjectFile::new(name)
 }
@@ -369,7 +387,9 @@ pub fn run() {
             calculate_multiplicity,
             export_multiplicity_markdown,
             calculate_group_sequential,
-            export_group_sequential_markdown
+            export_group_sequential_markdown,
+            calculate_blinded_ssre,
+            export_blinded_ssre_markdown
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

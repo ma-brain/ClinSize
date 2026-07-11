@@ -278,3 +278,36 @@ export interface GroupSequentialResult {
   spendingFunction: SpendingFunction;
   warnings: CalculationWarning[];
 }
+
+export interface BlindedSsreInput {
+  alpha: number;
+  targetPower: number;
+  meanDifference: number;
+  plannedStandardDeviation: number;
+  blindedInterimStandardDeviation?: number;
+  interimFraction: number;
+  allocationRatio: number;
+  maxSampleSizeMultiplier: number;
+  alternative: Alternative;
+}
+
+export interface BlindedSsreResult {
+  plannedNControl: number;
+  plannedNTreatment: number;
+  plannedTotalN: number;
+  interimNControl: number;
+  interimNTreatment: number;
+  interimTotalN: number;
+  reEstimatedNControl: number;
+  reEstimatedNTreatment: number;
+  reEstimatedTotalN: number;
+  cappedNControl: number;
+  cappedNTreatment: number;
+  cappedTotalN: number;
+  sampleSizeInflationFactor: number;
+  cappedInflationFactor: number;
+  varianceRatio: number;
+  achievedPowerAtCapped: number;
+  wasCapped: boolean;
+  warnings: CalculationWarning[];
+}

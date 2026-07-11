@@ -1,5 +1,6 @@
 <script lang="ts">
   import BinaryEffectMeasureView from "$lib/methods/BinaryEffectMeasureView.svelte";
+  import BlindedSsreView from "$lib/methods/BlindedSsreView.svelte";
   import GroupSequentialView from "$lib/methods/GroupSequentialView.svelte";
   import LogRankView from "$lib/methods/LogRankView.svelte";
   import MultiplicityView from "$lib/methods/MultiplicityView.svelte";
@@ -63,6 +64,8 @@
   <MultiplicityView />
 {:else if methodId === "design.group_sequential"}
   <GroupSequentialView />
+{:else if methodId === "design.blinded_ssre"}
+  <BlindedSsreView />
 {:else}
   <p class="muted">Select a method from the navigation rail.</p>
 {/if}

@@ -12,6 +12,7 @@ use crate::methods::continuous::one_sample_ttest::{OneSampleTTestInput, OneSampl
 use crate::methods::continuous::one_way_anova::{OneWayAnovaInput, OneWayAnovaResult};
 use crate::methods::continuous::paired_ttest::{PairedTTestInput, PairedTTestResult};
 use crate::methods::continuous::two_sample_ttest::{TwoSampleTTestInput, TwoSampleTTestResult};
+use crate::methods::design::blinded_ssre::{BlindedSsreInput, BlindedSsreResult};
 use crate::methods::design::group_sequential::{GroupSequentialInput, GroupSequentialResult};
 use crate::methods::design::multiplicity::{MultiplicityInput, MultiplicityResult};
 use crate::methods::survival::log_rank::{LogRankInput, LogRankResult};
@@ -657,6 +658,99 @@ pub fn group_sequential_markdown(
     lines.push(format!("- **Engine version:** {engine_version}"));
     lines.push(
         "- **Validation source:** R `gsDesign::gsDesign` with `test.type = 1` (upper efficacy bounds)".into(),
+    );
+
+    lines.join("\n")
+}
+
+/// Render a blinded sample size re-estimation summary as Markdown.
+pub fn blinded_ssre_markdown(
+    input: &BlindedSsreInput,
+    result: &BlindedSsreResult,
+    engine_version: &str,
+) -> String {
+    let blinded_sd = input
+        .blinded_interim_standard_deviation
+        .unwrap_or(input.planned_standard_deviation);
+
+    let mut lines = vec![
+        "# ClinSize calculation summary".into(),
+        String::new(),
+        "## Method".into(),
+        "- **Method:** Blinded sample size re-estimation (two-sample t-test)".into(),
+        "- **Endpoint:** Continuous".into(),
+        format!("- **Alternative:** {:?}", input.alternative),
+        String::new(),
+        "## Inputs".into(),
+        format!("- **Alpha:** {:.4}", input.alpha),
+        format!("- **Target power:** {:.4}", input.target_power),
+        format!("- **Mean difference:** {:.4}", input.mean_difference),
+        format!(
+            "- **Planned standard deviation:** {:.4}",
+            input.planned_standard_deviation
+        ),
+        format!(
+            "- **Blinded interim standard deviation:** {:.4}",
+            blinded_sd
+        ),
+        format!("- **Interim fraction:** {:.4}", input.interim_fraction),
+        format!("- **Allocation ratio:** {:.4}", input.allocation_ratio),
+        format!(
+            "- **Maximum sample size multiplier:** {:.4}",
+            input.max_sample_size_multiplier
+        ),
+        String::new(),
+        "## Planned design".into(),
+        format!("- **Planned control N:** {}", result.planned_n_control),
+        format!("- **Planned treatment N:** {}", result.planned_n_treatment),
+        format!("- **Planned total N:** {}", result.planned_total_n),
+        String::new(),
+        "## Interim look".into(),
+        format!("- **Interim control N:** {}", result.interim_n_control),
+        format!("- **Interim treatment N:** {}", result.interim_n_treatment),
+        format!("- **Interim total N:** {}", result.interim_total_n),
+        String::new(),
+        "## Re-estimation".into(),
+        format!(
+            "- **Variance ratio (s_b/σ₀)²:** {:.4}",
+            result.variance_ratio
+        ),
+        format!(
+            "- **Re-estimated control N:** {}",
+            result.re_estimated_n_control
+        ),
+        format!(
+            "- **Re-estimated treatment N:** {}",
+            result.re_estimated_n_treatment
+        ),
+        format!(
+            "- **Re-estimated total N:** {}",
+            result.re_estimated_total_n
+        ),
+        format!(
+            "- **Sample size inflation factor:** {:.4}",
+            result.sample_size_inflation_factor
+        ),
+        format!("- **Cap applied:** {}", result.was_capped),
+        format!("- **Capped control N:** {}", result.capped_n_control),
+        format!("- **Capped treatment N:** {}", result.capped_n_treatment),
+        format!("- **Capped total N:** {}", result.capped_total_n),
+        format!(
+            "- **Capped inflation factor:** {:.4}",
+            result.capped_inflation_factor
+        ),
+        format!(
+            "- **Achieved power at capped N:** {:.4}",
+            result.achieved_power_at_capped
+        ),
+    ];
+
+    append_warnings(&mut lines, &result.warnings);
+    lines.push(String::new());
+    lines.push("## Reproducibility".into());
+    lines.push(format!("- **Engine version:** {engine_version}"));
+    lines.push(
+        "- **Validation source:** Friede & Kieser (2006); planned N via R `power.t.test`".into(),
     );
 
     lines.join("\n")
