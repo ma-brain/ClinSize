@@ -1,6 +1,8 @@
 <script lang="ts">
+  import ExportMenu from "$lib/components/ExportMenu.svelte";
   import SensitivityPanel from "$lib/components/SensitivityPanel.svelte";
   import { binaryEffectSensitivityOptions } from "$lib/sensitivity/configs";
+  import { persistCalculation } from "$lib/workflow/record";
   import type {
     Alternative,
     OddsRatioInput,
@@ -43,6 +45,7 @@
 
   let oddsResult = $state<OddsRatioResult | null>(null);
   let riskResult = $state<RiskRatioResult | null>(null);
+  let exportMarkdown = $state<string | null>(null);
   let errorMessage = $state<string | null>(null);
   let calculating = $state(false);
 
@@ -122,15 +125,28 @@
     errorMessage = null;
     oddsResult = null;
     riskResult = null;
+    exportMarkdown = null;
 
     try {
       if (variant === "odds_ratio") {
-        oddsResult = await invoke<OddsRatioResult>(calculateCommand, {
-          input: buildOddsInput(),
+        const input = buildOddsInput();
+        oddsResult = await invoke<OddsRatioResult>(calculateCommand, { input });
+        exportMarkdown = await invoke<string>(exportCommand, { input, result: oddsResult });
+        persistCalculation({
+          methodId: "binary.odds_ratio",
+          methodName: title,
+          input,
+          result: oddsResult,
         });
       } else {
-        riskResult = await invoke<RiskRatioResult>(calculateCommand, {
-          input: buildRiskInput(),
+        const input = buildRiskInput();
+        riskResult = await invoke<RiskRatioResult>(calculateCommand, { input });
+        exportMarkdown = await invoke<string>(exportCommand, { input, result: riskResult });
+        persistCalculation({
+          methodId: "binary.risk_ratio",
+          methodName: title,
+          input,
+          result: riskResult,
         });
       }
     } catch (error) {
@@ -140,31 +156,6 @@
     }
   }
 
-  async function exportResult() {
-    if (variant === "odds_ratio" && oddsResult) {
-      const markdown = await invoke<string>(exportCommand, {
-        input: buildOddsInput(),
-        result: oddsResult,
-      });
-      downloadMarkdown(markdown, exportFilename);
-    } else if (variant === "risk_ratio" && riskResult) {
-      const markdown = await invoke<string>(exportCommand, {
-        input: buildRiskInput(),
-        result: riskResult,
-      });
-      downloadMarkdown(markdown, exportFilename);
-    }
-  }
-
-  function downloadMarkdown(markdown: string, filename: string) {
-    const blob = new Blob([markdown], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = filename;
-    anchor.click();
-    URL.revokeObjectURL(url);
-  }
 </script>
 
 <div class="method-page">
@@ -273,7 +264,7 @@
           </div>
         {/if}
 
-        <button class="secondary" onclick={exportResult}>Export Markdown</button>
+        <ExportMenu {title} markdown={exportMarkdown} />
 
         <SensitivityPanel
           ready={true}

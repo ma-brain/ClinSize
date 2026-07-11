@@ -12,6 +12,7 @@ pub mod registry;
 pub mod reports;
 pub mod types;
 pub mod validation;
+pub mod validation_report;
 
 pub use error::{Error, Result};
 pub use types::{Alternative, CalculationWarning, SolveMode, StudyObjective};

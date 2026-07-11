@@ -1,6 +1,8 @@
 <script lang="ts">
+  import ExportMenu from "$lib/components/ExportMenu.svelte";
   import SensitivityPanel from "$lib/components/SensitivityPanel.svelte";
   import { logRankSensitivityOptions } from "$lib/sensitivity/configs";
+  import { persistCalculation } from "$lib/workflow/record";
   import type { Alternative, LogRankInput, LogRankResult, SolveMode } from "$lib/types";
   import { invoke } from "@tauri-apps/api/core";
 
@@ -18,6 +20,7 @@
   let includeAccrual = $state(true);
 
   let result = $state<LogRankResult | null>(null);
+  let exportMarkdown = $state<string | null>(null);
   let errorMessage = $state<string | null>(null);
   let calculating = $state(false);
 
@@ -93,31 +96,21 @@
     try {
       const input = buildInput();
       result = await invoke<LogRankResult>("calculate_log_rank", { input });
+      exportMarkdown = await invoke<string>("export_log_rank_markdown", { input, result });
+      persistCalculation({
+        methodId: "survival.log_rank",
+        methodName: "Log-rank test",
+        input,
+        result,
+      });
     } catch (error) {
       errorMessage = String(error);
+      exportMarkdown = null;
     } finally {
       calculating = false;
     }
   }
 
-  async function exportResult() {
-    if (!result) return;
-    const markdown = await invoke<string>("export_log_rank_markdown", {
-      input: buildInput(),
-      result,
-    });
-    downloadMarkdown(markdown, "clinsize-log-rank.md");
-  }
-
-  function downloadMarkdown(markdown: string, filename: string) {
-    const blob = new Blob([markdown], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = filename;
-    anchor.click();
-    URL.revokeObjectURL(url);
-  }
 </script>
 
 <div class="method-page">
@@ -249,7 +242,7 @@
           </div>
         {/if}
 
-        <button class="secondary" onclick={exportResult}>Export Markdown</button>
+        <ExportMenu title="Log-rank test" markdown={exportMarkdown} />
 
         <SensitivityPanel
           ready={true}

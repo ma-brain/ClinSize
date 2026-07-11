@@ -1,6 +1,8 @@
 <script lang="ts">
+  import ExportMenu from "$lib/components/ExportMenu.svelte";
   import SensitivityPanel from "$lib/components/SensitivityPanel.svelte";
   import { twoProportionSensitivityOptions } from "$lib/sensitivity/configs";
+  import { persistCalculation } from "$lib/workflow/record";
   import type {
     Alternative,
     SolveMode,
@@ -23,6 +25,7 @@
   let dropoutRate = $state("");
 
   let result = $state<TwoProportionDifferenceResult | null>(null);
+  let exportMarkdown = $state<string | null>(null);
   let errorMessage = $state<string | null>(null);
   let calculating = $state(false);
 
@@ -95,31 +98,24 @@
         "calculate_two_proportion_difference",
         { input },
       );
+      exportMarkdown = await invoke<string>("export_two_proportion_difference_markdown", {
+        input,
+        result,
+      });
+      persistCalculation({
+        methodId: "binary.two_proportion_difference",
+        methodName: "Difference in proportions",
+        input,
+        result,
+      });
     } catch (error) {
       errorMessage = String(error);
+      exportMarkdown = null;
     } finally {
       calculating = false;
     }
   }
 
-  async function exportResult() {
-    if (!result) return;
-    const markdown = await invoke<string>("export_two_proportion_difference_markdown", {
-      input: buildInput(),
-      result,
-    });
-    downloadMarkdown(markdown, "clinsize-two-proportion-difference.md");
-  }
-
-  function downloadMarkdown(markdown: string, filename: string) {
-    const blob = new Blob([markdown], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = filename;
-    anchor.click();
-    URL.revokeObjectURL(url);
-  }
 </script>
 
 <div class="method-page">
@@ -244,7 +240,7 @@
           </div>
         {/if}
 
-        <button class="secondary" onclick={exportResult}>Export Markdown</button>
+        <ExportMenu title="Difference in proportions" markdown={exportMarkdown} />
 
         <SensitivityPanel
           ready={true}

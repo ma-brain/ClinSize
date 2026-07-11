@@ -1,9 +1,11 @@
 <script lang="ts">
+  import ExportMenu from "$lib/components/ExportMenu.svelte";
   import SensitivityPanel from "$lib/components/SensitivityPanel.svelte";
   import {
     oneSampleSensitivityOptions,
     pairedSensitivityOptions,
   } from "$lib/sensitivity/configs";
+  import { persistCalculation } from "$lib/workflow/record";
   import type {
     Alternative,
     OneSampleTTestInput,
@@ -41,6 +43,7 @@
 
   let oneSampleResult = $state<OneSampleTTestResult | null>(null);
   let pairedResult = $state<PairedTTestResult | null>(null);
+  let exportMarkdown = $state<string | null>(null);
   let errorMessage = $state<string | null>(null);
   let calculating = $state(false);
 
@@ -117,6 +120,7 @@
     errorMessage = null;
     oneSampleResult = null;
     pairedResult = null;
+    exportMarkdown = null;
 
     try {
       if (variant === "one_sample") {
@@ -125,10 +129,30 @@
           "calculate_one_sample_ttest",
           { input },
         );
+        exportMarkdown = await invoke<string>("export_one_sample_ttest_markdown", {
+          input,
+          result: oneSampleResult,
+        });
+        persistCalculation({
+          methodId: "continuous.one_sample_ttest",
+          methodName: title,
+          input,
+          result: oneSampleResult,
+        });
       } else {
         const input = buildPairedInput();
         pairedResult = await invoke<PairedTTestResult>("calculate_paired_ttest", {
           input,
+        });
+        exportMarkdown = await invoke<string>("export_paired_ttest_markdown", {
+          input,
+          result: pairedResult,
+        });
+        persistCalculation({
+          methodId: "continuous.paired_ttest",
+          methodName: title,
+          input,
+          result: pairedResult,
         });
       }
     } catch (error) {
@@ -138,33 +162,6 @@
     }
   }
 
-  async function exportResult() {
-    if (variant === "one_sample" && oneSampleResult) {
-      const input = buildOneSampleInput();
-      const markdown = await invoke<string>("export_one_sample_ttest_markdown", {
-        input,
-        result: oneSampleResult,
-      });
-      downloadMarkdown(markdown, "clinsize-one-sample-ttest.md");
-    } else if (variant === "paired" && pairedResult) {
-      const input = buildPairedInput();
-      const markdown = await invoke<string>("export_paired_ttest_markdown", {
-        input,
-        result: pairedResult,
-      });
-      downloadMarkdown(markdown, "clinsize-paired-ttest.md");
-    }
-  }
-
-  function downloadMarkdown(markdown: string, filename: string) {
-    const blob = new Blob([markdown], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = filename;
-    anchor.click();
-    URL.revokeObjectURL(url);
-  }
 </script>
 
 <div class="method-page">
@@ -261,7 +258,7 @@
             </ul>
           </div>
         {/if}
-        <button class="secondary" onclick={exportResult}>Export Markdown</button>
+        <ExportMenu {title} markdown={exportMarkdown} />
         <SensitivityPanel
           ready={true}
           inputSignature={sensitivitySignature}
@@ -297,7 +294,7 @@
             </ul>
           </div>
         {/if}
-        <button class="secondary" onclick={exportResult}>Export Markdown</button>
+        <ExportMenu {title} markdown={exportMarkdown} />
         <SensitivityPanel
           ready={true}
           inputSignature={sensitivitySignature}

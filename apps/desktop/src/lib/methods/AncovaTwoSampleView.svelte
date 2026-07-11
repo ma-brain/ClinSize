@@ -1,6 +1,8 @@
 <script lang="ts">
+  import ExportMenu from "$lib/components/ExportMenu.svelte";
   import SensitivityPanel from "$lib/components/SensitivityPanel.svelte";
   import { ancovaSensitivityOptions } from "$lib/sensitivity/configs";
+  import { persistCalculation } from "$lib/workflow/record";
   import type {
     Alternative,
     AncovaTwoSampleInput,
@@ -21,6 +23,7 @@
   let dropoutRate = $state("");
 
   let result = $state<AncovaTwoSampleResult | null>(null);
+  let exportMarkdown = $state<string | null>(null);
   let errorMessage = $state<string | null>(null);
   let calculating = $state(false);
 
@@ -88,29 +91,21 @@
     try {
       const input = buildInput();
       result = await invoke<AncovaTwoSampleResult>("calculate_ancova_two_sample", { input });
+      exportMarkdown = await invoke<string>("export_ancova_two_sample_markdown", { input, result });
+      persistCalculation({
+        methodId: "continuous.ancova_two_sample",
+        methodName: "Two-sample ANCOVA",
+        input,
+        result,
+      });
     } catch (error) {
       errorMessage = String(error);
+      exportMarkdown = null;
     } finally {
       calculating = false;
     }
   }
 
-  async function exportResult() {
-    if (!result) return;
-    const input = buildInput();
-    const markdown = await invoke<string>("export_ancova_two_sample_markdown", {
-      input,
-      result,
-    });
-
-    const blob = new Blob([markdown], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = "clinsize-ancova-two-sample.md";
-    anchor.click();
-    URL.revokeObjectURL(url);
-  }
 </script>
 
 <div class="method-page">
@@ -236,7 +231,7 @@
           </div>
         {/if}
 
-        <button class="secondary" onclick={exportResult}>Export Markdown</button>
+        <ExportMenu title="Two-sample ANCOVA" markdown={exportMarkdown} />
 
         <SensitivityPanel
           ready={true}

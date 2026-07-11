@@ -80,7 +80,8 @@ screen. The UI varies one parameter at a time across a fixed sweep range and
 re-runs the existing Rust `calculate_*` command for each point. No statistical
 logic is duplicated in TypeScript.
 
-Scenario comparison can be added later after the base workflow is stable.
+Scenario comparison is available on the **Scenarios** page using saved project
+history entries.
 
 ## Accessibility
 

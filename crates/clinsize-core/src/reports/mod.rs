@@ -1,5 +1,7 @@
 //! Report data assembly for exported calculation summaries.
 
+pub mod html;
+
 use crate::methods::binary::odds_ratio::{OddsRatioInput, OddsRatioResult};
 use crate::methods::binary::risk_ratio::{RiskRatioInput, RiskRatioResult};
 use crate::methods::binary::two_proportion_difference::{

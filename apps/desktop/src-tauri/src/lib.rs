@@ -1,3 +1,5 @@
+mod project;
+
 use clinsize_core::methods::binary::odds_ratio::{self, OddsRatioInput, OddsRatioResult};
 use clinsize_core::methods::binary::risk_ratio::{self, RiskRatioInput, RiskRatioResult};
 use clinsize_core::methods::binary::two_proportion_difference::{
@@ -19,6 +21,7 @@ use clinsize_core::methods::continuous::two_sample_ttest::{
 use clinsize_core::methods::survival::log_rank::{self, LogRankInput, LogRankResult};
 use clinsize_core::registry::MethodDescriptor;
 use clinsize_core::types::SolveMode;
+use project::ProjectFile;
 use serde::Serialize;
 
 /// UI-facing error returned from Tauri commands.
@@ -243,13 +246,68 @@ fn export_log_rank_markdown(
     ))
 }
 
+#[tauri::command]
+fn create_project(name: String) -> ProjectFile {
+    ProjectFile::new(name)
+}
+
+#[tauri::command]
+fn read_project_file(path: String) -> Result<ProjectFile, AppError> {
+    let content = std::fs::read_to_string(&path).map_err(|err| AppError {
+        code: "export".into(),
+        message: err.to_string(),
+    })?;
+    serde_json::from_str(&content).map_err(|err| AppError {
+        code: "export".into(),
+        message: err.to_string(),
+    })
+}
+
+#[tauri::command]
+fn write_project_file(path: String, project: ProjectFile) -> Result<(), AppError> {
+    let content = serde_json::to_string_pretty(&project).map_err(|err| AppError {
+        code: "export".into(),
+        message: err.to_string(),
+    })?;
+    std::fs::write(path, content).map_err(|err| AppError {
+        code: "export".into(),
+        message: err.to_string(),
+    })
+}
+
+#[tauri::command]
+fn export_markdown_as_html(markdown: String, title: String) -> String {
+    clinsize_core::reports::html::markdown_to_html_document(&markdown, &title)
+}
+
+#[tauri::command]
+fn export_markdown_as_word_html(markdown: String, title: String) -> String {
+    clinsize_core::reports::html::markdown_to_word_html_document(&markdown, &title)
+}
+
+#[tauri::command]
+fn generate_validation_report(method_id: String) -> Result<String, AppError> {
+    let validation_root =
+        std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../validation");
+    clinsize_core::validation_report::generate_markdown(&method_id, &validation_root)
+        .map_err(AppError::from)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             engine_info,
             list_methods,
+            create_project,
+            read_project_file,
+            write_project_file,
+            export_markdown_as_html,
+            export_markdown_as_word_html,
+            generate_validation_report,
             calculate_two_sample_ttest,
             export_two_sample_ttest_markdown,
             calculate_one_sample_ttest,

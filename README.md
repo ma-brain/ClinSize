@@ -35,6 +35,6 @@ just cli -- --help   # run the CLI wrapper
 
 ## Status
 
-Phase 4 (survival endpoints): log-rank test with accrual-based enrollment sizing
-is implemented with desktop UI and sensitivity analysis. See
-[`handbook/11-roadmap.md`](handbook/11-roadmap.md).
+Phase 5 (professional workflow): calculation history, project files,
+scenario comparison, multi-format export, and validation report generation
+are available in the desktop app. See [`handbook/11-roadmap.md`](handbook/11-roadmap.md).

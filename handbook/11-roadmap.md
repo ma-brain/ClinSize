@@ -43,11 +43,11 @@
 
 ## Phase 5: Professional Workflow
 
-- Calculation history.
-- Project files.
-- Scenario comparison.
-- PDF and Word export.
-- Validation report generation.
+- Calculation history. **Done** — auto-recorded on each method calculation into the active project.
+- Project files. **Done** — JSON `.clinsize.json` save/open from the Project page.
+- Scenario comparison. **Done** — group history entries and compare primary outputs.
+- PDF and Word export. **Done** — HTML and Word-compatible HTML exports; PDF via printable HTML.
+- Validation report generation. **Done** — automated reports for two-sample t-test and log-rank.
 
 ## Phase 6: Extended Platforms
 

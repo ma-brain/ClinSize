@@ -1,6 +1,8 @@
 <script lang="ts">
+  import ExportMenu from "$lib/components/ExportMenu.svelte";
   import SensitivityPanel from "$lib/components/SensitivityPanel.svelte";
   import { twoSampleSensitivityOptions } from "$lib/sensitivity/configs";
+  import { persistCalculation } from "$lib/workflow/record";
   import type {
     Alternative,
     SolveMode,
@@ -20,6 +22,7 @@
   let dropoutRate = $state("");
 
   let result = $state<TwoSampleTTestResult | null>(null);
+  let exportMarkdown = $state<string | null>(null);
   let errorMessage = $state<string | null>(null);
   let calculating = $state(false);
 
@@ -89,30 +92,25 @@
       result = await invoke<TwoSampleTTestResult>("calculate_two_sample_ttest", {
         input,
       });
+      exportMarkdown = await invoke<string>("export_two_sample_ttest_markdown", {
+        input,
+        result,
+      });
+      persistCalculation({
+        methodId: "continuous.two_sample_ttest",
+        methodName: "Two-sample t-test",
+        input,
+        result,
+      });
     } catch (error) {
       result = null;
+      exportMarkdown = null;
       errorMessage = String(error);
     } finally {
       calculating = false;
     }
   }
 
-  async function exportResult() {
-    if (!result) return;
-    const input = buildInput();
-    const markdown = await invoke<string>("export_two_sample_ttest_markdown", {
-      input,
-      result,
-    });
-
-    const blob = new Blob([markdown], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = "clinsize-two-sample-ttest.md";
-    anchor.click();
-    URL.revokeObjectURL(url);
-  }
 </script>
 
 <div class="method-page">
@@ -220,7 +218,7 @@
           </div>
         {/if}
 
-        <button class="secondary" onclick={exportResult}>Export Markdown</button>
+        <ExportMenu title="Two-sample t-test" markdown={exportMarkdown} />
 
         <SensitivityPanel
           ready={true}

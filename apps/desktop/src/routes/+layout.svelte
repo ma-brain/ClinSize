@@ -19,6 +19,18 @@
     </header>
 
     <ul class="method-list">
+      <li class="workflow-link">
+        <a href="/project">Project / history</a>
+      </li>
+      <li class="workflow-link">
+        <a href="/scenarios">Scenarios</a>
+      </li>
+      <li class="workflow-link">
+        <a href="/validation">Validation reports</a>
+      </li>
+    </ul>
+
+    <ul class="method-list">
       {#each methods as method}
         <li>
           <a href="/methods/{method.id}">{method.displayName}</a>
@@ -92,6 +104,11 @@
     padding: 0;
     display: grid;
     gap: 0.5rem;
+  }
+
+  .workflow-link a {
+    font-size: 0.8125rem;
+    font-weight: 600;
   }
 
   .method-list a {

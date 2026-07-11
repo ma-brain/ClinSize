@@ -1,6 +1,8 @@
 <script lang="ts">
+  import ExportMenu from "$lib/components/ExportMenu.svelte";
   import SensitivityPanel from "$lib/components/SensitivityPanel.svelte";
   import { oneWayAnovaSensitivityOptions } from "$lib/sensitivity/configs";
+  import { persistCalculation } from "$lib/workflow/record";
   import type { OneWayAnovaInput, OneWayAnovaResult, SolveMode } from "$lib/types";
   import { invoke } from "@tauri-apps/api/core";
 
@@ -14,6 +16,7 @@
   let dropoutRate = $state("");
 
   let result = $state<OneWayAnovaResult | null>(null);
+  let exportMarkdown = $state<string | null>(null);
   let errorMessage = $state<string | null>(null);
   let calculating = $state(false);
 
@@ -76,29 +79,21 @@
     try {
       const input = buildInput();
       result = await invoke<OneWayAnovaResult>("calculate_one_way_anova", { input });
+      exportMarkdown = await invoke<string>("export_one_way_anova_markdown", { input, result });
+      persistCalculation({
+        methodId: "continuous.one_way_anova",
+        methodName: "One-way ANOVA",
+        input,
+        result,
+      });
     } catch (error) {
       errorMessage = String(error);
+      exportMarkdown = null;
     } finally {
       calculating = false;
     }
   }
 
-  async function exportResult() {
-    if (!result) return;
-    const input = buildInput();
-    const markdown = await invoke<string>("export_one_way_anova_markdown", {
-      input,
-      result,
-    });
-
-    const blob = new Blob([markdown], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = "clinsize-one-way-anova.md";
-    anchor.click();
-    URL.revokeObjectURL(url);
-  }
 </script>
 
 <div class="method-page">
@@ -195,7 +190,7 @@
           </div>
         {/if}
 
-        <button class="secondary" onclick={exportResult}>Export Markdown</button>
+        <ExportMenu title="One-way ANOVA" markdown={exportMarkdown} />
 
         <SensitivityPanel
           ready={true}
