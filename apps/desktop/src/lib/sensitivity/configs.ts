@@ -1,9 +1,12 @@
 import type {
   AncovaTwoSampleInput,
+  OddsRatioInput,
   OneSampleTTestInput,
   OneWayAnovaInput,
   PairedTTestInput,
   SolveMode,
+  StudyObjective,
+  TwoProportionDifferenceInput,
   TwoSampleTTestInput,
 } from "$lib/types";
 import { centeredRange, linearRange, ratioRange } from "./ranges";
@@ -344,4 +347,153 @@ export function ancovaSensitivityOptions(
   }
 
   return asSensitivityOptions(options);
+}
+
+function binaryRateOptions(
+  solveMode: SolveMode,
+  controlRate: string,
+  treatmentRate: string,
+  alpha: string,
+  power: string,
+  allocationRatio: string,
+  dropoutRate: string,
+) {
+  const control = Number(controlRate);
+  const treatment = Number(treatmentRate);
+  const alphaValue = Number(alpha);
+  const powerValue = Number(power);
+  const ratio = Number(allocationRatio);
+  const dropout = parseOptionalRate(dropoutRate);
+
+  type BinaryRatesInput = {
+    controlRate: number;
+    treatmentRate: number;
+    alpha: number;
+    allocationRatio: number;
+    power?: number;
+    dropoutRate?: number;
+  };
+
+  const options: Array<{
+    id: string;
+    label: string;
+    getValues: () => number[];
+    mutate: (input: BinaryRatesInput, value: number) => BinaryRatesInput;
+  }> = [
+    {
+      id: "controlRate",
+      label: "Control event rate",
+      getValues: () => centeredRange(control || 0.3, 0.15, 0.05, 0.95, 9),
+      mutate: (input, value) => ({ ...input, controlRate: value }),
+    },
+    {
+      id: "treatmentRate",
+      label: "Treatment event rate",
+      getValues: () => centeredRange(treatment || 0.45, 0.15, 0.05, 0.95, 9),
+      mutate: (input, value) => ({ ...input, treatmentRate: value }),
+    },
+    {
+      id: "alpha",
+      label: "Type I error (alpha)",
+      getValues: () => centeredRange(alphaValue || 0.05, 0.03, 0.01, 0.1, 9),
+      mutate: (input, value) => ({ ...input, alpha: value }),
+    },
+    {
+      id: "allocationRatio",
+      label: "Allocation ratio",
+      getValues: () => (ratio > 0 ? centeredRange(ratio, 1, 0.5, 3) : linearRange(0.5, 3, 11)),
+      mutate: (input, value) => ({ ...input, allocationRatio: value }),
+    },
+    {
+      id: "dropoutRate",
+      label: "Dropout rate",
+      getValues: () => linearRange(0, Math.max(dropout, 0.4), 9),
+      mutate: (input, value) => ({
+        ...input,
+        dropoutRate: value === 0 ? undefined : value,
+      }),
+    },
+  ];
+
+  if (solveMode === "sample_size") {
+    options.splice(3, 0, {
+      id: "power",
+      label: "Target power",
+      getValues: () => centeredRange(powerValue || 0.8, 0.15, 0.6, 0.95, 8),
+      mutate: (input, value) => ({ ...input, power: value }),
+    });
+  }
+
+  return options;
+}
+
+export function twoProportionSensitivityOptions(
+  solveMode: SolveMode,
+  studyObjective: StudyObjective,
+  controlRate: string,
+  treatmentRate: string,
+  alpha: string,
+  power: string,
+  allocationRatio: string,
+  dropoutRate: string,
+  noninferiorityMargin = "0.1",
+): SensitivityOptionDef[] {
+  const options = binaryRateOptions(
+    solveMode,
+    controlRate,
+    treatmentRate,
+    alpha,
+    power,
+    allocationRatio,
+    dropoutRate,
+  ).map((option) => ({
+    id: option.id,
+    label: option.label,
+    getValues: option.getValues,
+    mutate: (input: unknown, value: number) =>
+      option.mutate(input as TwoProportionDifferenceInput, value),
+  }));
+
+  if (studyObjective === "non_inferiority") {
+    const margin = Number(noninferiorityMargin);
+    options.push({
+      id: "noninferiorityMargin",
+      label: "Non-inferiority margin",
+      getValues: () => centeredRange(margin || 0.1, 0.05, 0.01, 0.3, 7),
+      mutate: (input: unknown, value: number) => ({
+        ...(input as TwoProportionDifferenceInput),
+        noninferiorityMargin: value,
+        studyObjective: "non_inferiority",
+        alternative: "greater",
+      }),
+    });
+  }
+
+  return options;
+}
+
+export function binaryEffectSensitivityOptions(
+  solveMode: SolveMode,
+  controlRate: string,
+  treatmentRate: string,
+  alpha: string,
+  power: string,
+  allocationRatio: string,
+  dropoutRate: string,
+): SensitivityOptionDef[] {
+  return binaryRateOptions(
+    solveMode,
+    controlRate,
+    treatmentRate,
+    alpha,
+    power,
+    allocationRatio,
+    dropoutRate,
+  ).map((option) => ({
+    id: option.id,
+    label: option.label,
+    getValues: option.getValues,
+    mutate: (input: unknown, value: number) =>
+      option.mutate(input as OddsRatioInput, value),
+  }));
 }

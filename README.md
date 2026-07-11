@@ -35,5 +35,6 @@ just cli -- --help   # run the CLI wrapper
 
 ## Status
 
-Phase 2 (continuous endpoints) is complete: t-tests, one-way ANOVA, two-sample
-ANCOVA, and one-way sensitivity analysis views. See [`handbook/11-roadmap.md`](handbook/11-roadmap.md).
+Phase 3 (binary endpoints): difference in proportions, odds ratio, and risk ratio
+are implemented with desktop UI and sensitivity analysis. See
+[`handbook/11-roadmap.md`](handbook/11-roadmap.md).

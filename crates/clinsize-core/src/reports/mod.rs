@@ -1,10 +1,16 @@
 //! Report data assembly for exported calculation summaries.
 
+use crate::methods::binary::odds_ratio::{OddsRatioInput, OddsRatioResult};
+use crate::methods::binary::risk_ratio::{RiskRatioInput, RiskRatioResult};
+use crate::methods::binary::two_proportion_difference::{
+    TwoProportionDifferenceInput, TwoProportionDifferenceResult,
+};
 use crate::methods::continuous::ancova_two_sample::{AncovaTwoSampleInput, AncovaTwoSampleResult};
 use crate::methods::continuous::one_sample_ttest::{OneSampleTTestInput, OneSampleTTestResult};
 use crate::methods::continuous::one_way_anova::{OneWayAnovaInput, OneWayAnovaResult};
 use crate::methods::continuous::paired_ttest::{PairedTTestInput, PairedTTestResult};
 use crate::methods::continuous::two_sample_ttest::{TwoSampleTTestInput, TwoSampleTTestResult};
+use crate::types::SolveMode;
 
 fn append_warnings(lines: &mut Vec<String>, warnings: &[crate::types::CalculationWarning]) {
     lines.push("## Assumptions and warnings".into());
@@ -284,6 +290,178 @@ pub fn ancova_two_sample_markdown(
     lines.push("## Reproducibility".into());
     lines.push(format!("- **Engine version:** {engine_version}"));
     lines.push("- **Validation source:** R `power.t.test` with σ_adj = σ_y × √(1 − ρ²)".into());
+
+    lines.join("\n")
+}
+
+/// Render a two-proportion difference calculation summary as Markdown.
+pub fn two_proportion_difference_markdown(
+    input: &TwoProportionDifferenceInput,
+    result: &TwoProportionDifferenceResult,
+    engine_version: &str,
+) -> String {
+    let dropout = input
+        .dropout_rate
+        .map(|rate| format!("{rate:.4}"))
+        .unwrap_or_else(|| "none".into());
+    let margin = input
+        .noninferiority_margin
+        .map(|m| format!("{m:.4}"))
+        .unwrap_or_else(|| "n/a".into());
+
+    let mut lines = vec![
+        "# ClinSize calculation summary".into(),
+        String::new(),
+        "## Method".into(),
+        "- **Method:** Two-sample difference in proportions".into(),
+        "- **Endpoint:** Binary".into(),
+        format!("- **Solve mode:** {:?}", input.solve_mode),
+        format!("- **Study objective:** {:?}", input.study_objective),
+        format!("- **Alternative:** {:?}", input.alternative),
+        String::new(),
+        "## Inputs".into(),
+        format!("- **Alpha:** {:.4}", input.alpha),
+        format!("- **Control event rate:** {:.4}", input.control_rate),
+        format!("- **Treatment event rate:** {:.4}", input.treatment_rate),
+        format!("- **Allocation ratio:** {:.4}", input.allocation_ratio),
+        format!("- **Non-inferiority margin:** {margin}"),
+        format!("- **Dropout rate:** {dropout}"),
+        String::new(),
+        "## Results".into(),
+        format!("- **Control N:** {}", result.n_control),
+        format!("- **Treatment N:** {}", result.n_treatment),
+        format!("- **Total N:** {}", result.total_n),
+        format!(
+            "- **Dropout-adjusted total N:** {}",
+            result.total_n_adjusted
+        ),
+        format!("- **Achieved power:** {:.4}", result.achieved_power),
+        format!(
+            "- **Rate difference (treatment − control):** {:.4}",
+            result.rate_difference
+        ),
+    ];
+
+    append_warnings(&mut lines, &result.warnings);
+    lines.push(String::new());
+    lines.push("## Reproducibility".into());
+    lines.push(format!("- **Engine version:** {engine_version}"));
+    lines.push(
+        "- **Validation source:** R `power.prop.test` (superiority); TrialSize `TwoSampleProportion.NIS` (non-inferiority)".into(),
+    );
+
+    lines.join("\n")
+}
+
+/// Render an odds-ratio calculation summary as Markdown.
+pub fn odds_ratio_markdown(
+    input: &OddsRatioInput,
+    result: &OddsRatioResult,
+    engine_version: &str,
+) -> String {
+    binary_effect_markdown(&BinaryEffectReportContext {
+        method_name: "Odds ratio superiority",
+        solve_mode: input.solve_mode,
+        alpha: input.alpha,
+        control_rate: input.control_rate,
+        treatment_rate: input.treatment_rate,
+        allocation_ratio: input.allocation_ratio,
+        dropout_rate: input.dropout_rate,
+        n_control: result.n_control,
+        n_treatment: result.n_treatment,
+        total_n: result.total_n,
+        total_n_adjusted: result.total_n_adjusted,
+        achieved_power: result.achieved_power,
+        effect_line: format!("- **Odds ratio:** {:.4}", result.odds_ratio),
+        warnings: &result.warnings,
+        engine_version,
+        validation_source: "TrialSize `RelativeRisk.Equality` (log odds ratio; Chow et al. 2003)",
+    })
+}
+
+/// Render a risk-ratio calculation summary as Markdown.
+pub fn risk_ratio_markdown(
+    input: &RiskRatioInput,
+    result: &RiskRatioResult,
+    engine_version: &str,
+) -> String {
+    binary_effect_markdown(&BinaryEffectReportContext {
+        method_name: "Risk ratio superiority",
+        solve_mode: input.solve_mode,
+        alpha: input.alpha,
+        control_rate: input.control_rate,
+        treatment_rate: input.treatment_rate,
+        allocation_ratio: input.allocation_ratio,
+        dropout_rate: input.dropout_rate,
+        n_control: result.n_control,
+        n_treatment: result.n_treatment,
+        total_n: result.total_n,
+        total_n_adjusted: result.total_n_adjusted,
+        achieved_power: result.achieved_power,
+        effect_line: format!("- **Risk ratio:** {:.4}", result.risk_ratio),
+        warnings: &result.warnings,
+        engine_version,
+        validation_source: "Chow et al. 2003 log risk-ratio normal approximation",
+    })
+}
+
+struct BinaryEffectReportContext<'a> {
+    method_name: &'a str,
+    solve_mode: SolveMode,
+    alpha: f64,
+    control_rate: f64,
+    treatment_rate: f64,
+    allocation_ratio: f64,
+    dropout_rate: Option<f64>,
+    n_control: u32,
+    n_treatment: u32,
+    total_n: u32,
+    total_n_adjusted: u32,
+    achieved_power: f64,
+    effect_line: String,
+    warnings: &'a [crate::types::CalculationWarning],
+    engine_version: &'a str,
+    validation_source: &'a str,
+}
+
+fn binary_effect_markdown(ctx: &BinaryEffectReportContext<'_>) -> String {
+    let dropout = ctx
+        .dropout_rate
+        .map(|rate| format!("{rate:.4}"))
+        .unwrap_or_else(|| "none".into());
+
+    let mut lines = vec![
+        "# ClinSize calculation summary".into(),
+        String::new(),
+        "## Method".into(),
+        format!("- **Method:** {}", ctx.method_name),
+        "- **Endpoint:** Binary".into(),
+        format!("- **Solve mode:** {:?}", ctx.solve_mode),
+        String::new(),
+        "## Inputs".into(),
+        format!("- **Alpha:** {:.4}", ctx.alpha),
+        format!("- **Control event rate:** {:.4}", ctx.control_rate),
+        format!("- **Treatment event rate:** {:.4}", ctx.treatment_rate),
+        format!("- **Allocation ratio:** {:.4}", ctx.allocation_ratio),
+        format!("- **Dropout rate:** {dropout}"),
+        String::new(),
+        "## Results".into(),
+        format!("- **Control N:** {}", ctx.n_control),
+        format!("- **Treatment N:** {}", ctx.n_treatment),
+        format!("- **Total N:** {}", ctx.total_n),
+        format!("- **Dropout-adjusted total N:** {}", ctx.total_n_adjusted),
+        format!("- **Achieved power:** {:.4}", ctx.achieved_power),
+        ctx.effect_line.clone(),
+    ];
+
+    append_warnings(&mut lines, ctx.warnings);
+    lines.push(String::new());
+    lines.push("## Reproducibility".into());
+    lines.push(format!("- **Engine version:** {}", ctx.engine_version));
+    lines.push(format!(
+        "- **Validation source:** {}",
+        ctx.validation_source
+    ));
 
     lines.join("\n")
 }

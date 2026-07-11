@@ -1,4 +1,6 @@
 <script lang="ts">
+  import BinaryEffectMeasureView from "$lib/methods/BinaryEffectMeasureView.svelte";
+  import TwoProportionDifferenceView from "$lib/methods/TwoProportionDifferenceView.svelte";
   import AncovaTwoSampleView from "$lib/methods/AncovaTwoSampleView.svelte";
   import OneWayAnovaView from "$lib/methods/OneWayAnovaView.svelte";
   import SingleSampleTTestView from "$lib/methods/SingleSampleTTestView.svelte";
@@ -30,6 +32,28 @@
   <OneWayAnovaView />
 {:else if methodId === "continuous.ancova_two_sample"}
   <AncovaTwoSampleView />
+{:else if methodId === "binary.two_proportion_difference"}
+  <TwoProportionDifferenceView />
+{:else if methodId === "binary.odds_ratio"}
+  <BinaryEffectMeasureView
+    title="Odds ratio"
+    description="Superiority design based on a log odds-ratio normal approximation."
+    variant="odds_ratio"
+    calculateCommand="calculate_odds_ratio"
+    exportCommand="export_odds_ratio_markdown"
+    exportFilename="clinsize-odds-ratio.md"
+    effectLabel="Odds ratio"
+  />
+{:else if methodId === "binary.risk_ratio"}
+  <BinaryEffectMeasureView
+    title="Risk ratio"
+    description="Superiority design based on a log risk-ratio normal approximation."
+    variant="risk_ratio"
+    calculateCommand="calculate_risk_ratio"
+    exportCommand="export_risk_ratio_markdown"
+    exportFilename="clinsize-risk-ratio.md"
+    effectLabel="Risk ratio"
+  />
 {:else}
   <p class="muted">Select a method from the navigation rail.</p>
 {/if}

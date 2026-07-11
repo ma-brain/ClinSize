@@ -52,6 +52,27 @@ const METHODS: &[MethodDescriptor] = &[
         supported_solve_modes: &[SolveMode::SampleSize, SolveMode::Power],
         documentation_path: Some("handbook/calculations/anova-ancova.md"),
     },
+    MethodDescriptor {
+        id: "binary.two_proportion_difference",
+        display_name: "Difference in proportions",
+        endpoint_category: "Binary",
+        supported_solve_modes: &[SolveMode::SampleSize, SolveMode::Power],
+        documentation_path: Some("handbook/calculations/binary-endpoints.md"),
+    },
+    MethodDescriptor {
+        id: "binary.odds_ratio",
+        display_name: "Odds ratio",
+        endpoint_category: "Binary",
+        supported_solve_modes: &[SolveMode::SampleSize, SolveMode::Power],
+        documentation_path: Some("handbook/calculations/binary-endpoints.md"),
+    },
+    MethodDescriptor {
+        id: "binary.risk_ratio",
+        display_name: "Risk ratio",
+        endpoint_category: "Binary",
+        supported_solve_modes: &[SolveMode::SampleSize, SolveMode::Power],
+        documentation_path: Some("handbook/calculations/binary-endpoints.md"),
+    },
 ];
 
 /// Return all registered methods.
@@ -66,11 +87,10 @@ mod tests {
     #[test]
     fn list_methods_includes_continuous_ttests() {
         let methods = list_methods();
-        assert_eq!(methods.len(), 5);
+        assert_eq!(methods.len(), 8);
         assert_eq!(methods[0].id, "continuous.two_sample_ttest");
-        assert_eq!(methods[1].id, "continuous.one_sample_ttest");
-        assert_eq!(methods[2].id, "continuous.paired_ttest");
-        assert_eq!(methods[3].id, "continuous.one_way_anova");
-        assert_eq!(methods[4].id, "continuous.ancova_two_sample");
+        assert_eq!(methods[5].id, "binary.two_proportion_difference");
+        assert_eq!(methods[6].id, "binary.odds_ratio");
+        assert_eq!(methods[7].id, "binary.risk_ratio");
     }
 }

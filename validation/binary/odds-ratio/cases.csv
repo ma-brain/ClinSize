@@ -1,0 +1,2 @@
+case_id,solve_mode,control_rate,treatment_rate,alpha,power,control_n,allocation_ratio,alternative,expected_n_control,expected_odds_ratio,reference
+or_trial_size_example,sample_size,0.25,0.4,0.05,0.8,,1,two_sided,156,2.0,TrialSize RelativeRisk.Equality

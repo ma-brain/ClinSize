@@ -1,0 +1,5 @@
+case_id,solve_mode,control_rate,treatment_rate,alpha,power,control_n,allocation_ratio,alternative,study_objective,noninferiority_margin,expected_n_control,expected_n_treatment,expected_achieved_power,reference
+prop_superiority_two_sided,sample_size,0.3,0.45,0.05,0.8,,1,two_sided,superiority,,163,163,0.8016161,R power.prop.test
+prop_superiority_one_sided,sample_size,0.3,0.45,0.05,0.8,,1,greater,superiority,,128,128,0.801,R power.prop.test one.sided
+prop_power_mode,power,0.3,0.45,0.05,,163,1,two_sided,superiority,,,,0.8016161,R power.prop.test n=163
+prop_noninferiority,sample_size,0.3,0.35,0.05,0.8,,1,greater,non_inferiority,0.1,121,121,0.8,TrialSize TwoSampleProportion.NIS

@@ -9,6 +9,8 @@ export interface CalculationWarning {
   message: string;
 }
 
+export type StudyObjective = "superiority" | "non_inferiority";
+
 export interface MethodDescriptor {
   id: string;
   displayName: string;
@@ -126,5 +128,79 @@ export interface AncovaTwoSampleResult {
   adjustedStandardDeviation: number;
   baselineOutcomeCorrelation: number;
   varianceReductionFactor: number;
+  warnings: CalculationWarning[];
+}
+
+export interface TwoProportionDifferenceInput {
+  solveMode: SolveMode;
+  alpha: number;
+  power?: number;
+  controlN?: number;
+  controlRate: number;
+  treatmentRate: number;
+  allocationRatio: number;
+  alternative: Alternative;
+  studyObjective: StudyObjective;
+  noninferiorityMargin?: number;
+  dropoutRate?: number;
+}
+
+export interface TwoProportionDifferenceResult {
+  nControl: number;
+  nTreatment: number;
+  totalN: number;
+  nControlAdjusted: number;
+  nTreatmentAdjusted: number;
+  totalNAdjusted: number;
+  achievedPower: number;
+  rateDifference: number;
+  warnings: CalculationWarning[];
+}
+
+export interface OddsRatioInput {
+  solveMode: SolveMode;
+  alpha: number;
+  power?: number;
+  controlN?: number;
+  controlRate: number;
+  treatmentRate: number;
+  allocationRatio: number;
+  alternative: Alternative;
+  dropoutRate?: number;
+}
+
+export interface OddsRatioResult {
+  nControl: number;
+  nTreatment: number;
+  totalN: number;
+  nControlAdjusted: number;
+  nTreatmentAdjusted: number;
+  totalNAdjusted: number;
+  achievedPower: number;
+  oddsRatio: number;
+  warnings: CalculationWarning[];
+}
+
+export interface RiskRatioInput {
+  solveMode: SolveMode;
+  alpha: number;
+  power?: number;
+  controlN?: number;
+  controlRate: number;
+  treatmentRate: number;
+  allocationRatio: number;
+  alternative: Alternative;
+  dropoutRate?: number;
+}
+
+export interface RiskRatioResult {
+  nControl: number;
+  nTreatment: number;
+  totalN: number;
+  nControlAdjusted: number;
+  nTreatmentAdjusted: number;
+  totalNAdjusted: number;
+  achievedPower: number;
+  riskRatio: number;
   warnings: CalculationWarning[];
 }

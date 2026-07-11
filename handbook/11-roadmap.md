@@ -28,11 +28,11 @@
 
 ## Phase 3: Binary Endpoints
 
-- Difference in proportions.
-- Risk ratio.
-- Odds ratio.
-- Superiority designs.
-- Basic non-inferiority designs.
+- Difference in proportions. **Done** — `binary.two_proportion_difference` with superiority and basic non-inferiority.
+- Risk ratio. **Done** — `binary.risk_ratio`.
+- Odds ratio. **Done** — `binary.odds_ratio`.
+- Superiority designs. **Done** — supported on all three binary methods.
+- Basic non-inferiority designs. **Done** — proportion difference only.
 
 ## Phase 4: Survival Endpoints
 

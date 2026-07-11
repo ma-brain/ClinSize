@@ -1,3 +1,8 @@
+use clinsize_core::methods::binary::odds_ratio::{self, OddsRatioInput, OddsRatioResult};
+use clinsize_core::methods::binary::risk_ratio::{self, RiskRatioInput, RiskRatioResult};
+use clinsize_core::methods::binary::two_proportion_difference::{
+    self, TwoProportionDifferenceInput, TwoProportionDifferenceResult,
+};
 use clinsize_core::methods::continuous::ancova_two_sample::{
     self, AncovaTwoSampleInput, AncovaTwoSampleResult,
 };
@@ -167,6 +172,59 @@ fn export_ancova_two_sample_markdown(
     ))
 }
 
+#[tauri::command]
+fn calculate_two_proportion_difference(
+    input: TwoProportionDifferenceInput,
+) -> Result<TwoProportionDifferenceResult, AppError> {
+    two_proportion_difference::calculate(input).map_err(AppError::from)
+}
+
+#[tauri::command]
+fn export_two_proportion_difference_markdown(
+    input: TwoProportionDifferenceInput,
+    result: TwoProportionDifferenceResult,
+) -> Result<String, AppError> {
+    Ok(clinsize_core::reports::two_proportion_difference_markdown(
+        &input,
+        &result,
+        clinsize_core::engine_version(),
+    ))
+}
+
+#[tauri::command]
+fn calculate_odds_ratio(input: OddsRatioInput) -> Result<OddsRatioResult, AppError> {
+    odds_ratio::calculate(input).map_err(AppError::from)
+}
+
+#[tauri::command]
+fn export_odds_ratio_markdown(
+    input: OddsRatioInput,
+    result: OddsRatioResult,
+) -> Result<String, AppError> {
+    Ok(clinsize_core::reports::odds_ratio_markdown(
+        &input,
+        &result,
+        clinsize_core::engine_version(),
+    ))
+}
+
+#[tauri::command]
+fn calculate_risk_ratio(input: RiskRatioInput) -> Result<RiskRatioResult, AppError> {
+    risk_ratio::calculate(input).map_err(AppError::from)
+}
+
+#[tauri::command]
+fn export_risk_ratio_markdown(
+    input: RiskRatioInput,
+    result: RiskRatioResult,
+) -> Result<String, AppError> {
+    Ok(clinsize_core::reports::risk_ratio_markdown(
+        &input,
+        &result,
+        clinsize_core::engine_version(),
+    ))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -183,7 +241,13 @@ pub fn run() {
             calculate_one_way_anova,
             export_one_way_anova_markdown,
             calculate_ancova_two_sample,
-            export_ancova_two_sample_markdown
+            export_ancova_two_sample_markdown,
+            calculate_two_proportion_difference,
+            export_two_proportion_difference_markdown,
+            calculate_odds_ratio,
+            export_odds_ratio_markdown,
+            calculate_risk_ratio,
+            export_risk_ratio_markdown
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
