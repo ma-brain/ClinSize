@@ -1,0 +1,14 @@
+[workspace]
+resolver = "2"
+members = ["crates/clinsize-core", "crates/clinsize-cli", "apps/desktop/src-tauri"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "UNLICENSED"
+repository = "https://github.com/Marius/ClinSize"
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+thiserror = "2"
+approx = "0.5"

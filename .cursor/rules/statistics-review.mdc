@@ -1,0 +1,31 @@
+---
+description: Use when reviewing a ClinSize statistical method (formula correctness, validation gaps, numerical risk) rather than general code style
+globs:
+alwaysApply: false
+---
+
+When reviewing a ClinSize statistical method implementation, check in this
+order and report findings by severity — do not spend time on style unless it
+affects correctness or maintainability:
+
+1. Are the null/alternative hypotheses clearly defined, including sign
+   convention (which direction is "better")?
+2. Are all inputs validated (alpha, power, allocation ratio, dropout rate,
+   margin direction for non-inferiority/equivalence)?
+3. Is the formula or numerical algorithm documented in a method note under
+   `handbook/calculations/`, and does the code match that note?
+4. Are alpha and one-sided/two-sided handling correct for this specific test?
+5. Is rounding conservative (sample size rounds up), and is achieved power
+   recalculated *after* rounding rather than reporting the pre-rounding value?
+6. Are warnings returned for important assumptions (e.g. proportional hazards,
+   equal variance, approximation family used)?
+7. Are there reference-value tests against an independent source (R package,
+   textbook example, SAS output) with a documented, justified tolerance —
+   not a tolerance loose enough to hide a real discrepancy?
+8. For non-inferiority/equivalence methods specifically: is margin direction
+   unambiguous in both code and UI copy? Ambiguous margin direction is a
+   serious statistical risk, not a style nit.
+
+If the method note, the tests, or the validation evidence don't exist yet,
+say so explicitly and treat the method as incomplete rather than assuming it
+will be added later.

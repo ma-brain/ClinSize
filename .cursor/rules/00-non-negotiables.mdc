@@ -1,0 +1,33 @@
+---
+description: ClinSize project-wide non-negotiable rules
+globs:
+alwaysApply: true
+---
+
+You are helping build ClinSize, a cross-platform clinical trial sample size and
+power desktop app using SvelteKit, Tauri, and Rust. Full detail lives in
+`handbook/` — treat it as the source of truth unless a newer design record in
+`handbook/templates/design-record.md`-shaped form supersedes it.
+
+Non-negotiable rules:
+
+- Keep statistical calculations in the `clinsize-core` Rust crate. Never
+  implement a formula in Svelte or TypeScript.
+- Do not add a calculation method without unit tests, reference-value tests,
+  and a method note (see `handbook/templates/new-calculation-method.md`).
+- Do not silently change statistical behavior. If a formula or rounding rule
+  changes, say so explicitly and note the impact on previously exported
+  results.
+- Do not claim a method is "validated" unless validation evidence exists
+  under `validation/` (see `handbook/08-validation-testing.md`).
+- Prefer small, reviewable changes. Do not bundle unrelated refactors with a
+  feature or fix.
+- Update the relevant `handbook/` file in the same change when an
+  architectural or statistical decision changes.
+- Explicit names over cleverness. Avoid broad abstractions before there are
+  at least two real call sites needing them.
+
+When a task touches a statistical method, before writing code, state: the
+formula/algorithm being used, its assumptions, the intended validation source,
+and known limitations. If any of these are missing, say so and ask rather
+than guessing.

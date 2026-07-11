@@ -1,0 +1,10 @@
+//! Calculation methods, one submodule per endpoint category.
+//!
+//! Each method follows the shape documented in `02-architecture.md`
+//! ("Core Crate Design"): a typed input struct, a typed output struct,
+//! a validation function, a calculation function, unit tests, and
+//! reference examples. See `templates/new-calculation-method.md` before
+//! adding a method here.
+//!
+//! No methods are implemented yet — see the roadmap's Phase 1
+//! (two-sample t-test sample size) for the first one.

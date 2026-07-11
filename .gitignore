@@ -1,0 +1,23 @@
+# Rust
+/target/
+**/target/
+
+# Node / pnpm
+node_modules/
+.pnpm-store/
+
+# SvelteKit
+apps/desktop/.svelte-kit/
+apps/desktop/build/
+
+# Tauri
+apps/desktop/src-tauri/target/
+
+# Editor / OS
+.DS_Store
+.vscode/
+*.swp
+
+# Env
+.env
+.env.local

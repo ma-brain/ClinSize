@@ -1,0 +1,32 @@
+---
+description: Svelte/Tauri frontend standards for the ClinSize desktop app
+globs: apps/desktop/src/**/*.svelte,apps/desktop/src/**/*.ts
+alwaysApply: false
+---
+
+Full detail: `handbook/05-svelte-tauri-standards.md`, `handbook/06-ui-ux-guidelines.md`.
+
+- SvelteKit renders forms, results, warnings, and charts. It never implements
+  a statistical formula — that always lives in `clinsize-core`.
+- TypeScript may validate for UX (instant feedback, disabling a button), but
+  Rust validation is authoritative. Never assume the UI already prevented an
+  invalid Tauri command call.
+- Keep TypeScript DTOs (in `src/lib/types` or similar) structurally aligned
+  with the matching Rust struct. If a Rust DTO's fields change, update the
+  TypeScript type in the same change.
+- Use local component state for a single form/page. Reach for a shared
+  Svelte store only for things that outlive one page: selected method, user
+  preferences, recent calculations, theme.
+- Visual style is a restrained professional workbench, not a marketing page:
+  neutral background, compact panels, tables for comparison, minimal
+  decoration. No hero sections, oversized cards, or decorative gradients.
+- Every calculation method screen needs: method + endpoint context, solve
+  mode selector, inputs grouped by clinical meaning, inline validation,
+  result summary (primary output, group sizes, total N, achieved power,
+  effect size), assumptions and warnings (visible, not buried), a
+  sensitivity view, and an export action.
+- Use clinical terminology as written in the handbook (treatment/control
+  group, allocation ratio, superiority/non-inferiority/equivalence, dropout,
+  achieved power, Type I error) — not casual paraphrases.
+- Don't assume path separators, a default documents folder, or macOS-only
+  keyboard labels. Use Tauri's dialog/filesystem APIs.

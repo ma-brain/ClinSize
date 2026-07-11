@@ -1,0 +1,34 @@
+---
+description: Rust engine standards for clinsize-core, clinsize-cli, and the Tauri backend
+globs: crates/**/*.rs,apps/desktop/src-tauri/**/*.rs
+alwaysApply: false
+---
+
+Full detail: `handbook/02-architecture.md`, `handbook/04-rust-engine-standards.md`.
+
+- `clinsize-core` has zero Tauri, UI, or OS dependencies — it must be usable
+  standalone from the desktop app, the CLI, and tests.
+- Every calculation method exposes: a typed input struct, a typed output
+  struct, a validation function, a calculation function, unit tests, and
+  reference-value tests. Put this in `src/methods/<category>/<method>.rs`.
+- Use `f64`, enums for finite option sets (e.g. `Alternative`), and
+  `Result<T, error::Error>` for anything that can fail. Never return a raw
+  string from core calculation logic — construct an `error::Error` variant.
+- Validate every input before calculating: alpha in (0,1), power in (0,1),
+  standard deviations/variances positive, allocation ratios positive,
+  dropout rates in [0,1). Reuse `validation::` helpers instead of re-deriving
+  these checks per method.
+- Sample sizes round up to the next integer. Never hide a rounding decision —
+  expose the raw estimate (if useful), rounded group sizes, total N, and
+  achieved power recalculated after rounding.
+- Numerical/root-finding methods need a documented convergence tolerance and
+  max-iteration bound, and must return `Error::ConvergenceFailure` instead of
+  looping unboundedly or panicking.
+- `statrs` has no noncentral t/F/chi-square support — exact power methods
+  that need these must be implemented in `distributions/`, validated against
+  R's `pt`/`pf`/`pchisq` with `ncp` set (see `handbook/references/bibliography.md`).
+- Tauri commands (`apps/desktop/src-tauri/src/lib.rs`) are thin: deserialize,
+  call into `clinsize-core`, map `Error` to a UI-friendly message. No
+  calculation logic in a `#[tauri::command]` function, ever.
+- Every fixed statistical or numerical defect gets a regression test that
+  fails on the old behavior first (red-green), kept permanently.
