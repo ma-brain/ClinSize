@@ -48,8 +48,8 @@ fn cholesky_lower(
     for i in 0..n {
         for j in 0..=i {
             let mut sum = corr[i][j];
-            for k in 0..j {
-                sum -= chol[i][k] * chol[j][k];
+            for (k, item) in chol[i].iter().enumerate().take(j) {
+                sum -= item * chol[j][k];
             }
             if i == j {
                 chol[i][j] = sum.max(0.0).sqrt();
@@ -90,10 +90,8 @@ fn mvn_rectangle_probability(
 
     let mut lo = [0.0; MAX_LOOKS];
     let mut hi = [0.0; MAX_LOOKS];
-    for i in 0..n {
-        lo[i] = lower[i];
-        hi[i] = upper[i];
-    }
+    lo[..n].copy_from_slice(&lower[..n]);
+    hi[..n].copy_from_slice(&upper[..n]);
 
     let mut order: Vec<usize> = (0..n).collect();
     order.sort_by(|&a, &b| {
