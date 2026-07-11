@@ -36,10 +36,10 @@
 
 ## Phase 4: Survival Endpoints
 
-- Log-rank test. **Done** — `survival.log_rank` with desktop UI and sensitivity analysis.
-- Accrual and follow-up assumptions.
-- Event-driven sample size.
-- Dropout and censoring assumptions.
+- Log-rank test. **Done** — `survival.log_rank` with desktop UI, sensitivity analysis, and accrual-based enrollment sizing.
+- Accrual and follow-up assumptions. **Done** — optional inputs on `survival.log_rank`.
+- Event-driven sample size. **Done** — events-to-enrollment translation on `survival.log_rank`.
+- Dropout and censoring assumptions. **Done (basic)** — optional exponential dropout hazard on `survival.log_rank`.
 
 ## Phase 5: Professional Workflow
 

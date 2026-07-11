@@ -505,11 +505,20 @@ export function logRankSensitivityOptions(
   alpha: string,
   power: string,
   allocationRatio: string,
+  includeAccrual = false,
+  controlHazardRate = "0.1155",
+  accrualDuration = "12",
+  minimumFollowUp = "18",
+  dropoutHazardRate = "",
 ): SensitivityOptionDef[] {
   const hr = Number(hazardRatio);
   const alphaValue = Number(alpha);
   const powerValue = Number(power);
   const ratio = Number(allocationRatio);
+  const controlHazard = Number(controlHazardRate);
+  const accrual = Number(accrualDuration);
+  const followUp = Number(minimumFollowUp);
+  const dropout = parseOptionalRate(dropoutHazardRate);
 
   const options: Array<{
     id: string;
@@ -544,6 +553,38 @@ export function logRankSensitivityOptions(
       getValues: () => centeredRange(powerValue || 0.8, 0.15, 0.6, 0.95, 8),
       mutate: (input, value) => ({ ...input, power: value }),
     });
+  }
+
+  if (includeAccrual) {
+    options.push(
+      {
+        id: "controlHazardRate",
+        label: "Control hazard rate",
+        getValues: () => ratioRange(controlHazard || 0.1155, 0.5, 2),
+        mutate: (input, value) => ({ ...input, controlHazardRate: value }),
+      },
+      {
+        id: "accrualDuration",
+        label: "Accrual duration",
+        getValues: () => centeredRange(accrual || 12, 6, 1, 60, 9),
+        mutate: (input, value) => ({ ...input, accrualDuration: value }),
+      },
+      {
+        id: "minimumFollowUp",
+        label: "Minimum follow-up",
+        getValues: () => centeredRange(followUp || 18, 6, 1, 60, 9),
+        mutate: (input, value) => ({ ...input, minimumFollowUp: value }),
+      },
+      {
+        id: "dropoutHazardRate",
+        label: "Dropout hazard rate",
+        getValues: () => linearRange(0, Math.max(dropout, 0.01), 9),
+        mutate: (input, value) => ({
+          ...input,
+          dropoutHazardRate: value === 0 ? undefined : value,
+        }),
+      },
+    );
   }
 
   return options.map((option) => ({

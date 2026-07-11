@@ -501,6 +501,42 @@ pub fn log_rank_markdown(
         format!("- **Hazard ratio:** {:.4}", result.hazard_ratio),
     ];
 
+    if let (Some(control_hazard), Some(accrual), Some(follow_up)) = (
+        input.control_hazard_rate,
+        input.accrual_duration,
+        input.minimum_follow_up,
+    ) {
+        lines.push(String::new());
+        lines.push("## Accrual assumptions".into());
+        lines.push(format!("- **Control hazard rate:** {control_hazard:.4}"));
+        lines.push(format!("- **Accrual duration:** {accrual:.4}"));
+        lines.push(format!("- **Minimum follow-up:** {follow_up:.4}"));
+        let dropout = input
+            .dropout_hazard_rate
+            .map(|rate| format!("{rate:.4}"))
+            .unwrap_or_else(|| "0".into());
+        lines.push(format!("- **Dropout hazard rate:** {dropout}"));
+    }
+
+    if let (Some(total_n), Some(n_control), Some(n_treatment)) =
+        (result.total_n, result.n_control, result.n_treatment)
+    {
+        lines.push(String::new());
+        lines.push("## Enrolled subjects".into());
+        lines.push(format!("- **Control N:** {n_control}"));
+        lines.push(format!("- **Treatment N:** {n_treatment}"));
+        lines.push(format!("- **Total N:** {total_n}"));
+        if let (Some(p_control), Some(p_treatment)) = (
+            result.probability_event_control,
+            result.probability_event_treatment,
+        ) {
+            lines.push(format!("- **Control event probability:** {p_control:.4}"));
+            lines.push(format!(
+                "- **Treatment event probability:** {p_treatment:.4}"
+            ));
+        }
+    }
+
     append_warnings(&mut lines, &result.warnings);
     lines.push(String::new());
     lines.push("## Reproducibility".into());

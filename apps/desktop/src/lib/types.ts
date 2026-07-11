@@ -213,6 +213,10 @@ export interface LogRankInput {
   hazardRatio: number;
   allocationRatio: number;
   alternative: Alternative;
+  controlHazardRate?: number;
+  accrualDuration?: number;
+  minimumFollowUp?: number;
+  dropoutHazardRate?: number;
 }
 
 export interface LogRankResult {
@@ -221,5 +225,10 @@ export interface LogRankResult {
   eventsTreatment: number;
   achievedPower: number;
   hazardRatio: number;
+  nControl?: number;
+  nTreatment?: number;
+  totalN?: number;
+  probabilityEventControl?: number;
+  probabilityEventTreatment?: number;
   warnings: CalculationWarning[];
 }

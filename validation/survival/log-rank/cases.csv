@@ -1,6 +1,8 @@
-case_id,solve_mode,hazard_ratio,alpha,power,total_events,allocation_ratio,alternative,expected_required_events,expected_events_control,expected_events_treatment,expected_achieved_power,reference
-logrank_two_sided_80,sample_size,0.5,0.05,0.8,,1,two_sided,66,33,33,0.8038941,gsDesign nEvents sided=2
-logrank_one_sided_80,sample_size,0.5,0.05,0.8,,1,greater,52,26,26,0.803537,gsDesign nEvents sided=1
-logrank_unequal_allocation,sample_size,0.5,0.05,0.8,,2,two_sided,74,25,49,0.802579,gsDesign nEvents ratio=2
-logrank_power_mode,power,0.5,0.05,,66,1,two_sided,66,33,33,0.8038941,gsDesign nEvents n=66
-logrank_mild_effect,sample_size,0.75,0.05,0.8,,1,two_sided,380,190,190,0.8006692,gsDesign nEvents HR=0.75
+case_id,solve_mode,hazard_ratio,alpha,power,total_events,allocation_ratio,alternative,control_hazard_rate,accrual_duration,minimum_follow_up,dropout_hazard_rate,expected_required_events,expected_total_n,expected_n_control,expected_n_treatment,expected_achieved_power,reference
+logrank_two_sided_80,sample_size,0.5,0.05,0.8,,1,two_sided,,,,,66,,,,0.8038941,gsDesign nEvents sided=2
+logrank_one_sided_80,sample_size,0.5,0.05,0.8,,1,greater,,,,,52,,,,0.803537,gsDesign nEvents sided=1
+logrank_unequal_allocation,sample_size,0.5,0.05,0.8,,2,two_sided,,,,,74,,,,0.802579,gsDesign nEvents ratio=2
+logrank_power_mode,power,0.5,0.05,,66,1,two_sided,,,,,66,,,,0.8038941,gsDesign nEvents n=66
+logrank_mild_effect,sample_size,0.75,0.05,0.8,,1,two_sided,,,,,380,,,,0.8006692,gsDesign nEvents HR=0.75
+logrank_accrual_enrollment,sample_size,0.5,0.05,0.8,,1,two_sided,0.115524,12,18,0,66,79,40,39,0.8038941,gsDesign nSurv Schoenfeld
+logrank_accrual_dropout,sample_size,0.5,0.05,0.8,,1,two_sided,0.115524,12,18,0.001,66,80,40,40,0.8038941,gsDesign nSurv LachinFoulkes

@@ -35,5 +35,6 @@ just cli -- --help   # run the CLI wrapper
 
 ## Status
 
-Phase 4 (survival endpoints): log-rank test is implemented with desktop UI
-and sensitivity analysis. See [`handbook/11-roadmap.md`](handbook/11-roadmap.md).
+Phase 4 (survival endpoints): log-rank test with accrual-based enrollment sizing
+is implemented with desktop UI and sensitivity analysis. See
+[`handbook/11-roadmap.md`](handbook/11-roadmap.md).

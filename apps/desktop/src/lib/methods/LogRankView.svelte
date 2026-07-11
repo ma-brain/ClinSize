@@ -11,6 +11,11 @@
   let hazardRatio = $state("0.5");
   let allocationRatio = $state("1");
   let alternative = $state<Alternative>("two_sided");
+  let controlHazardRate = $state("0.1155");
+  let accrualDuration = $state("12");
+  let minimumFollowUp = $state("18");
+  let dropoutHazardRate = $state("");
+  let includeAccrual = $state(true);
 
   let result = $state<LogRankResult | null>(null);
   let errorMessage = $state<string | null>(null);
@@ -23,6 +28,11 @@
       alpha,
       power,
       allocationRatio,
+      includeAccrual,
+      controlHazardRate,
+      accrualDuration,
+      minimumFollowUp,
+      dropoutHazardRate,
     ),
   );
 
@@ -35,11 +45,20 @@
       hazardRatio,
       allocationRatio,
       alternative,
+      includeAccrual,
+      controlHazardRate,
+      accrualDuration,
+      minimumFollowUp,
+      dropoutHazardRate,
     }),
   );
 
   const sensitivityOutputLabel = $derived(
-    solveMode === "sample_size" ? "Required total events" : "Achieved power",
+    solveMode === "sample_size"
+      ? includeAccrual
+        ? "Total enrolled subjects"
+        : "Required total events"
+      : "Achieved power",
   );
 
   function buildInput(): LogRankInput {
@@ -53,6 +72,15 @@
 
     if (solveMode === "sample_size") input.power = Number(power);
     else input.totalEvents = Number(totalEvents);
+
+    if (includeAccrual) {
+      input.controlHazardRate = Number(controlHazardRate);
+      input.accrualDuration = Number(accrualDuration);
+      input.minimumFollowUp = Number(minimumFollowUp);
+      if (dropoutHazardRate.trim() !== "") {
+        input.dropoutHazardRate = Number(dropoutHazardRate);
+      }
+    }
 
     return input;
   }
@@ -96,8 +124,8 @@
   <header class="page-header">
     <h2>Log-rank test</h2>
     <p>
-      Two-arm time-to-event design using the Schoenfeld approximation. Results
-      are required events, not enrolled subjects.
+      Two-arm time-to-event design using the Schoenfeld approximation. Provide
+      accrual assumptions to translate required events into enrolled subjects.
     </p>
   </header>
 
@@ -149,6 +177,33 @@
         <input type="number" min="0" step="0.01" bind:value={allocationRatio} />
       </label>
 
+      <label class="checkbox">
+        <input type="checkbox" bind:checked={includeAccrual} />
+        Include accrual and follow-up assumptions
+      </label>
+
+      {#if includeAccrual}
+        <label>
+          Control hazard rate
+          <input type="number" min="0" step="0.001" bind:value={controlHazardRate} />
+        </label>
+
+        <label>
+          Accrual duration
+          <input type="number" min="0" step="0.1" bind:value={accrualDuration} />
+        </label>
+
+        <label>
+          Minimum follow-up
+          <input type="number" min="0" step="0.1" bind:value={minimumFollowUp} />
+        </label>
+
+        <label>
+          Dropout hazard rate (optional)
+          <input type="number" min="0" step="0.0001" bind:value={dropoutHazardRate} />
+        </label>
+      {/if}
+
       <button onclick={calculate} disabled={calculating}>
         {calculating ? "Calculating…" : "Calculate"}
       </button>
@@ -173,6 +228,14 @@
           <dd>{result.achievedPower.toFixed(4)}</dd>
           <dt>Hazard ratio</dt>
           <dd>{result.hazardRatio.toFixed(4)}</dd>
+          {#if result.totalN}
+            <dt>Control N</dt>
+            <dd>{result.nControl}</dd>
+            <dt>Treatment N</dt>
+            <dd>{result.nTreatment}</dd>
+            <dt>Total enrolled subjects</dt>
+            <dd>{result.totalN}</dd>
+          {/if}
         </dl>
 
         {#if result.warnings.length > 0}
@@ -196,7 +259,10 @@
           options={sensitivityOptions}
           getOutputValue={(value) => {
             const row = value as LogRankResult;
-            return solveMode === "sample_size" ? row.requiredEvents : row.achievedPower;
+            if (solveMode === "sample_size") {
+              return includeAccrual ? (row.totalN ?? row.requiredEvents) : row.requiredEvents;
+            }
+            return row.achievedPower;
           }}
           outputLabel={sensitivityOutputLabel}
         />
@@ -249,6 +315,16 @@
     gap: 0.25rem;
     margin-bottom: 0.75rem;
     font-size: 0.8125rem;
+  }
+
+  .checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .checkbox input {
+    width: auto;
   }
 
   input,
