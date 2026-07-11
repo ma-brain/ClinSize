@@ -24,7 +24,7 @@
 - Paired t-test.
 - One-way ANOVA.
 - Basic ANCOVA adjustment.
-- Sensitivity analysis views.
+- Sensitivity analysis views. **Done** — collapsible one-parameter sweeps on each method screen.
 
 ## Phase 3: Binary Endpoints
 

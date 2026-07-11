@@ -35,5 +35,5 @@ just cli -- --help   # run the CLI wrapper
 
 ## Status
 
-Phase 2 (continuous endpoints): t-tests, one-way ANOVA, and two-sample ANCOVA are implemented.
-Sensitivity analysis views are next. See [`handbook/11-roadmap.md`](handbook/11-roadmap.md).
+Phase 2 (continuous endpoints) is complete: t-tests, one-way ANOVA, two-sample
+ANCOVA, and one-way sensitivity analysis views. See [`handbook/11-roadmap.md`](handbook/11-roadmap.md).

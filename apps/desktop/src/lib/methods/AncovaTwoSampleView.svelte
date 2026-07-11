@@ -1,4 +1,6 @@
 <script lang="ts">
+  import SensitivityPanel from "$lib/components/SensitivityPanel.svelte";
+  import { ancovaSensitivityOptions } from "$lib/sensitivity/configs";
   import type {
     Alternative,
     AncovaTwoSampleInput,
@@ -21,6 +23,38 @@
   let result = $state<AncovaTwoSampleResult | null>(null);
   let errorMessage = $state<string | null>(null);
   let calculating = $state(false);
+
+  const sensitivityOptions = $derived(
+    ancovaSensitivityOptions(
+      solveMode,
+      meanDifference,
+      standardDeviation,
+      baselineOutcomeCorrelation,
+      alpha,
+      power,
+      allocationRatio,
+      dropoutRate,
+    ),
+  );
+
+  const sensitivitySignature = $derived(
+    JSON.stringify({
+      solveMode,
+      alpha,
+      power,
+      controlN,
+      meanDifference,
+      standardDeviation,
+      baselineOutcomeCorrelation,
+      allocationRatio,
+      alternative,
+      dropoutRate,
+    }),
+  );
+
+  const sensitivityOutputLabel = $derived(
+    solveMode === "sample_size" ? "Total sample size" : "Achieved power",
+  );
 
   function buildInput(): AncovaTwoSampleInput {
     const input: AncovaTwoSampleInput = {
@@ -203,6 +237,19 @@
         {/if}
 
         <button class="secondary" onclick={exportResult}>Export Markdown</button>
+
+        <SensitivityPanel
+          ready={true}
+          inputSignature={sensitivitySignature}
+          command="calculate_ancova_two_sample"
+          buildInput={buildInput}
+          options={sensitivityOptions}
+          getOutputValue={(value) => {
+            const row = value as AncovaTwoSampleResult;
+            return solveMode === "sample_size" ? row.totalN : row.achievedPower;
+          }}
+          outputLabel={sensitivityOutputLabel}
+        />
       {:else}
         <p class="muted">Enter parameters and calculate to see results.</p>
       {/if}

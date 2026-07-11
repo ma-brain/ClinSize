@@ -1,4 +1,9 @@
 <script lang="ts">
+  import SensitivityPanel from "$lib/components/SensitivityPanel.svelte";
+  import {
+    oneSampleSensitivityOptions,
+    pairedSensitivityOptions,
+  } from "$lib/sensitivity/configs";
   import type {
     Alternative,
     OneSampleTTestInput,
@@ -38,6 +43,46 @@
   let pairedResult = $state<PairedTTestResult | null>(null);
   let errorMessage = $state<string | null>(null);
   let calculating = $state(false);
+
+  const sensitivitySignature = $derived(
+    JSON.stringify({
+      variant,
+      solveMode,
+      alpha,
+      power,
+      size,
+      meanDifference,
+      standardDeviation,
+      alternative,
+      dropoutRate,
+    }),
+  );
+
+  const sensitivityOutputLabel = $derived(
+    solveMode === "sample_size" ? "Sample size" : "Achieved power",
+  );
+
+  const oneSampleSensitivity = $derived(
+    oneSampleSensitivityOptions(
+      solveMode,
+      meanDifference,
+      standardDeviation,
+      alpha,
+      power,
+      dropoutRate,
+    ),
+  );
+
+  const pairedSensitivity = $derived(
+    pairedSensitivityOptions(
+      solveMode,
+      meanDifference,
+      standardDeviation,
+      alpha,
+      power,
+      dropoutRate,
+    ),
+  );
 
   function buildOneSampleInput(): OneSampleTTestInput {
     const input: OneSampleTTestInput = {
@@ -217,6 +262,18 @@
           </div>
         {/if}
         <button class="secondary" onclick={exportResult}>Export Markdown</button>
+        <SensitivityPanel
+          ready={true}
+          inputSignature={sensitivitySignature}
+          command="calculate_one_sample_ttest"
+          buildInput={buildOneSampleInput}
+          options={oneSampleSensitivity}
+          getOutputValue={(value) => {
+            const result = value as OneSampleTTestResult;
+            return solveMode === "sample_size" ? result.n : result.achievedPower;
+          }}
+          outputLabel={sensitivityOutputLabel}
+        />
       {:else if pairedResult}
         <dl class="results">
           <dt>{sizeLabel}</dt>
@@ -241,6 +298,18 @@
           </div>
         {/if}
         <button class="secondary" onclick={exportResult}>Export Markdown</button>
+        <SensitivityPanel
+          ready={true}
+          inputSignature={sensitivitySignature}
+          command="calculate_paired_ttest"
+          buildInput={buildPairedInput}
+          options={pairedSensitivity}
+          getOutputValue={(value) => {
+            const result = value as PairedTTestResult;
+            return solveMode === "sample_size" ? result.nPairs : result.achievedPower;
+          }}
+          outputLabel={sensitivityOutputLabel}
+        />
       {:else}
         <p class="muted">Enter parameters and calculate to see results.</p>
       {/if}

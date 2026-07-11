@@ -75,6 +75,11 @@ At minimum, support one-way sensitivity analysis over:
 - Allocation ratio.
 - Dropout rate.
 
+**Implemented** in the desktop app as a collapsible sensitivity panel on each method
+screen. The UI varies one parameter at a time across a fixed sweep range and
+re-runs the existing Rust `calculate_*` command for each point. No statistical
+logic is duplicated in TypeScript.
+
 Scenario comparison can be added later after the base workflow is stable.
 
 ## Accessibility

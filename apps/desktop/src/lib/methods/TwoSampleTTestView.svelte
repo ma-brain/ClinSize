@@ -1,4 +1,6 @@
 <script lang="ts">
+  import SensitivityPanel from "$lib/components/SensitivityPanel.svelte";
+  import { twoSampleSensitivityOptions } from "$lib/sensitivity/configs";
   import type {
     Alternative,
     SolveMode,
@@ -20,6 +22,40 @@
   let result = $state<TwoSampleTTestResult | null>(null);
   let errorMessage = $state<string | null>(null);
   let calculating = $state(false);
+
+  const sensitivityOptions = $derived(
+    twoSampleSensitivityOptions(
+      solveMode,
+      meanDifference,
+      standardDeviation,
+      alpha,
+      power,
+      allocationRatio,
+      dropoutRate,
+    ),
+  );
+
+  const sensitivitySignature = $derived(
+    JSON.stringify({
+      solveMode,
+      alpha,
+      power,
+      controlN,
+      meanDifference,
+      standardDeviation,
+      allocationRatio,
+      alternative,
+      dropoutRate,
+    }),
+  );
+
+  const sensitivityOutputLabel = $derived(
+    solveMode === "sample_size" ? "Total sample size" : "Achieved power",
+  );
+
+  function sensitivityOutput(value: TwoSampleTTestResult): number {
+    return solveMode === "sample_size" ? value.totalN : value.achievedPower;
+  }
 
   function buildInput(): TwoSampleTTestInput {
     const input: TwoSampleTTestInput = {
@@ -185,6 +221,16 @@
         {/if}
 
         <button class="secondary" onclick={exportResult}>Export Markdown</button>
+
+        <SensitivityPanel
+          ready={true}
+          inputSignature={sensitivitySignature}
+          command="calculate_two_sample_ttest"
+          buildInput={buildInput}
+          options={sensitivityOptions}
+          getOutputValue={(value) => sensitivityOutput(value as TwoSampleTTestResult)}
+          outputLabel={sensitivityOutputLabel}
+        />
       {:else}
         <p class="muted">Enter parameters and calculate to see results.</p>
       {/if}

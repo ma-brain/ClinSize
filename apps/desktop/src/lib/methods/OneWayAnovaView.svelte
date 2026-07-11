@@ -1,4 +1,6 @@
 <script lang="ts">
+  import SensitivityPanel from "$lib/components/SensitivityPanel.svelte";
+  import { oneWayAnovaSensitivityOptions } from "$lib/sensitivity/configs";
   import type { OneWayAnovaInput, OneWayAnovaResult, SolveMode } from "$lib/types";
   import { invoke } from "@tauri-apps/api/core";
 
@@ -14,6 +16,34 @@
   let result = $state<OneWayAnovaResult | null>(null);
   let errorMessage = $state<string | null>(null);
   let calculating = $state(false);
+
+  const sensitivityOptions = $derived(
+    oneWayAnovaSensitivityOptions(
+      solveMode,
+      betweenVariance,
+      withinSd,
+      alpha,
+      power,
+      dropoutRate,
+    ),
+  );
+
+  const sensitivitySignature = $derived(
+    JSON.stringify({
+      solveMode,
+      alpha,
+      power,
+      nPerGroup,
+      nGroups,
+      betweenVariance,
+      withinSd,
+      dropoutRate,
+    }),
+  );
+
+  const sensitivityOutputLabel = $derived(
+    solveMode === "sample_size" ? "Total sample size" : "Achieved power",
+  );
 
   function buildInput(): OneWayAnovaInput {
     const withinVariance = Number(withinSd) ** 2;
@@ -166,6 +196,19 @@
         {/if}
 
         <button class="secondary" onclick={exportResult}>Export Markdown</button>
+
+        <SensitivityPanel
+          ready={true}
+          inputSignature={sensitivitySignature}
+          command="calculate_one_way_anova"
+          buildInput={buildInput}
+          options={sensitivityOptions}
+          getOutputValue={(value) => {
+            const row = value as OneWayAnovaResult;
+            return solveMode === "sample_size" ? row.totalN : row.achievedPower;
+          }}
+          outputLabel={sensitivityOutputLabel}
+        />
       {:else}
         <p class="muted">Enter parameters and calculate to see results.</p>
       {/if}
