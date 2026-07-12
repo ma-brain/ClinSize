@@ -12,6 +12,19 @@
 
   const categoryOrder = ["Continuous", "Binary", "Count", "Ordinal", "Survival", "Design"];
 
+  // Categories start collapsed on launch; the user expands the ones they need.
+  let collapsedCategories = $state(new Set(categoryOrder));
+
+  function toggleCategory(category: string) {
+    const next = new Set(collapsedCategories);
+    if (next.has(category)) {
+      next.delete(category);
+    } else {
+      next.add(category);
+    }
+    collapsedCategories = next;
+  }
+
   const groupedMethods = $derived.by(() => {
     const groups = new Map<string, MethodDescriptor[]>();
 
@@ -58,20 +71,31 @@
   </section>
 
   {#each groupedMethods as group}
+    {@const collapsed = collapsedCategories.has(group.category)}
     <section class="nav-section">
-      <h2 class="nav-heading">{group.category}</h2>
-      <ul class="nav-list">
-        {#each group.methods as method}
-          <li>
-            <a
-              href="/methods/{method.id}"
-              class:active={$page.url.pathname === `/methods/${method.id}`}
-            >
-              {method.displayName}
-            </a>
-          </li>
-        {/each}
-      </ul>
+      <button
+        type="button"
+        class="nav-heading"
+        aria-expanded={!collapsed}
+        onclick={() => toggleCategory(group.category)}
+      >
+        <span>{group.category}</span>
+        <span class="chevron" class:open={!collapsed}>▾</span>
+      </button>
+      {#if !collapsed}
+        <ul class="nav-list">
+          {#each group.methods as method}
+            <li>
+              <a
+                href="/methods/{method.id}"
+                class:active={$page.url.pathname === `/methods/${method.id}`}
+              >
+                {method.displayName}
+              </a>
+            </li>
+          {/each}
+        </ul>
+      {/if}
     </section>
   {/each}
 </nav>
@@ -120,6 +144,41 @@
     text-transform: uppercase;
     color: var(--text-primary);
     opacity: 0.62;
+  }
+
+  button.nav-heading {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: opacity var(--transition-fast);
+  }
+
+  button.nav-heading:hover {
+    opacity: 1;
+  }
+
+  button.nav-heading:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .chevron {
+    font-size: 0.65rem;
+    transition: transform var(--transition-fast);
+  }
+
+  .chevron.open {
+    transform: rotate(180deg);
   }
 
   .nav-list {

@@ -14,8 +14,9 @@
   <section class="panel">
     <h2>ClinSize</h2>
     <p>
-      Clinical trial sample size and power workbench. Phase 1 adds the first
-      validated method: two-sample t-test sample size and power.
+      Clinical trial sample size and power workbench — {methods.length} validated
+      methods across continuous, binary, count, ordinal, survival, and design
+      endpoints, each independently checked against published R references.
     </p>
     <dl class="status">
       <dt>Registered methods</dt>

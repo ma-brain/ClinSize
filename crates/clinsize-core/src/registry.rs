@@ -18,15 +18,15 @@ pub struct MethodDescriptor {
 
 const METHODS: &[MethodDescriptor] = &[
     MethodDescriptor {
-        id: "continuous.two_sample_ttest",
-        display_name: "Two-sample t-test",
+        id: "continuous.one_sample_ttest",
+        display_name: "One-sample t-test",
         endpoint_category: "Continuous",
         supported_solve_modes: &[SolveMode::SampleSize, SolveMode::Power],
         documentation_path: Some("handbook/calculations/continuous-ttest.md"),
     },
     MethodDescriptor {
-        id: "continuous.one_sample_ttest",
-        display_name: "One-sample t-test",
+        id: "continuous.two_sample_ttest",
+        display_name: "Two-sample t-test",
         endpoint_category: "Continuous",
         supported_solve_modes: &[SolveMode::SampleSize, SolveMode::Power],
         documentation_path: Some("handbook/calculations/continuous-ttest.md"),
@@ -172,7 +172,7 @@ mod tests {
     fn list_methods_includes_continuous_ttests() {
         let methods = list_methods();
         assert_eq!(methods.len(), 20);
-        assert_eq!(methods[0].id, "continuous.two_sample_ttest");
+        assert_eq!(methods[0].id, "continuous.one_sample_ttest");
         assert_eq!(methods[5].id, "continuous.change_from_baseline");
         assert_eq!(methods[6].id, "continuous.mmrm");
         assert_eq!(methods[7].id, "continuous.mann_whitney");
