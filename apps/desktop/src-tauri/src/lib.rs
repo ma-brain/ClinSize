@@ -33,6 +33,7 @@ use clinsize_core::methods::continuous::wilcoxon_signed_rank::{
 use clinsize_core::methods::count::negative_binomial::{
     self, NegativeBinomialInput, NegativeBinomialResult,
 };
+use clinsize_core::methods::count::poisson::{self, PoissonInput, PoissonResult};
 use clinsize_core::methods::design::blinded_ssre::{self, BlindedSsreInput, BlindedSsreResult};
 use clinsize_core::methods::design::group_sequential::{
     self, GroupSequentialInput, GroupSequentialResult,
@@ -349,6 +350,20 @@ fn export_negative_binomial_markdown(
     result: NegativeBinomialResult,
 ) -> Result<String, AppError> {
     Ok(clinsize_core::reports::negative_binomial_markdown(
+        &input,
+        &result,
+        clinsize_core::engine_version(),
+    ))
+}
+
+#[tauri::command]
+fn calculate_poisson(input: PoissonInput) -> Result<PoissonResult, AppError> {
+    poisson::calculate(input).map_err(AppError::from)
+}
+
+#[tauri::command]
+fn export_poisson_markdown(input: PoissonInput, result: PoissonResult) -> Result<String, AppError> {
+    Ok(clinsize_core::reports::poisson_markdown(
         &input,
         &result,
         clinsize_core::engine_version(),
@@ -718,6 +733,8 @@ pub fn run() {
             export_mmrm_markdown,
             calculate_negative_binomial,
             export_negative_binomial_markdown,
+            calculate_poisson,
+            export_poisson_markdown,
             calculate_proportional_odds,
             export_proportional_odds_markdown,
             calculate_two_proportion_difference,

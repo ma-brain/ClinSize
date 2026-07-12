@@ -6,6 +6,7 @@ import type {
   MmrmInput,
   NegativeBinomialInput,
   OddsRatioInput,
+  PoissonInput,
   OneSampleBinomialInput,
   OneSampleTTestInput,
   OneWayAnovaInput,
@@ -566,6 +567,90 @@ export function negativeBinomialSensitivityOptions(
       label: "Target power",
       getValues: () => centeredRange(powerValue || 0.8, 0.15, 0.6, 0.95, 8),
       mutate: (input: NegativeBinomialInput, value: number) => ({ ...input, power: value }),
+    });
+  }
+
+  return asSensitivityOptions(options);
+}
+
+export function poissonSensitivityOptions(
+  solveMode: SolveMode,
+  controlRate: string,
+  treatmentRate: string,
+  exposureTime: string,
+  alpha: string,
+  power: string,
+  allocationRatio: string,
+  dropoutRate: string,
+): SensitivityOptionDef[] {
+  const control = Number(controlRate);
+  const treatment = Number(treatmentRate);
+  const exposure = Number(exposureTime);
+  const alphaValue = Number(alpha);
+  const powerValue = Number(power);
+  const ratio = Number(allocationRatio);
+  const dropout = parseOptionalRate(dropoutRate);
+
+  const options = [
+    {
+      id: "controlRate",
+      label: "Control rate (λ₁)",
+      getValues: () => ratioRange(control || 1, 0.5, 2),
+      mutate: (input: PoissonInput, value: number) => ({
+        ...input,
+        controlRate: value,
+      }),
+    },
+    {
+      id: "treatmentRate",
+      label: "Treatment rate (λ₂)",
+      getValues: () => ratioRange(treatment || 1, 0.5, 2),
+      mutate: (input: PoissonInput, value: number) => ({
+        ...input,
+        treatmentRate: value,
+      }),
+    },
+    {
+      id: "exposureTime",
+      label: "Exposure time",
+      getValues: () => ratioRange(exposure || 1, 0.5, 2),
+      mutate: (input: PoissonInput, value: number) => ({
+        ...input,
+        exposureTime: value,
+      }),
+    },
+    {
+      id: "alpha",
+      label: "Type I error (alpha)",
+      getValues: () => centeredRange(alphaValue || 0.05, 0.03, 0.01, 0.1, 9),
+      mutate: (input: PoissonInput, value: number) => ({ ...input, alpha: value }),
+    },
+    {
+      id: "allocationRatio",
+      label: "Allocation ratio",
+      getValues: () => (ratio > 0 ? centeredRange(ratio, 1, 0.5, 3) : linearRange(0.5, 3, 11)),
+      mutate: (input: PoissonInput, value: number) => ({
+        ...input,
+        allocationRatio: value,
+      }),
+    },
+    {
+      id: "dropoutRate",
+      label: "Dropout rate",
+      getValues: () => linearRange(0, Math.max(dropout, 0.4), 9),
+      mutate: (input: PoissonInput, value: number) => ({
+        ...input,
+        dropoutRate: value === 0 ? undefined : value,
+      }),
+    },
+  ];
+
+  if (solveMode === "sample_size") {
+    options.splice(3, 0, {
+      id: "power",
+      label: "Target power",
+      getValues: () => centeredRange(powerValue || 0.8, 0.15, 0.6, 0.95, 8),
+      mutate: (input: PoissonInput, value: number) => ({ ...input, power: value }),
     });
   }
 
