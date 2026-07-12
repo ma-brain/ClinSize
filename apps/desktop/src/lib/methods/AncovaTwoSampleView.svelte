@@ -15,6 +15,7 @@
   import WarningList from "$lib/components/ui/WarningList.svelte";
   import { ancovaSensitivityOptions } from "$lib/sensitivity/configs";
   import { persistCalculation } from "$lib/workflow/record";
+  import { calculateMethod, exportMethodMarkdown } from "$lib/workflow/methodDispatch";
   import { fetchCalculationRationale, fetchProtocolText } from "$lib/workflow/rationale";
   import type {
     Alternative,
@@ -22,7 +23,6 @@
     AncovaTwoSampleResult,
     SolveMode,
   } from "$lib/types";
-  import { invoke } from "@tauri-apps/api/core";
 
   let solveMode = $state<SolveMode>("sample_size");
   let alpha = $state("0.05");
@@ -158,8 +158,15 @@
 
     try {
       const input = buildInput();
-      result = await invoke<AncovaTwoSampleResult>("calculate_ancova_two_sample", { input });
-      exportMarkdown = await invoke<string>("export_ancova_two_sample_markdown", { input, result });
+      result = await calculateMethod<AncovaTwoSampleInput, AncovaTwoSampleResult>(
+        "continuous.ancova_two_sample",
+        input,
+      );
+      exportMarkdown = await exportMethodMarkdown<AncovaTwoSampleInput, AncovaTwoSampleResult>(
+        "continuous.ancova_two_sample",
+        input,
+        result,
+      );
       rationale = await fetchCalculationRationale("continuous.ancova_two_sample", input, result);
       protocolText = await fetchProtocolText("continuous.ancova_two_sample", input, result);
       lastCalculatedSignature = inputSignature;
@@ -308,7 +315,7 @@
           defaultExpanded={true}
           chartFileStem="clinsize-sensitivity-ancova-two-sample"
           inputSignature={lastCalculatedSignature ?? inputSignature}
-          command="calculate_ancova_two_sample"
+          methodId="continuous.ancova_two_sample"
           buildInput={buildInput}
           options={sensitivityOptions}
           getOutputValue={(value) => {

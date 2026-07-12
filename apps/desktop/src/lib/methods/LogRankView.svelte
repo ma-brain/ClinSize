@@ -15,9 +15,9 @@
   import WarningList from "$lib/components/ui/WarningList.svelte";
   import { logRankSensitivityOptions } from "$lib/sensitivity/configs";
   import { persistCalculation } from "$lib/workflow/record";
+  import { calculateMethod, exportMethodMarkdown } from "$lib/workflow/methodDispatch";
   import { fetchCalculationRationale, fetchProtocolText } from "$lib/workflow/rationale";
   import type { Alternative, LogRankInput, LogRankResult, SolveMode } from "$lib/types";
-  import { invoke } from "@tauri-apps/api/core";
 
   let solveMode = $state<SolveMode>("sample_size");
   let alpha = $state("0.05");
@@ -161,8 +161,12 @@
 
     try {
       const input = buildInput();
-      result = await invoke<LogRankResult>("calculate_log_rank", { input });
-      exportMarkdown = await invoke<string>("export_log_rank_markdown", { input, result });
+      result = await calculateMethod<LogRankInput, LogRankResult>("survival.log_rank", input);
+      exportMarkdown = await exportMethodMarkdown<LogRankInput, LogRankResult>(
+        "survival.log_rank",
+        input,
+        result,
+      );
       rationale = await fetchCalculationRationale("survival.log_rank", input, result);
       protocolText = await fetchProtocolText("survival.log_rank", input, result);
       lastCalculatedSignature = inputSignature;
@@ -318,7 +322,7 @@
           defaultExpanded={true}
           chartFileStem="clinsize-sensitivity-log-rank"
           inputSignature={lastCalculatedSignature ?? inputSignature}
-          command="calculate_log_rank"
+          methodId="survival.log_rank"
           buildInput={buildInput}
           options={sensitivityOptions}
           getOutputValue={(value) => {

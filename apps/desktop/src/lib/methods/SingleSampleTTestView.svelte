@@ -18,6 +18,7 @@
     pairedSensitivityOptions,
   } from "$lib/sensitivity/configs";
   import { persistCalculation } from "$lib/workflow/record";
+  import { calculateMethod, exportMethodMarkdown } from "$lib/workflow/methodDispatch";
   import { fetchCalculationRationale, fetchProtocolText } from "$lib/workflow/rationale";
   import type {
     Alternative,
@@ -27,7 +28,6 @@
     PairedTTestResult,
     SolveMode,
   } from "$lib/types";
-  import { invoke } from "@tauri-apps/api/core";
 
   type Variant = "one_sample" | "paired";
 
@@ -215,14 +215,15 @@
     try {
       if (variant === "one_sample") {
         const input = buildOneSampleInput();
-        oneSampleResult = await invoke<OneSampleTTestResult>(
-          "calculate_one_sample_ttest",
-          { input },
-        );
-        exportMarkdown = await invoke<string>("export_one_sample_ttest_markdown", {
+        oneSampleResult = await calculateMethod<OneSampleTTestInput, OneSampleTTestResult>(
+          "continuous.one_sample_ttest",
           input,
-          result: oneSampleResult,
-        });
+        );
+        exportMarkdown = await exportMethodMarkdown<OneSampleTTestInput, OneSampleTTestResult>(
+          "continuous.one_sample_ttest",
+          input,
+          oneSampleResult,
+        );
         rationale = await fetchCalculationRationale(
           "continuous.one_sample_ttest",
           input,
@@ -242,13 +243,15 @@
         });
       } else {
         const input = buildPairedInput();
-        pairedResult = await invoke<PairedTTestResult>("calculate_paired_ttest", {
+        pairedResult = await calculateMethod<PairedTTestInput, PairedTTestResult>(
+          "continuous.paired_ttest",
           input,
-        });
-        exportMarkdown = await invoke<string>("export_paired_ttest_markdown", {
+        );
+        exportMarkdown = await exportMethodMarkdown<PairedTTestInput, PairedTTestResult>(
+          "continuous.paired_ttest",
           input,
-          result: pairedResult,
-        });
+          pairedResult,
+        );
         rationale = await fetchCalculationRationale(
           "continuous.paired_ttest",
           input,
@@ -391,7 +394,7 @@
             defaultExpanded={true}
             chartFileStem="clinsize-sensitivity-one-sample-ttest"
             inputSignature={lastCalculatedSignature ?? inputSignature}
-            command="calculate_one_sample_ttest"
+            methodId="continuous.one_sample_ttest"
             buildInput={buildOneSampleInput}
             options={oneSampleSensitivity}
             getOutputValue={(value) => {
@@ -406,7 +409,7 @@
             defaultExpanded={true}
             chartFileStem="clinsize-sensitivity-paired-ttest"
             inputSignature={lastCalculatedSignature ?? inputSignature}
-            command="calculate_paired_ttest"
+            methodId="continuous.paired_ttest"
             buildInput={buildPairedInput}
             options={pairedSensitivity}
             getOutputValue={(value) => {

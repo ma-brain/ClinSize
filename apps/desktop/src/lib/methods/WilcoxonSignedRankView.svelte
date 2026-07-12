@@ -15,6 +15,7 @@
   import WarningList from "$lib/components/ui/WarningList.svelte";
   import { wilcoxonSignedRankSensitivityOptions } from "$lib/sensitivity/configs";
   import { persistCalculation } from "$lib/workflow/record";
+  import { calculateMethod, exportMethodMarkdown } from "$lib/workflow/methodDispatch";
   import { fetchCalculationRationale, fetchProtocolText } from "$lib/workflow/rationale";
   import type {
     Alternative,
@@ -22,7 +23,6 @@
     WilcoxonSignedRankInput,
     WilcoxonSignedRankResult,
   } from "$lib/types";
-  import { invoke } from "@tauri-apps/api/core";
 
   let solveMode = $state<SolveMode>("sample_size");
   let alpha = $state("0.05");
@@ -150,13 +150,15 @@
 
     try {
       const input = buildInput();
-      result = await invoke<WilcoxonSignedRankResult>("calculate_wilcoxon_signed_rank", {
+      result = await calculateMethod<WilcoxonSignedRankInput, WilcoxonSignedRankResult>(
+        "continuous.wilcoxon_signed_rank",
         input,
-      });
-      exportMarkdown = await invoke<string>("export_wilcoxon_signed_rank_markdown", {
+      );
+      exportMarkdown = await exportMethodMarkdown<WilcoxonSignedRankInput, WilcoxonSignedRankResult>(
+        "continuous.wilcoxon_signed_rank",
         input,
         result,
-      });
+      );
       rationale = await fetchCalculationRationale(
         "continuous.wilcoxon_signed_rank",
         input,
@@ -295,7 +297,7 @@
           defaultExpanded={true}
           chartFileStem="clinsize-sensitivity-wilcoxon-signed-rank"
           inputSignature={lastCalculatedSignature ?? inputSignature}
-          command="calculate_wilcoxon_signed_rank"
+          methodId="continuous.wilcoxon_signed_rank"
           buildInput={buildInput}
           options={sensitivityOptions}
           getOutputValue={(value) => {

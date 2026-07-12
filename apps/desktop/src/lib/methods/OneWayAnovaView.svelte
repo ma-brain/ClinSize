@@ -15,9 +15,9 @@
   import WarningList from "$lib/components/ui/WarningList.svelte";
   import { oneWayAnovaSensitivityOptions } from "$lib/sensitivity/configs";
   import { persistCalculation } from "$lib/workflow/record";
+  import { calculateMethod, exportMethodMarkdown } from "$lib/workflow/methodDispatch";
   import { fetchCalculationRationale, fetchProtocolText } from "$lib/workflow/rationale";
   import type { OneWayAnovaInput, OneWayAnovaResult, SolveMode } from "$lib/types";
-  import { invoke } from "@tauri-apps/api/core";
 
   let solveMode = $state<SolveMode>("sample_size");
   let alpha = $state("0.05");
@@ -135,8 +135,15 @@
 
     try {
       const input = buildInput();
-      result = await invoke<OneWayAnovaResult>("calculate_one_way_anova", { input });
-      exportMarkdown = await invoke<string>("export_one_way_anova_markdown", { input, result });
+      result = await calculateMethod<OneWayAnovaInput, OneWayAnovaResult>(
+        "continuous.one_way_anova",
+        input,
+      );
+      exportMarkdown = await exportMethodMarkdown<OneWayAnovaInput, OneWayAnovaResult>(
+        "continuous.one_way_anova",
+        input,
+        result,
+      );
       rationale = await fetchCalculationRationale("continuous.one_way_anova", input, result);
       protocolText = await fetchProtocolText("continuous.one_way_anova", input, result);
       lastCalculatedSignature = inputSignature;
@@ -263,7 +270,7 @@
           defaultExpanded={true}
           chartFileStem="clinsize-sensitivity-one-way-anova"
           inputSignature={lastCalculatedSignature ?? inputSignature}
-          command="calculate_one_way_anova"
+          methodId="continuous.one_way_anova"
           buildInput={buildInput}
           options={sensitivityOptions}
           getOutputValue={(value) => {

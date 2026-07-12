@@ -15,6 +15,7 @@
   import WarningList from "$lib/components/ui/WarningList.svelte";
   import { binaryEffectSensitivityOptions } from "$lib/sensitivity/configs";
   import { persistCalculation } from "$lib/workflow/record";
+  import { calculateMethod, exportMethodMarkdown } from "$lib/workflow/methodDispatch";
   import { fetchCalculationRationale, fetchProtocolText } from "$lib/workflow/rationale";
   import type {
     Alternative,
@@ -24,7 +25,6 @@
     RiskRatioResult,
     SolveMode,
   } from "$lib/types";
-  import { invoke } from "@tauri-apps/api/core";
 
   type Variant = "odds_ratio" | "risk_ratio";
 
@@ -32,15 +32,11 @@
     title,
     description,
     variant,
-    calculateCommand,
-    exportCommand,
     effectLabel,
   }: {
     title: string;
     description: string;
     variant: Variant;
-    calculateCommand: string;
-    exportCommand: string;
     exportFilename: string;
     effectLabel: string;
   } = $props();
@@ -200,8 +196,15 @@
     try {
       if (variant === "odds_ratio") {
         const input = buildOddsInput();
-        oddsResult = await invoke<OddsRatioResult>(calculateCommand, { input });
-        exportMarkdown = await invoke<string>(exportCommand, { input, result: oddsResult });
+        oddsResult = await calculateMethod<OddsRatioInput, OddsRatioResult>(
+          "binary.odds_ratio",
+          input,
+        );
+        exportMarkdown = await exportMethodMarkdown<OddsRatioInput, OddsRatioResult>(
+          "binary.odds_ratio",
+          input,
+          oddsResult,
+        );
         rationale = await fetchCalculationRationale("binary.odds_ratio", input, oddsResult);
         protocolText = await fetchProtocolText("binary.odds_ratio", input, oddsResult);
         lastCalculatedSignature = inputSignature;
@@ -213,8 +216,15 @@
         });
       } else {
         const input = buildRiskInput();
-        riskResult = await invoke<RiskRatioResult>(calculateCommand, { input });
-        exportMarkdown = await invoke<string>(exportCommand, { input, result: riskResult });
+        riskResult = await calculateMethod<RiskRatioInput, RiskRatioResult>(
+          "binary.risk_ratio",
+          input,
+        );
+        exportMarkdown = await exportMethodMarkdown<RiskRatioInput, RiskRatioResult>(
+          "binary.risk_ratio",
+          input,
+          riskResult,
+        );
         rationale = await fetchCalculationRationale("binary.risk_ratio", input, riskResult);
         protocolText = await fetchProtocolText("binary.risk_ratio", input, riskResult);
         lastCalculatedSignature = inputSignature;
@@ -348,7 +358,7 @@
           defaultExpanded={true}
           chartFileStem={`clinsize-sensitivity-${variant.replace("_", "-")}`}
           inputSignature={lastCalculatedSignature ?? inputSignature}
-          command={calculateCommand}
+          methodId={variant === "odds_ratio" ? "binary.odds_ratio" : "binary.risk_ratio"}
           buildInput={buildInput}
           options={sensitivityOptions}
           getOutputValue={(value) => {

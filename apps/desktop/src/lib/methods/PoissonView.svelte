@@ -15,9 +15,9 @@
   import WarningList from "$lib/components/ui/WarningList.svelte";
   import { poissonSensitivityOptions } from "$lib/sensitivity/configs";
   import { persistCalculation } from "$lib/workflow/record";
+  import { calculateMethod, exportMethodMarkdown } from "$lib/workflow/methodDispatch";
   import { fetchCalculationRationale, fetchProtocolText } from "$lib/workflow/rationale";
   import type { Alternative, PoissonInput, PoissonResult, SolveMode } from "$lib/types";
-  import { invoke } from "@tauri-apps/api/core";
 
   let solveMode = $state<SolveMode>("sample_size");
   let alpha = $state("0.05");
@@ -151,8 +151,12 @@
 
     try {
       const input = buildInput();
-      result = await invoke<PoissonResult>("calculate_poisson", { input });
-      exportMarkdown = await invoke<string>("export_poisson_markdown", { input, result });
+      result = await calculateMethod<PoissonInput, PoissonResult>("count.poisson", input);
+      exportMarkdown = await exportMethodMarkdown<PoissonInput, PoissonResult>(
+        "count.poisson",
+        input,
+        result,
+      );
       rationale = await fetchCalculationRationale("count.poisson", input, result);
       protocolText = await fetchProtocolText("count.poisson", input, result);
       lastCalculatedSignature = inputSignature;
@@ -295,7 +299,7 @@
           defaultExpanded={true}
           chartFileStem="clinsize-sensitivity-poisson"
           inputSignature={lastCalculatedSignature ?? inputSignature}
-          command="calculate_poisson"
+          methodId="count.poisson"
           buildInput={buildInput}
           options={sensitivityOptions}
           getOutputValue={(value) => {

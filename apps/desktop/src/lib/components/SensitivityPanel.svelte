@@ -1,12 +1,12 @@
 <script lang="ts">
   import SensitivityChart from "$lib/components/SensitivityChart.svelte";
   import type { SensitivityOptionDef, SensitivityPoint } from "$lib/sensitivity/types";
-  import { invoke } from "@tauri-apps/api/core";
+  import { calculateMethod } from "$lib/workflow/methodDispatch";
 
   let {
     ready,
     inputSignature,
-    command,
+    methodId,
     buildInput,
     options,
     getOutputValue,
@@ -18,7 +18,7 @@
   }: {
     ready: boolean;
     inputSignature: string;
-    command: string;
+    methodId: string;
     buildInput: () => unknown;
     options: SensitivityOptionDef[];
     getOutputValue: (result: unknown) => number;
@@ -64,7 +64,7 @@
     for (const value of values) {
       const input = selectedOption.mutate(baseInput, value);
       try {
-        const result = await invoke(command, { input });
+        const result = await calculateMethod<unknown, unknown>(methodId, input);
         nextPoints.push({
           parameterValue: value,
           outputValue: getOutputValue(result),

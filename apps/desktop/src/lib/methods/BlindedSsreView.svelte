@@ -13,13 +13,13 @@
   import Section from "$lib/components/ui/Section.svelte";
   import WarningList from "$lib/components/ui/WarningList.svelte";
   import { persistCalculation } from "$lib/workflow/record";
+  import { calculateMethod, exportMethodMarkdown } from "$lib/workflow/methodDispatch";
   import { fetchCalculationRationale, fetchProtocolText } from "$lib/workflow/rationale";
   import type {
     Alternative,
     BlindedSsreInput,
     BlindedSsreResult,
   } from "$lib/types";
-  import { invoke } from "@tauri-apps/api/core";
 
   let alpha = $state("0.05");
   let targetPower = $state("0.8");
@@ -136,11 +136,15 @@
 
     try {
       const input = buildInput();
-      result = await invoke<BlindedSsreResult>("calculate_blinded_ssre", { input });
-      exportMarkdown = await invoke<string>("export_blinded_ssre_markdown", {
+      result = await calculateMethod<BlindedSsreInput, BlindedSsreResult>(
+        "design.blinded_ssre",
+        input,
+      );
+      exportMarkdown = await exportMethodMarkdown<BlindedSsreInput, BlindedSsreResult>(
+        "design.blinded_ssre",
         input,
         result,
-      });
+      );
       rationale = await fetchCalculationRationale("design.blinded_ssre", input, result);
       protocolText = await fetchProtocolText("design.blinded_ssre", input, result);
       lastCalculatedSignature = inputSignature;

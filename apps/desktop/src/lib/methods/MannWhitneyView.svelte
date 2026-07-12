@@ -15,6 +15,7 @@
   import WarningList from "$lib/components/ui/WarningList.svelte";
   import { mannWhitneySensitivityOptions } from "$lib/sensitivity/configs";
   import { persistCalculation } from "$lib/workflow/record";
+  import { calculateMethod, exportMethodMarkdown } from "$lib/workflow/methodDispatch";
   import { fetchCalculationRationale, fetchProtocolText } from "$lib/workflow/rationale";
   import type {
     Alternative,
@@ -22,7 +23,6 @@
     MannWhitneyResult,
     SolveMode,
   } from "$lib/types";
-  import { invoke } from "@tauri-apps/api/core";
 
   let solveMode = $state<SolveMode>("sample_size");
   let alpha = $state("0.05");
@@ -156,11 +156,15 @@
 
     try {
       const input = buildInput();
-      result = await invoke<MannWhitneyResult>("calculate_mann_whitney", { input });
-      exportMarkdown = await invoke<string>("export_mann_whitney_markdown", {
+      result = await calculateMethod<MannWhitneyInput, MannWhitneyResult>(
+        "continuous.mann_whitney",
+        input,
+      );
+      exportMarkdown = await exportMethodMarkdown<MannWhitneyInput, MannWhitneyResult>(
+        "continuous.mann_whitney",
         input,
         result,
-      });
+      );
       rationale = await fetchCalculationRationale(
         "continuous.mann_whitney",
         input,
@@ -305,7 +309,7 @@
           defaultExpanded={true}
           chartFileStem="clinsize-sensitivity-mann-whitney"
           inputSignature={lastCalculatedSignature ?? inputSignature}
-          command="calculate_mann_whitney"
+          methodId="continuous.mann_whitney"
           buildInput={buildInput}
           options={sensitivityOptions}
           getOutputValue={(value) => {

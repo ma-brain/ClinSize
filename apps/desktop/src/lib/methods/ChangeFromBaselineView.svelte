@@ -15,6 +15,7 @@
   import WarningList from "$lib/components/ui/WarningList.svelte";
   import { changeFromBaselineSensitivityOptions } from "$lib/sensitivity/configs";
   import { persistCalculation } from "$lib/workflow/record";
+  import { calculateMethod, exportMethodMarkdown } from "$lib/workflow/methodDispatch";
   import { fetchCalculationRationale, fetchProtocolText } from "$lib/workflow/rationale";
   import type {
     Alternative,
@@ -22,7 +23,6 @@
     ChangeFromBaselineResult,
     SolveMode,
   } from "$lib/types";
-  import { invoke } from "@tauri-apps/api/core";
 
   let solveMode = $state<SolveMode>("sample_size");
   let alpha = $state("0.05");
@@ -160,8 +160,15 @@
 
     try {
       const input = buildInput();
-      result = await invoke<ChangeFromBaselineResult>("calculate_change_from_baseline", { input });
-      exportMarkdown = await invoke<string>("export_change_from_baseline_markdown", { input, result });
+      result = await calculateMethod<ChangeFromBaselineInput, ChangeFromBaselineResult>(
+        "continuous.change_from_baseline",
+        input,
+      );
+      exportMarkdown = await exportMethodMarkdown<ChangeFromBaselineInput, ChangeFromBaselineResult>(
+        "continuous.change_from_baseline",
+        input,
+        result,
+      );
       rationale = await fetchCalculationRationale("continuous.change_from_baseline", input, result);
       protocolText = await fetchProtocolText("continuous.change_from_baseline", input, result);
       lastCalculatedSignature = inputSignature;
@@ -310,7 +317,7 @@
           defaultExpanded={true}
           chartFileStem="clinsize-sensitivity-change-from-baseline"
           inputSignature={lastCalculatedSignature ?? inputSignature}
-          command="calculate_change_from_baseline"
+          methodId="continuous.change_from_baseline"
           buildInput={buildInput}
           options={sensitivityOptions}
           getOutputValue={(value) => {

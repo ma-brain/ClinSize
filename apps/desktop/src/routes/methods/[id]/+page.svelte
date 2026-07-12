@@ -59,8 +59,6 @@
     title="Odds ratio"
     description="Superiority design based on a log odds-ratio normal approximation."
     variant="odds_ratio"
-    calculateCommand="calculate_odds_ratio"
-    exportCommand="export_odds_ratio_markdown"
     exportFilename="clinsize-odds-ratio.md"
     effectLabel="Odds ratio"
   />
@@ -71,8 +69,6 @@
     title="Risk ratio"
     description="Superiority design based on a log risk-ratio normal approximation."
     variant="risk_ratio"
-    calculateCommand="calculate_risk_ratio"
-    exportCommand="export_risk_ratio_markdown"
     exportFilename="clinsize-risk-ratio.md"
     effectLabel="Risk ratio"
   />

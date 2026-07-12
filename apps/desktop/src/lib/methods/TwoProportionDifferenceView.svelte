@@ -15,6 +15,7 @@
   import WarningList from "$lib/components/ui/WarningList.svelte";
   import { twoProportionSensitivityOptions } from "$lib/sensitivity/configs";
   import { persistCalculation } from "$lib/workflow/record";
+  import { calculateMethod, exportMethodMarkdown } from "$lib/workflow/methodDispatch";
   import { fetchCalculationRationale, fetchProtocolText } from "$lib/workflow/rationale";
   import type {
     Alternative,
@@ -23,7 +24,6 @@
     TwoProportionDifferenceInput,
     TwoProportionDifferenceResult,
   } from "$lib/types";
-  import { invoke } from "@tauri-apps/api/core";
 
   let solveMode = $state<SolveMode>("sample_size");
   let studyObjective = $state<StudyObjective>("superiority");
@@ -166,14 +166,18 @@
 
     try {
       const input = buildInput();
-      result = await invoke<TwoProportionDifferenceResult>(
-        "calculate_two_proportion_difference",
-        { input },
+      result = await calculateMethod<TwoProportionDifferenceInput, TwoProportionDifferenceResult>(
+        "binary.two_proportion_difference",
+        input,
       );
-      exportMarkdown = await invoke<string>("export_two_proportion_difference_markdown", {
+      exportMarkdown = await exportMethodMarkdown<
+        TwoProportionDifferenceInput,
+        TwoProportionDifferenceResult
+      >(
+        "binary.two_proportion_difference",
         input,
         result,
-      });
+      );
       rationale = await fetchCalculationRationale(
         "binary.two_proportion_difference",
         input,
@@ -337,7 +341,7 @@
           defaultExpanded={true}
           chartFileStem="clinsize-sensitivity-two-proportion-difference"
           inputSignature={lastCalculatedSignature ?? inputSignature}
-          command="calculate_two_proportion_difference"
+          methodId="binary.two_proportion_difference"
           buildInput={buildInput}
           options={sensitivityOptions}
           getOutputValue={(value) => {
