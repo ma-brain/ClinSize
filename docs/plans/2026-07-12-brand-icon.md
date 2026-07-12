@@ -37,4 +37,3 @@ Run the assertion, `pnpm --dir apps/desktop check`, and `git diff --check`. Expe
 **Step 5: Commit**
 
 Stage the asset and `NavRail.svelte`, then commit with message `feat: add icon to navigation brand`.
-
