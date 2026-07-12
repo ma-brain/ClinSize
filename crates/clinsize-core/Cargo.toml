@@ -15,6 +15,7 @@ pulldown-cmark = { version = "0.13", default-features = false, features = ["html
 # Maintained fork of the unmaintained `docx` crate; the original pulled in
 # jetscii 0.4, which no longer compiles on x86_64 stable Rust.
 docx-rust = { version = "0.1.11", default-features = false }
+paste = "1"
 
 [dev-dependencies]
 approx.workspace = true

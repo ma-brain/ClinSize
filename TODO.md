@@ -1,9 +1,10 @@
 TODO — what's left to fix
 
   High value
-  1. Collapse the dispatch duplication (~1,500 lines): the 19-method match is hand-written 4× in dispatch.rs,
-  plus 2 Tauri commands per method. A macro or function-pointer table removes the "add a method, forget a site"
-  bug class that caused the stale CLI test.
+  1. Collapse the Tauri-side dispatch duplication: 38 per-method command handlers in
+  apps/desktop/src-tauri/src/lib.rs (calculate_* + export_*_markdown) plus 38 literal invoke()
+  call sites across 17 *View.svelte files. The core dispatch.rs side is now macro-driven; the
+  Tauri+frontend side is the remaining Layer 2 of the old "add a method, forget a site" risk.
 
   Medium
   2. Group sequential / Dunnett numerical precision: fixed 12,000-point Halton QMC gives ~0.02 boundary accuracy
