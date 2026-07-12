@@ -122,7 +122,15 @@ More detail: [`handbook/extended-platforms.md`](handbook/extended-platforms.md),
 
 ## Status
 
-Phase 6 (extended platforms): Windows and Linux installers via Tauri,
-GitHub Actions release builds, and a scriptable `clinsize` CLI are
-available. See [`handbook/11-roadmap.md`](handbook/11-roadmap.md) and
+**20 validated methods** across six endpoint categories — continuous,
+binary, count, ordinal, survival, and design — each independently checked
+against published R references (Noether 1987, Zhu & Lakkis 2014,
+Whitehead 1993, Signorini 1991, R `power.t.test`, `gsDesign`, `longpower`,
+`EnvStats`, `Hmisc`). See [`validation/`](validation/) for the evidence
+and [`handbook/08-validation-testing.md`](handbook/08-validation-testing.md)
+for the testing framework.
+
+Windows and Linux installers via Tauri, GitHub Actions release builds, and
+a scriptable `clinsize` CLI are available. See
+[`handbook/11-roadmap.md`](handbook/11-roadmap.md) and
 [`handbook/extended-platforms.md`](handbook/extended-platforms.md).
