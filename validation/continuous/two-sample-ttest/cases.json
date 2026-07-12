@@ -1,0 +1,80 @@
+{
+  "methodId": "continuous.two_sample_ttest",
+  "cases": [
+    {
+      "caseId": "equal_two_sided_d1",
+      "source": "R power.t.test(delta = 1, sd = 1, sig.level = 0.05, power = 0.8)",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "meanDifference": 1,
+        "standardDeviation": 1,
+        "allocationRatio": 1,
+        "alternative": "two_sided"
+      },
+      "expect": {
+        "nControl": 17,
+        "nTreatment": 17,
+        "achievedPower": { "value": 0.80704, "tol": 1e-4 }
+      }
+    },
+    {
+      "caseId": "equal_two_sided_d05",
+      "source": "R power.t.test(delta = 0.5, sd = 1, sig.level = 0.05, power = 0.8)",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "meanDifference": 0.5,
+        "standardDeviation": 1,
+        "allocationRatio": 1,
+        "alternative": "two_sided"
+      },
+      "expect": {
+        "nControl": 64,
+        "nTreatment": 64,
+        "achievedPower": { "value": 0.80146, "tol": 1e-4 }
+      }
+    },
+    {
+      "caseId": "one_sided_d1",
+      "source": "R power.t.test(delta = 1, sd = 1, sig.level = 0.05, power = 0.8, alternative = \"one.sided\")",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "meanDifference": 1,
+        "standardDeviation": 1,
+        "allocationRatio": 1,
+        "alternative": "greater"
+      },
+      "expect": {
+        "nControl": 14,
+        "nTreatment": 14,
+        "achievedPower": { "value": 0.82409, "tol": 1e-4 }
+      }
+    },
+    {
+      "caseId": "dropout_20pct",
+      "source": "ClinSize rounding policy: enrolled n = ceil(randomized n / (1 - dropout)) = ceil(17 / 0.8) = 22",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "meanDifference": 1,
+        "standardDeviation": 1,
+        "allocationRatio": 1,
+        "alternative": "two_sided",
+        "dropoutRate": 0.2
+      },
+      "expect": {
+        "nControl": 17,
+        "nTreatment": 17,
+        "nControlAdjusted": 22,
+        "nTreatmentAdjusted": 22,
+        "achievedPower": { "value": 0.80704, "tol": 1e-4 }
+      }
+    }
+  ]
+}

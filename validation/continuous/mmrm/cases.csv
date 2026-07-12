@@ -1,6 +1,0 @@
-case_id,structure,rho,n_visits,per_visit_dropout,sigma,delta,alpha,power,alternative,allocation_ratio,expected_phi,expected_n_control,expected_n_treatment,expected_achieved_power,tolerance,reference_source
-cs_k3_dropout5,compound_symmetry,0.5,3,0.05,2,2,0.05,0.8,two_sided,1,1.13306118,18,18,0.8046597,1e-5,R longpower power.mmrm (Lu-Luo-Chen 2008)
-cs_k3_complete,compound_symmetry,0.5,3,,2,2,0.05,0.8,two_sided,1,1.0,16,16,0.8074296,1e-5,R longpower power.mmrm (Lu-Luo-Chen 2008)
-ar1_k4_dropout10,ar1,0.6,4,0.1,3,1.5,0.025,0.9,greater,1,1.44575044,122,122,0.9010971,1e-5,R longpower power.mmrm (Lu-Luo-Chen 2008)
-cs_k5_lambda2,compound_symmetry,0.3,5,0.08,1.2,0.5,0.05,0.9,two_sided,2,1.45268834,132,264,0.9002562,1e-4,R longpower power.mmrm (Lu-Luo-Chen 2008)
-ar1_k4_power_at_74,ar1,0.6,4,0.1,3,1.5,0.025,,greater,1,1.44575044,37,37,0.4319623,1e-5,R longpower power.mmrm power mode

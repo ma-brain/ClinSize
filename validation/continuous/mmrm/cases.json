@@ -1,0 +1,119 @@
+{
+  "methodId": "continuous.mmrm",
+  "cases": [
+    {
+      "caseId": "cs_k3_dropout5",
+      "source": "R longpower::power.mmrm (Lu-Luo-Chen 2008), CS rho = 0.5, k = 3, 5%/visit dropout",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "treatmentEffect": 2,
+        "residualStandardDeviation": 2,
+        "correlationStructure": "compound_symmetry",
+        "correlation": 0.5,
+        "nPostBaselineVisits": 3,
+        "perVisitDropoutRate": 0.05,
+        "allocationRatio": 1,
+        "alternative": "two_sided"
+      },
+      "expect": {
+        "nControl": 18,
+        "nTreatment": 18,
+        "varianceFactor": { "value": 1.13306118, "tol": 1e-6 },
+        "achievedPower": { "value": 0.8046597, "tol": 1e-5 }
+      }
+    },
+    {
+      "caseId": "cs_k3_complete",
+      "source": "R longpower::power.mmrm; complete data must give phi = 1 (final-visit t-test)",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "treatmentEffect": 2,
+        "residualStandardDeviation": 2,
+        "correlationStructure": "compound_symmetry",
+        "correlation": 0.5,
+        "nPostBaselineVisits": 3,
+        "allocationRatio": 1,
+        "alternative": "two_sided"
+      },
+      "expect": {
+        "nControl": 16,
+        "nTreatment": 16,
+        "varianceFactor": 1.0,
+        "achievedPower": { "value": 0.8074296, "tol": 1e-5 }
+      }
+    },
+    {
+      "caseId": "ar1_k4_dropout10",
+      "source": "R longpower::power.mmrm (Lu-Luo-Chen 2008), AR(1) rho = 0.6, k = 4, 10%/visit dropout, one-sided alpha 0.025",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.025,
+        "power": 0.9,
+        "treatmentEffect": 1.5,
+        "residualStandardDeviation": 3,
+        "correlationStructure": "ar1",
+        "correlation": 0.6,
+        "nPostBaselineVisits": 4,
+        "perVisitDropoutRate": 0.1,
+        "allocationRatio": 1,
+        "alternative": "greater"
+      },
+      "expect": {
+        "nControl": 122,
+        "nTreatment": 122,
+        "varianceFactor": { "value": 1.44575044, "tol": 1e-6 },
+        "achievedPower": { "value": 0.9010971, "tol": 1e-5 }
+      }
+    },
+    {
+      "caseId": "cs_k5_lambda2",
+      "source": "R longpower::power.mmrm (Lu-Luo-Chen 2008), CS rho = 0.3, k = 5, 8%/visit dropout, allocation 2:1",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.9,
+        "treatmentEffect": 0.5,
+        "residualStandardDeviation": 1.2,
+        "correlationStructure": "compound_symmetry",
+        "correlation": 0.3,
+        "nPostBaselineVisits": 5,
+        "perVisitDropoutRate": 0.08,
+        "allocationRatio": 2,
+        "alternative": "two_sided"
+      },
+      "expect": {
+        "nControl": 132,
+        "nTreatment": 264,
+        "varianceFactor": { "value": 1.45268834, "tol": 1e-6 },
+        "achievedPower": { "value": 0.9002562, "tol": 1e-4 }
+      }
+    },
+    {
+      "caseId": "ar1_k4_power_at_74",
+      "source": "R longpower::power.mmrm power mode at n = 37 per arm",
+      "input": {
+        "solveMode": "power",
+        "alpha": 0.025,
+        "controlN": 37,
+        "treatmentEffect": 1.5,
+        "residualStandardDeviation": 3,
+        "correlationStructure": "ar1",
+        "correlation": 0.6,
+        "nPostBaselineVisits": 4,
+        "perVisitDropoutRate": 0.1,
+        "allocationRatio": 1,
+        "alternative": "greater"
+      },
+      "expect": {
+        "nControl": 37,
+        "nTreatment": 37,
+        "varianceFactor": { "value": 1.44575044, "tol": 1e-6 },
+        "achievedPower": { "value": 0.4319623, "tol": 1e-5 }
+      }
+    }
+  ]
+}

@@ -513,10 +513,9 @@ fn export_markdown_as_pdf(markdown: String, title: String) -> Result<Vec<u8>, Ap
 
 #[tauri::command]
 fn generate_validation_report(method_id: String) -> Result<String, AppError> {
-    let validation_root =
-        std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../validation");
-    clinsize_core::validation_report::generate_markdown(&method_id, &validation_root)
-        .map_err(AppError::from)
+    // Evidence is embedded at compile time; a packaged install has no
+    // repository checkout to read from.
+    clinsize_core::validation_report::generate_markdown_embedded(&method_id).map_err(AppError::from)
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

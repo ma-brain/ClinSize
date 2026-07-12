@@ -1,0 +1,39 @@
+{
+  "methodId": "continuous.one_way_anova",
+  "cases": [
+    {
+      "caseId": "three_groups_equal",
+      "source": "R power.anova.test(groups = 3, between.var = 1, within.var = 1, sig.level = 0.05, power = 0.8)",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "nGroups": 3,
+        "betweenVariance": 1,
+        "withinVariance": 1
+      },
+      "expect": {
+        "nPerGroup": 6,
+        "totalN": 18,
+        "achievedPower": { "value": 0.8053172, "tol": 1e-4 }
+      }
+    },
+    {
+      "caseId": "four_groups_equal",
+      "source": "R power.anova.test(groups = 4, between.var = 1, within.var = 1, sig.level = 0.05, power = 0.8)",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "nGroups": 4,
+        "betweenVariance": 1,
+        "withinVariance": 1
+      },
+      "expect": {
+        "nPerGroup": 5,
+        "totalN": 20,
+        "achievedPower": { "value": 0.8303491, "tol": 1e-4 }
+      }
+    }
+  ]
+}

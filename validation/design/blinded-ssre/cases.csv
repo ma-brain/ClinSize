@@ -1,4 +1,0 @@
-case_id,alpha,target_power,mean_difference,planned_sd,interim_sd,interim_fraction,max_multiplier,expected_planned_n,expected_re_estimated_n,expected_capped_n,expected_power_capped_planned_sd,expected_power_capped_interim_sd,tolerance,reference_source
-no_change,0.05,0.8,1,1,,0.5,1.5,17,17,17,0.80704,0.80704,1e-4,R power.t.test
-sd_increase_20pct,0.05,0.8,1,1,1.2,0.5,1.5,17,25,25,0.93371,0.8230090,1e-5,R power.t.test(n=25 delta=1 sd=1.2)
-sd_increase_50pct_capped,0.05,0.8,1,1,1.5,0.5,1.5,17,39,26,0.9424303,0.6544534,1e-5,R power.t.test(n=26 delta=1 sd=1.5)

@@ -54,10 +54,15 @@ For each method, store validation evidence under:
 validation/
   continuous/
     two-sample-ttest/
-      cases.csv
+      cases.json
       reference-output.md
       validation-report.md
 ```
+
+`cases.json` (format documented in `validation/README.md`) is machine-checked:
+every case runs through the engine's JSON dispatch in CI, and the same files
+are embedded into the binaries at compile time so the app's Validation page
+and `clinsize validation-report` work outside the repository checkout.
 
 Each validation report should include:
 

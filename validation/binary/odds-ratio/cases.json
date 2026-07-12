@@ -1,0 +1,22 @@
+{
+  "methodId": "binary.odds_ratio",
+  "cases": [
+    {
+      "caseId": "or_trial_size_example",
+      "source": "R TrialSize::RelativeRisk.Equality-style log odds-ratio formula, p1 = 0.25, p2 = 0.4 (OR = 2)",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "controlRate": 0.25,
+        "treatmentRate": 0.4,
+        "allocationRatio": 1,
+        "alternative": "two_sided"
+      },
+      "expect": {
+        "nControl": 156,
+        "oddsRatio": 2.0
+      }
+    }
+  ]
+}

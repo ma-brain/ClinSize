@@ -1,0 +1,131 @@
+{
+  "methodId": "survival.log_rank",
+  "cases": [
+    {
+      "caseId": "logrank_two_sided_80",
+      "source": "R gsDesign::nEvents(hr = 0.5, alpha = 0.05, beta = 0.2, sided = 2)",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "hazardRatio": 0.5,
+        "allocationRatio": 1,
+        "alternative": "two_sided"
+      },
+      "expect": {
+        "requiredEvents": 66,
+        "achievedPower": { "value": 0.8038941, "tol": 1e-4 }
+      }
+    },
+    {
+      "caseId": "logrank_one_sided_80",
+      "source": "R gsDesign::nEvents(hr = 0.5, alpha = 0.05, beta = 0.2, sided = 1)",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "hazardRatio": 0.5,
+        "allocationRatio": 1,
+        "alternative": "greater"
+      },
+      "expect": {
+        "requiredEvents": 52,
+        "achievedPower": { "value": 0.803537, "tol": 1e-4 }
+      }
+    },
+    {
+      "caseId": "logrank_unequal_allocation",
+      "source": "R gsDesign::nEvents(hr = 0.5, alpha = 0.05, beta = 0.2, sided = 2, ratio = 2)",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "hazardRatio": 0.5,
+        "allocationRatio": 2,
+        "alternative": "two_sided"
+      },
+      "expect": {
+        "requiredEvents": 74,
+        "achievedPower": { "value": 0.802579, "tol": 1e-4 }
+      }
+    },
+    {
+      "caseId": "logrank_power_mode",
+      "source": "R gsDesign::nEvents(hr = 0.5, alpha = 0.05, sided = 2, n = 66)",
+      "input": {
+        "solveMode": "power",
+        "alpha": 0.05,
+        "totalEvents": 66,
+        "hazardRatio": 0.5,
+        "allocationRatio": 1,
+        "alternative": "two_sided"
+      },
+      "expect": {
+        "requiredEvents": 66,
+        "achievedPower": { "value": 0.8038941, "tol": 1e-4 }
+      }
+    },
+    {
+      "caseId": "logrank_mild_effect",
+      "source": "R gsDesign::nEvents(hr = 0.75, alpha = 0.05, beta = 0.2, sided = 2)",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "hazardRatio": 0.75,
+        "allocationRatio": 1,
+        "alternative": "two_sided"
+      },
+      "expect": {
+        "requiredEvents": 380,
+        "achievedPower": { "value": 0.8006692, "tol": 1e-4 }
+      }
+    },
+    {
+      "caseId": "logrank_accrual_enrollment",
+      "source": "R gsDesign::nSurv Schoenfeld enrollment translation (lambdaC = 0.115524, accrual 12, follow-up 18, no dropout)",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "hazardRatio": 0.5,
+        "allocationRatio": 1,
+        "alternative": "two_sided",
+        "controlHazardRate": 0.115524,
+        "accrualDuration": 12,
+        "minimumFollowUp": 18,
+        "dropoutHazardRate": 0
+      },
+      "expect": {
+        "requiredEvents": 66,
+        "totalN": 79,
+        "nControl": 40,
+        "nTreatment": 39,
+        "achievedPower": { "value": 0.8038941, "tol": 1e-4 }
+      }
+    },
+    {
+      "caseId": "logrank_accrual_dropout",
+      "source": "R gsDesign::nSurv Lachin-Foulkes with dropout hazard eta = 0.001",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "hazardRatio": 0.5,
+        "allocationRatio": 1,
+        "alternative": "two_sided",
+        "controlHazardRate": 0.115524,
+        "accrualDuration": 12,
+        "minimumFollowUp": 18,
+        "dropoutHazardRate": 0.001
+      },
+      "expect": {
+        "requiredEvents": 66,
+        "totalN": 80,
+        "nControl": 40,
+        "nTreatment": 40,
+        "achievedPower": { "value": 0.8038941, "tol": 1e-4 }
+      }
+    }
+  ]
+}

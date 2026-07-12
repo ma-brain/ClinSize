@@ -44,7 +44,7 @@ information matrix (`solve(Ia)[K, K]` in the `power.mmrm` source), computed
 with the same correlation and retention inputs.
 
 Two-sided achieved powers differ from longpower by the opposite rejection
-tail (< 1e-6 at these operating points); tolerances in `cases.csv` absorb it.
+tail (< 1e-6 at these operating points); tolerances in `cases.json` absorb it.
 
 ## History
 

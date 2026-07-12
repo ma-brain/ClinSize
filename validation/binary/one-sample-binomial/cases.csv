@@ -1,6 +1,0 @@
-case_id,reference_rate,response_rate,alpha,power,alternative,expected_n,expected_achieved_power,tolerance,reference_source
-two_sided_p02_p04_80,0.2,0.4,0.05,0.8,two_sided,36,0.8021367,1e-5,R EnvStats propTestN/propTestPower approx=TRUE correct=FALSE
-two_sided_p03_p05_80,0.3,0.5,0.05,0.8,two_sided,44,0.8042717,1e-5,R EnvStats propTestN/propTestPower approx=TRUE correct=FALSE
-two_sided_p02_p04_90,0.2,0.4,0.05,0.9,two_sided,50,0.9008601,1e-5,R EnvStats propTestN/propTestPower approx=TRUE correct=FALSE
-greater_p05_p065_90,0.5,0.65,0.025,0.9,greater,113,0.9012011,1e-5,R EnvStats propTestN/propTestPower approx=TRUE correct=FALSE
-less_p04_p025_80,0.4,0.25,0.05,0.8,less,61,0.8008358,1e-5,R EnvStats propTestN/propTestPower approx=TRUE correct=FALSE
