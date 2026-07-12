@@ -102,6 +102,34 @@ export interface OneWayAnovaResult {
   warnings: CalculationWarning[];
 }
 
+export type AnovaEffect = "main_a" | "main_b" | "interaction";
+
+export interface TwoWayAnovaInput {
+  solveMode: SolveMode;
+  alpha: number;
+  power?: number;
+  nPerCell?: number;
+  nLevelsA: number;
+  nLevelsB: number;
+  primaryEffect: AnovaEffect;
+  varianceA: number;
+  varianceB: number;
+  varianceInteraction: number;
+  withinVariance: number;
+  dropoutRate?: number;
+}
+
+export interface TwoWayAnovaResult {
+  nPerCell: number;
+  totalN: number;
+  nPerCellAdjusted: number;
+  totalNAdjusted: number;
+  achievedPower: number;
+  effectSize: number;
+  primaryEffect: AnovaEffect;
+  warnings: CalculationWarning[];
+}
+
 export interface AncovaTwoSampleInput {
   solveMode: SolveMode;
   alpha: number;

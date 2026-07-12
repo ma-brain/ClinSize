@@ -15,6 +15,7 @@
   import PoissonView from "$lib/methods/PoissonView.svelte";
   import ProportionalOddsView from "$lib/methods/ProportionalOddsView.svelte";
   import OneWayAnovaView from "$lib/methods/OneWayAnovaView.svelte";
+  import TwoWayAnovaView from "$lib/methods/TwoWayAnovaView.svelte";
   import SingleSampleTTestView from "$lib/methods/SingleSampleTTestView.svelte";
   import TwoSampleTTestView from "$lib/methods/TwoSampleTTestView.svelte";
 
@@ -42,6 +43,8 @@
   />
 {:else if methodId === "continuous.one_way_anova"}
   <OneWayAnovaView />
+{:else if methodId === "continuous.two_way_anova"}
+  <TwoWayAnovaView />
 {:else if methodId === "continuous.ancova_two_sample"}
   <AncovaTwoSampleView />
 {:else if methodId === "continuous.change_from_baseline"}

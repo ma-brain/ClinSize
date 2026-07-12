@@ -25,6 +25,7 @@ use crate::methods::continuous::one_sample_ttest::{OneSampleTTestInput, OneSampl
 use crate::methods::continuous::one_way_anova::{OneWayAnovaInput, OneWayAnovaResult};
 use crate::methods::continuous::paired_ttest::{PairedTTestInput, PairedTTestResult};
 use crate::methods::continuous::two_sample_ttest::{TwoSampleTTestInput, TwoSampleTTestResult};
+use crate::methods::continuous::two_way_anova::{AnovaEffect, TwoWayAnovaInput, TwoWayAnovaResult};
 use crate::methods::continuous::wilcoxon_signed_rank::{
     WilcoxonSignedRankInput, WilcoxonSignedRankResult,
 };
@@ -262,6 +263,82 @@ pub fn one_way_anova_markdown(
     lines.push("## Reproducibility".into());
     lines.push(format!("- **Engine version:** {engine_version}"));
     lines.push("- **Validation source:** R `power.anova.test` (stats package)".into());
+
+    lines.join("\n")
+}
+
+/// Render a two-way ANOVA calculation summary as Markdown.
+pub fn two_way_anova_markdown(
+    input: &TwoWayAnovaInput,
+    result: &TwoWayAnovaResult,
+    engine_version: &str,
+) -> String {
+    let dropout = input
+        .dropout_rate
+        .map(|rate| format!("{rate:.4}"))
+        .unwrap_or_else(|| "none".into());
+
+    let effect_label = match input.primary_effect {
+        AnovaEffect::MainA => "Main effect A",
+        AnovaEffect::MainB => "Main effect B",
+        AnovaEffect::Interaction => "Interaction AB",
+    };
+
+    let mut lines = vec![
+        "# ClinSize calculation summary".into(),
+        String::new(),
+        "## Method".into(),
+        "- **Method:** Two-way ANOVA (balanced, fixed effects)".into(),
+        "- **Endpoint:** Continuous".into(),
+        format!("- **Solve mode:** {:?}", input.solve_mode),
+        format!("- **Primary effect:** {effect_label}"),
+        String::new(),
+        "## Inputs".into(),
+        format!("- **Alpha:** {:.4}", input.alpha),
+        format!("- **Levels of factor A:** {}", input.n_levels_a),
+        format!("- **Levels of factor B:** {}", input.n_levels_b),
+        format!("- **Variance A (σ²_A):** {:.4}", input.variance_a),
+        format!("- **Variance B (σ²_B):** {:.4}", input.variance_b),
+        format!(
+            "- **Variance AB (σ²_AB):** {:.4}",
+            input.variance_interaction
+        ),
+        format!(
+            "- **Within-cell variance (σ²_error):** {:.4}",
+            input.within_variance
+        ),
+        format!("- **Dropout rate:** {dropout}"),
+        String::new(),
+        "## Results".into(),
+        format!("- **N per cell:** {}", result.n_per_cell),
+        format!("- **Total N:** {}", result.total_n),
+        format!(
+            "- **Dropout-adjusted N per cell:** {}",
+            result.n_per_cell_adjusted
+        ),
+        format!(
+            "- **Dropout-adjusted total N:** {}",
+            result.total_n_adjusted
+        ),
+        format!("- **Achieved power:** {:.4}", result.achieved_power),
+        format!(
+            "- **Effect size (Cohen's f, primary):** {:.4}",
+            result.effect_size
+        ),
+    ];
+
+    append_rationale(
+        &mut lines,
+        rationale::two_way_anova_rationale(input, result),
+    );
+    append_protocol_text(&mut lines, protocol::two_way_anova_protocol(input, result));
+    append_warnings(&mut lines, &result.warnings);
+    lines.push(String::new());
+    lines.push("## Reproducibility".into());
+    lines.push(format!("- **Engine version:** {engine_version}"));
+    lines.push(
+        "- **Validation source:** Noncentral-F power (Cohen 1988 Ch. 8; G*Power two-way)".into(),
+    );
 
     lines.join("\n")
 }

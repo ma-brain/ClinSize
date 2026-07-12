@@ -10,6 +10,7 @@ import type {
   OneSampleBinomialInput,
   OneSampleTTestInput,
   OneWayAnovaInput,
+  TwoWayAnovaInput,
   PairedTTestInput,
   ProportionalOddsInput,
   SolveMode,
@@ -268,6 +269,81 @@ export function oneWayAnovaSensitivityOptions(
       label: "Target power",
       getValues: () => centeredRange(powerValue || 0.8, 0.15, 0.6, 0.95, 8),
       mutate: (input: OneWayAnovaInput, value: number) => ({ ...input, power: value }),
+    });
+  }
+
+  return asSensitivityOptions(options);
+}
+
+export function twoWayAnovaSensitivityOptions(
+  solveMode: SolveMode,
+  varianceA: string,
+  varianceB: string,
+  varianceInteraction: string,
+  withinVariance: string,
+  alpha: string,
+  power: string,
+  dropoutRate: string,
+): SensitivityOptionDef[] {
+  const va = Number(varianceA);
+  const vb = Number(varianceB);
+  const vab = Number(varianceInteraction);
+  const within = Number(withinVariance);
+  const alphaValue = Number(alpha);
+  const powerValue = Number(power);
+  const dropout = parseOptionalRate(dropoutRate);
+
+  const options = [
+    {
+      id: "varianceA",
+      label: "Variance A (σ²_A)",
+      getValues: () => ratioRange(va || 0.5, 0.25, 2),
+      mutate: (input: TwoWayAnovaInput, value: number) => ({ ...input, varianceA: value }),
+    },
+    {
+      id: "varianceB",
+      label: "Variance B (σ²_B)",
+      getValues: () => ratioRange(vb || 0.5, 0.25, 2),
+      mutate: (input: TwoWayAnovaInput, value: number) => ({ ...input, varianceB: value }),
+    },
+    {
+      id: "varianceInteraction",
+      label: "Variance AB (σ²_AB)",
+      getValues: () => ratioRange(vab || 0.5, 0.25, 2),
+      mutate: (input: TwoWayAnovaInput, value: number) => ({
+        ...input,
+        varianceInteraction: value,
+      }),
+    },
+    {
+      id: "withinVariance",
+      label: "Within-cell variance (σ²_error)",
+      getValues: () => ratioRange(within || 1, 0.5, 2),
+      mutate: (input: TwoWayAnovaInput, value: number) => ({ ...input, withinVariance: value }),
+    },
+    {
+      id: "alpha",
+      label: "Type I error (alpha)",
+      getValues: () => centeredRange(alphaValue || 0.05, 0.03, 0.01, 0.1, 9),
+      mutate: (input: TwoWayAnovaInput, value: number) => ({ ...input, alpha: value }),
+    },
+    {
+      id: "dropoutRate",
+      label: "Dropout rate",
+      getValues: () => linearRange(0, Math.max(dropout, 0.4), 9),
+      mutate: (input: TwoWayAnovaInput, value: number) => ({
+        ...input,
+        dropoutRate: value === 0 ? undefined : value,
+      }),
+    },
+  ];
+
+  if (solveMode === "sample_size") {
+    options.splice(4, 0, {
+      id: "power",
+      label: "Target power",
+      getValues: () => centeredRange(powerValue || 0.8, 0.15, 0.6, 0.95, 8),
+      mutate: (input: TwoWayAnovaInput, value: number) => ({ ...input, power: value }),
     });
   }
 

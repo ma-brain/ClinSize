@@ -1,0 +1,89 @@
+{
+  "methodId": "continuous.two_way_anova",
+  "cases": [
+    {
+      "caseId": "main_a_2x3",
+      "source": "Noncentral-F power (Cohen 1988 Ch. 8; G*Power two-way fixed effects); a=2, b=3, primary=main_a, σ²_A/σ²_err=0.5, α=0.05, power=0.8",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "nLevelsA": 2,
+        "nLevelsB": 3,
+        "primaryEffect": "main_a",
+        "varianceA": 0.5,
+        "varianceB": 0.5,
+        "varianceInteraction": 0.5,
+        "withinVariance": 1.0
+      },
+      "expect": {
+        "nPerCell": 6,
+        "totalN": 36,
+        "effectSize": { "value": 0.7071068, "tol": 1e-6 },
+        "achievedPower": { "value": 0.827, "tol": 1e-3 }
+      }
+    },
+    {
+      "caseId": "main_b_2x3",
+      "source": "Noncentral-F power; same design, primary=main_b (df1=2 vs 1 for main_a)",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "nLevelsA": 2,
+        "nLevelsB": 3,
+        "primaryEffect": "main_b",
+        "varianceA": 0.5,
+        "varianceB": 0.5,
+        "varianceInteraction": 0.5,
+        "withinVariance": 1.0
+      },
+      "expect": {
+        "nPerCell": 6,
+        "totalN": 36,
+        "achievedPower": { "value": 0.847, "tol": 1e-3 }
+      }
+    },
+    {
+      "caseId": "interaction_2x3",
+      "source": "Noncentral-F power; primary=interaction, df1=(a-1)(b-1)=2",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "nLevelsA": 2,
+        "nLevelsB": 3,
+        "primaryEffect": "interaction",
+        "varianceA": 0.5,
+        "varianceB": 0.5,
+        "varianceInteraction": 0.5,
+        "withinVariance": 1.0
+      },
+      "expect": {
+        "nPerCell": 11,
+        "totalN": 66,
+        "achievedPower": { "value": 0.833, "tol": 1e-3 }
+      }
+    },
+    {
+      "caseId": "power_round_trip",
+      "source": "Noncentral-F power at n=6 per cell for main_a (round-trip of main_a_2x3)",
+      "input": {
+        "solveMode": "power",
+        "alpha": 0.05,
+        "nPerCell": 6,
+        "nLevelsA": 2,
+        "nLevelsB": 3,
+        "primaryEffect": "main_a",
+        "varianceA": 0.5,
+        "varianceB": 0.5,
+        "varianceInteraction": 0.5,
+        "withinVariance": 1.0
+      },
+      "expect": {
+        "nPerCell": 6,
+        "achievedPower": { "value": 0.827, "tol": 1e-3 }
+      }
+    }
+  ]
+}

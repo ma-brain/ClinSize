@@ -18,6 +18,7 @@ use crate::methods::continuous::one_sample_ttest::{OneSampleTTestInput, OneSampl
 use crate::methods::continuous::one_way_anova::{OneWayAnovaInput, OneWayAnovaResult};
 use crate::methods::continuous::paired_ttest::{PairedTTestInput, PairedTTestResult};
 use crate::methods::continuous::two_sample_ttest::{TwoSampleTTestInput, TwoSampleTTestResult};
+use crate::methods::continuous::two_way_anova::{AnovaEffect, TwoWayAnovaInput, TwoWayAnovaResult};
 use crate::methods::continuous::wilcoxon_signed_rank::{
     WilcoxonSignedRankInput, WilcoxonSignedRankResult,
 };
@@ -388,6 +389,86 @@ pub fn one_way_anova_rationale(input: &OneWayAnovaInput, result: &OneWayAnovaRes
         "The method assumes independent observations, equal per-group sample sizes, and \
          approximately normal within-group distributions with a common variance. Post-hoc pairwise \
          comparisons require a separate multiplicity adjustment beyond this omnibus calculation."
+            .into(),
+    );
+
+    join_paragraphs(paragraphs)
+}
+
+/// Narrative rationale for a two-way ANOVA calculation.
+pub fn two_way_anova_rationale(input: &TwoWayAnovaInput, result: &TwoWayAnovaResult) -> String {
+    let mut paragraphs = Vec::new();
+
+    let effect_label = match input.primary_effect {
+        AnovaEffect::MainA => "main effect of factor A",
+        AnovaEffect::MainB => "main effect of factor B",
+        AnovaEffect::Interaction => "A × B interaction",
+    };
+
+    paragraphs.push(format!(
+        "This calculation addresses a balanced two-way ANOVA with factor A at {} levels and \
+         factor B at {} levels. The sample size is driven by the {effect_label}, using exact \
+         noncentral-F power. Variance components are σ²_A = {:.4}, σ²_B = {:.4}, σ²_AB = {:.4}, \
+         and within-cell error σ²_error = {:.4}.",
+        input.n_levels_a,
+        input.n_levels_b,
+        input.variance_a,
+        input.variance_b,
+        input.variance_interaction,
+        input.within_variance,
+    ));
+
+    paragraphs.push(format!(
+        "The Type I error rate is α = {:.4}. Cohen's f for the primary effect is {:.4}.",
+        input.alpha, result.effect_size,
+    ));
+
+    match input.solve_mode {
+        SolveMode::SampleSize => {
+            let target = input.power.expect("validated for sample size mode");
+            paragraphs.push(format!(
+                "The target power is {:.0}% for the {effect_label}. ClinSize searches for the \
+                 smallest integer per-cell sample size n meeting that power via the noncentral-F \
+                 distribution.",
+                target * 100.0,
+            ));
+            paragraphs.push(format!(
+                "The resulting per-cell size is n = {} (total N = {}). After integer rounding, \
+                 the achieved power is {:.2}%.",
+                result.n_per_cell,
+                result.total_n,
+                result.achieved_power * 100.0,
+            ));
+        }
+        SolveMode::Power => {
+            let n = input.n_per_cell.expect("validated for power mode");
+            paragraphs.push(format!(
+                "For a fixed per-cell size of n = {} (total N = {}), the achieved power for the \
+                 {effect_label} is {:.2}%.",
+                n,
+                result.total_n,
+                result.achieved_power * 100.0,
+            ));
+        }
+        SolveMode::DetectableEffect => unreachable!("not implemented for two-way ANOVA"),
+    }
+
+    if let Some(rate) = input.dropout_rate {
+        paragraphs.push(format!(
+            "A uniform dropout rate of {:.0}% is applied after sample-size rounding. Per-cell \
+             sizes are inflated by 1/(1 − dropout) and rounded up, yielding {} subjects per cell \
+             (total N = {}).",
+            rate * 100.0,
+            result.n_per_cell_adjusted,
+            result.total_n_adjusted,
+        ));
+    }
+
+    paragraphs.push(
+        "The method assumes independent observations, equal per-cell sample sizes, and \
+         approximately normal within-cell distributions with a common variance. Power is reported \
+         only for the selected primary effect; the other two effects may have different power at \
+         this sample size."
             .into(),
     );
 

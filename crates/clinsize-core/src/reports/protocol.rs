@@ -19,6 +19,7 @@ use crate::methods::continuous::one_sample_ttest::{OneSampleTTestInput, OneSampl
 use crate::methods::continuous::one_way_anova::{OneWayAnovaInput, OneWayAnovaResult};
 use crate::methods::continuous::paired_ttest::{PairedTTestInput, PairedTTestResult};
 use crate::methods::continuous::two_sample_ttest::{TwoSampleTTestInput, TwoSampleTTestResult};
+use crate::methods::continuous::two_way_anova::{AnovaEffect, TwoWayAnovaInput, TwoWayAnovaResult};
 use crate::methods::continuous::wilcoxon_signed_rank::{
     WilcoxonSignedRankInput, WilcoxonSignedRankResult,
 };
@@ -390,6 +391,52 @@ pub fn one_way_anova_protocol(input: &OneWayAnovaInput, result: &OneWayAnovaResu
             ));
         }
         SolveMode::DetectableEffect => unreachable!("not implemented for one-way ANOVA"),
+    }
+
+    join_paragraphs(paragraphs)
+}
+
+/// Protocol text for a two-way ANOVA calculation.
+pub fn two_way_anova_protocol(input: &TwoWayAnovaInput, result: &TwoWayAnovaResult) -> String {
+    let mut paragraphs = Vec::new();
+
+    let effect_label = match input.primary_effect {
+        AnovaEffect::MainA => "the main effect of factor A",
+        AnovaEffect::MainB => "the main effect of factor B",
+        AnovaEffect::Interaction => "the A × B interaction",
+    };
+
+    match input.solve_mode {
+        SolveMode::SampleSize => {
+            let target = input.power.expect("validated for sample size mode");
+            paragraphs.push(format!(
+                "A balanced two-way design with factor A at {} levels and factor B at {} levels \
+                 requires {} subjects per cell (total N = {}) to detect {effect_label} with \
+                 Cohen's f = {:.2} at {} power and a two-sided α of {:.2}.",
+                input.n_levels_a,
+                input.n_levels_b,
+                result.n_per_cell_adjusted,
+                result.total_n_adjusted,
+                result.effect_size,
+                format_power_percent(target),
+                input.alpha,
+            ));
+            paragraphs.push(format!(
+                "The primary analysis is a two-way fixed-effects ANOVA F-test for {effect_label}.",
+            ));
+        }
+        SolveMode::Power => {
+            paragraphs.push(format!(
+                "With {} subjects per cell (total N = {}), the design achieves {:.0}% power to \
+                 detect {effect_label} with Cohen's f = {:.2} at a two-sided α of {:.2}.",
+                input.n_per_cell.expect("validated"),
+                result.total_n,
+                result.achieved_power * 100.0,
+                result.effect_size,
+                input.alpha,
+            ));
+        }
+        SolveMode::DetectableEffect => unreachable!("not implemented for two-way ANOVA"),
     }
 
     join_paragraphs(paragraphs)

@@ -46,6 +46,13 @@ const METHODS: &[MethodDescriptor] = &[
         documentation_path: Some("handbook/calculations/anova-ancova.md"),
     },
     MethodDescriptor {
+        id: "continuous.two_way_anova",
+        display_name: "Two-way ANOVA",
+        endpoint_category: "Continuous",
+        supported_solve_modes: &[SolveMode::SampleSize, SolveMode::Power],
+        documentation_path: Some("handbook/calculations/anova-ancova.md"),
+    },
+    MethodDescriptor {
         id: "continuous.ancova_two_sample",
         display_name: "Two-sample ANCOVA",
         endpoint_category: "Continuous",
@@ -171,15 +178,17 @@ mod tests {
     #[test]
     fn list_methods_includes_continuous_ttests() {
         let methods = list_methods();
-        assert_eq!(methods.len(), 20);
+        assert_eq!(methods.len(), 21);
         assert_eq!(methods[0].id, "continuous.one_sample_ttest");
-        assert_eq!(methods[5].id, "continuous.change_from_baseline");
-        assert_eq!(methods[6].id, "continuous.mmrm");
-        assert_eq!(methods[7].id, "continuous.mann_whitney");
-        assert_eq!(methods[12].id, "binary.risk_ratio");
-        assert_eq!(methods[13].id, "count.negative_binomial");
-        assert_eq!(methods[14].id, "count.poisson");
-        assert_eq!(methods[15].id, "ordinal.proportional_odds");
-        assert_eq!(methods[19].id, "design.blinded_ssre");
+        assert_eq!(methods[4].id, "continuous.two_way_anova");
+        assert_eq!(methods[5].id, "continuous.ancova_two_sample");
+        assert_eq!(methods[6].id, "continuous.change_from_baseline");
+        assert_eq!(methods[7].id, "continuous.mmrm");
+        assert_eq!(methods[8].id, "continuous.mann_whitney");
+        assert_eq!(methods[13].id, "binary.risk_ratio");
+        assert_eq!(methods[14].id, "count.negative_binomial");
+        assert_eq!(methods[15].id, "count.poisson");
+        assert_eq!(methods[16].id, "ordinal.proportional_odds");
+        assert_eq!(methods[20].id, "design.blinded_ssre");
     }
 }
