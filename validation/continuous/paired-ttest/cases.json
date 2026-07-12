@@ -1,0 +1,53 @@
+{
+  "methodId": "continuous.paired_ttest",
+  "cases": [
+    {
+      "caseId": "two_sided_d1",
+      "source": "R power.t.test(delta = 1, sd = 1, sig.level = 0.05, power = 0.8, type = \"paired\", alternative = \"two.sided\")",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "meanDifference": 1,
+        "standardDeviation": 1,
+        "alternative": "two_sided"
+      },
+      "expect": {
+        "nPairs": 10,
+        "achievedPower": { "value": 0.8030969, "tol": 1e-4 }
+      }
+    },
+    {
+      "caseId": "one_sided_d1",
+      "source": "R power.t.test(delta = 1, sd = 1, sig.level = 0.05, power = 0.8, type = \"paired\", alternative = \"one.sided\")",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "meanDifference": 1,
+        "standardDeviation": 1,
+        "alternative": "greater"
+      },
+      "expect": {
+        "nPairs": 8,
+        "achievedPower": { "value": 0.8150194, "tol": 1e-4 }
+      }
+    },
+    {
+      "caseId": "power_round_trip",
+      "source": "R power.t.test(n = 10, delta = 1, sd = 1, sig.level = 0.05, type = \"paired\") achieves 0.8074",
+      "input": {
+        "solveMode": "power",
+        "alpha": 0.05,
+        "meanDifference": 1,
+        "standardDeviation": 1,
+        "alternative": "two_sided",
+        "nPairs": 10
+      },
+      "expect": {
+        "nPairs": 10,
+        "achievedPower": { "value": 0.8030969, "tol": 1e-4 }
+      }
+    }
+  ]
+}

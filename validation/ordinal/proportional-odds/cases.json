@@ -1,0 +1,59 @@
+{
+  "methodId": "ordinal.proportional_odds",
+  "cases": [
+    {
+      "caseId": "four_cat_or2_power8",
+      "source": "Whitehead (1993) / Hmisc posamsize; categoryProbabilities [0.2,0.5,0.2,0.1], oddsRatio 2, treatmentFraction 0.5, alpha 0.05, power 0.8",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "categoryProbabilities": [0.2, 0.5, 0.2, 0.1],
+        "oddsRatio": 2,
+        "treatmentFraction": 0.5
+      },
+      "expect": {
+        "nControl": 115,
+        "nTreatment": 116,
+        "totalN": 231,
+        "efficiency": { "value": 0.858, "tol": 1e-3 },
+        "achievedPower": { "value": 0.8, "tol": 0.02 }
+      }
+    },
+    {
+      "caseId": "four_cat_or2_power9",
+      "source": "Whitehead (1993) / Hmisc posamsize; same categories, oddsRatio 2, alpha 0.025, power 0.9",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.025,
+        "power": 0.9,
+        "categoryProbabilities": [0.2, 0.5, 0.2, 0.1],
+        "oddsRatio": 2,
+        "treatmentFraction": 0.5
+      },
+      "expect": {
+        "nControl": 182,
+        "nTreatment": 182,
+        "totalN": 364,
+        "efficiency": { "value": 0.858, "tol": 1e-3 },
+        "achievedPower": { "value": 0.9, "tol": 0.02 }
+      }
+    },
+    {
+      "caseId": "power_round_trip",
+      "source": "Whitehead (1993) / Hmisc posamsize power at controlN = 115 (round-trip of four_cat_or2_power8)",
+      "input": {
+        "solveMode": "power",
+        "alpha": 0.05,
+        "categoryProbabilities": [0.2, 0.5, 0.2, 0.1],
+        "oddsRatio": 2,
+        "treatmentFraction": 0.5,
+        "controlN": 115
+      },
+      "expect": {
+        "nControl": 115,
+        "achievedPower": { "value": 0.8, "tol": 0.02 }
+      }
+    }
+  ]
+}
