@@ -59,13 +59,40 @@ impl ProjectFile {
     }
 }
 
+/// Current UTC time as an ISO 8601 string (`YYYY-MM-DDTHH:MM:SSZ`).
+///
+/// Built from `std::time::SystemTime` via the Howard Hinnant civil-from-days
+/// algorithm (http://howardhinnant.github.io/date_algorithms.html) to avoid a
+/// `chrono` direct dependency. Only second resolution, always UTC.
 pub fn iso_timestamp() -> String {
     use std::time::{SystemTime, UNIX_EPOCH};
-    let seconds = SystemTime::now()
+    let secs = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map(|duration| duration.as_secs())
         .unwrap_or(0);
-    format!("{seconds}")
+    let days = (secs / 86_400) as i64;
+    let secs_in_day = secs % 86_400;
+    let (year, month, day) = civil_from_days(days);
+    let hour = secs_in_day / 3_600;
+    let minute = (secs_in_day % 3_600) / 60;
+    let second = secs_in_day % 60;
+    format!("{year:04}-{month:02}-{day:02}T{hour:02}:{minute:02}:{second:02}Z")
+}
+
+/// Howard Hinnant's civil-from-days algorithm: converts a count of days since
+/// the Unix epoch (1970-01-01) to a proleptic Gregorian (year, month, day).
+/// Valid for any date in the algorithm's supported range.
+fn civil_from_days(days_since_epoch: i64) -> (i64, u32, u32) {
+    let z = days_since_epoch + 719_468;
+    let era = if z >= 0 { z } else { z - 146_096 } / 146_097;
+    let doe = (z - era * 146_097) as u64; // [0, 146_096]
+    let yoe = (doe - doe / 1_460 + doe / 36_524 - doe / 146_096) / 365; // [0, 399]
+    let year = yoe as i64 + era * 400;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100); // [0, 365]
+    let mp = (5 * doy + 2) / 153; // [0, 11]
+    let day = (doy - (153 * mp + 2) / 5 + 1) as u32; // [1, 31]
+    let month = if mp < 10 { mp + 3 } else { mp - 9 } as u32; // [1, 12]
+    (if month <= 2 { year + 1 } else { year }, month, day)
 }
 
 const PROJECT_FILE_SUFFIX: &str = ".clinsize.json";
@@ -202,6 +229,37 @@ mod tests {
         let project = ProjectFile::new("Example trial");
         let json = serde_json::to_string(&project).expect("serialize");
         assert!(json.contains("\"name\":\"Example trial\""));
+    }
+
+    #[test]
+    fn civil_from_days_unix_epoch_is_1970_01_01() {
+        assert_eq!(civil_from_days(0), (1970, 1, 1));
+    }
+
+    #[test]
+    fn civil_from_days_handles_leap_day() {
+        // 2000-02-29 is a leap day (2000 is divisible by 400).
+        // Days from 1970-01-01 to 2000-02-29 = 11_016.
+        assert_eq!(civil_from_days(11_016), (2000, 2, 29));
+    }
+
+    #[test]
+    fn civil_from_days_handles_non_leap_century() {
+        // 2100 is NOT a leap year (divisible by 100 but not 400), so Feb 2100
+        // has 28 days and March 1st follows directly. Days from 1970-01-01 to
+        // 2100-03-01 = 47_541.
+        assert_eq!(civil_from_days(47_541), (2100, 3, 1));
+    }
+
+    #[test]
+    fn iso_timestamp_produces_rfc3339_format() {
+        let ts = iso_timestamp();
+        // YYYY-MM-DDTHH:MM:SSZ — 20 chars, ends with Z.
+        assert_eq!(ts.len(), 20);
+        assert!(ts.ends_with('Z'));
+        assert_eq!(ts.chars().nth(4), Some('-'));
+        assert_eq!(ts.chars().nth(10), Some('T'));
+        assert_eq!(ts.chars().nth(13), Some(':'));
     }
 
     #[test]

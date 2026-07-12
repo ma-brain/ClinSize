@@ -17,14 +17,7 @@ TODO — what's left to fix
   5. Project history shows "—" for one-sample, paired, multiplicity, and group-sequential records
   (summarizeResult only knows totalN).
 
-  Low / cleanup
-  6. odds_ratio/risk_ratio validate() don't reject control_n in sample-size mode or power in power mode (every
-  other method does).
-  7. iso_timestamp() returns raw Unix seconds despite the name (project files show "createdAt": "1752…");
-  newId() can collide within one millisecond.
-  8. InflationHeuristic one-impl trait in group_sequential.rs (violates the repo's own "no premature
-  abstraction" rule); design methods list empty solve modes in clinsize list.
   Process
-  9. Recompute any previously exported MMRM results — the old outputs are undersized by ~`(1+(k−1)ρ)/(1−ρ)`;
+  6. Recompute any previously exported MMRM results — the old outputs are undersized by ~`(1+(k−1)ρ)/(1−ρ)`;
   group-sequential exports at "two-sided 0.05" should be re-read as one-sided 0.05 designs. (Both documented in
   the validation history notes, but worth acting on if any numbers left the building.)
