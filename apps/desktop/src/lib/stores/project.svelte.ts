@@ -22,7 +22,7 @@ export function createProject(name: string): ProjectFile {
 
 export const projectState = $state({
   project: createProject("Untitled project"),
-  filePath: null as string | null,
+  fileName: null as string | null,
   dirty: false,
 });
 
@@ -77,9 +77,9 @@ export function removeScenario(id: string) {
   touchProject();
 }
 
-export function setProject(project: ProjectFile, filePath: string | null = null) {
+export function setProject(project: ProjectFile, fileName: string | null = null) {
   projectState.project = project;
-  projectState.filePath = filePath;
+  projectState.fileName = fileName;
   projectState.dirty = false;
 }
 

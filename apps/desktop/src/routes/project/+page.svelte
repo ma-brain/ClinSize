@@ -1,41 +1,42 @@
 <script lang="ts">
-  import { createProject, projectState, removeCalculation, renameCalculation, setProject, touchProject } from "$lib/stores/project.svelte";
+  import { projectState, removeCalculation, renameCalculation, setProject, touchProject } from "$lib/stores/project.svelte";
   import { invoke } from "@tauri-apps/api/core";
-  import { open, save } from "@tauri-apps/plugin-dialog";
   import type { ProjectFile } from "$lib/types/project";
 
   let projectName = $state(projectState.project.name);
   let statusMessage = $state<string | null>(null);
 
-  async function saveProject() {
-    const path =
-      projectState.filePath ??
-      (await save({
-        defaultPath: `${projectState.project.name || "clinsize-project"}.clinsize.json`,
-        filters: [{ name: "ClinSize project", extensions: ["clinsize.json", "json"] }],
-      }));
-    if (!path) return;
+  type OpenedProjectFile = {
+    project: ProjectFile;
+    fileName: string;
+  };
 
-    await invoke("write_project_file", { path, project: projectState.project });
-    projectState.filePath = path;
+  async function saveProject() {
+    const fileName = await invoke<string | null>("save_project_file", {
+      project: projectState.project,
+    });
+    if (!fileName) return;
+
+    projectState.fileName = fileName;
     projectState.dirty = false;
-    statusMessage = `Saved ${path}`;
+    statusMessage = `Saved ${fileName}`;
   }
 
   async function openProject() {
-    const path = await open({
-      multiple: false,
-      filters: [{ name: "ClinSize project", extensions: ["clinsize.json", "json"] }],
-    });
-    if (!path || Array.isArray(path)) return;
-    const project = await invoke<ProjectFile>("read_project_file", { path });
-    setProject(project, path);
-    projectName = project.name;
-    statusMessage = `Opened ${path}`;
+    const opened = await invoke<OpenedProjectFile | null>("open_project_file");
+    if (!opened) return;
+
+    setProject(opened.project, opened.fileName);
+    projectName = opened.project.name;
+    statusMessage = `Opened ${opened.fileName}`;
   }
 
-  function newProject() {
-    setProject(createProject(projectName.trim() || "Untitled project"));
+  async function newProject() {
+    const project = await invoke<ProjectFile>("create_project", {
+      name: projectName.trim() || "Untitled project",
+    });
+    setProject(project);
+    projectName = project.name;
     statusMessage = "Started a new project.";
   }
 </script>
@@ -62,8 +63,8 @@
       <button onclick={openProject}>Open project</button>
       <button onclick={saveProject}>Save project</button>
     </div>
-    {#if projectState.filePath}
-      <p class="meta">File: {projectState.filePath}</p>
+    {#if projectState.fileName}
+      <p class="meta">File: {projectState.fileName}</p>
     {/if}
     {#if projectState.dirty}
       <p class="meta">Unsaved changes</p>

@@ -1,7 +1,5 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
-  import { save } from "@tauri-apps/plugin-dialog";
-  import { writeTextFile } from "@tauri-apps/plugin-fs";
   import { onMount } from "svelte";
   import type { MethodDescriptor } from "$lib/types";
 
@@ -32,12 +30,11 @@
 
   async function saveReport() {
     if (!report) return;
-    const path = await save({
-      defaultPath: `validation-report-${selectedMethodId.replaceAll(".", "-")}.md`,
-      filters: [{ name: "Markdown", extensions: ["md"] }],
+    await invoke<string | null>("save_export_file", {
+      exportType: "markdown",
+      fileStem: `validation-report-${selectedMethodId.replaceAll(".", "-")}`,
+      contents: Array.from(new TextEncoder().encode(report)),
     });
-    if (!path) return;
-    await writeTextFile(path, report);
   }
 </script>
 

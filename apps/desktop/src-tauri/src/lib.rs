@@ -1,3 +1,4 @@
+mod export_file;
 mod project;
 
 use clinsize_core::methods::binary::odds_ratio::{self, OddsRatioInput, OddsRatioResult};
@@ -43,8 +44,13 @@ use clinsize_core::methods::ordinal::proportional_odds::{
 use clinsize_core::methods::survival::log_rank::{self, LogRankInput, LogRankResult};
 use clinsize_core::registry::MethodDescriptor;
 use clinsize_core::types::SolveMode;
-use project::ProjectFile;
-use serde::Serialize;
+use export_file::{write_export_file, ExportFileError};
+use project::{
+    open_project_at_path, save_project_at_path, save_project_to_active_path, OpenedProjectFile,
+    ProjectFile, ProjectFileError, ProjectFileState,
+};
+use serde::{Deserialize, Serialize};
+use tauri_plugin_dialog::DialogExt;
 
 /// UI-facing error returned from Tauri commands.
 #[derive(Debug, Serialize)]
@@ -66,6 +72,85 @@ impl From<clinsize_core::Error> for AppError {
             code: code.into(),
             message: err.to_string(),
         }
+    }
+}
+
+impl From<ProjectFileError> for AppError {
+    fn from(err: ProjectFileError) -> Self {
+        Self {
+            code: "project_file".into(),
+            message: err.to_string(),
+        }
+    }
+}
+
+impl From<ExportFileError> for AppError {
+    fn from(err: ExportFileError) -> Self {
+        Self {
+            code: "export".into(),
+            message: err.to_string(),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum ExportFileType {
+    Markdown,
+    Html,
+    Word,
+    Pdf,
+    Svg,
+    Png,
+}
+
+impl ExportFileType {
+    fn extension(self) -> &'static str {
+        match self {
+            Self::Markdown => "md",
+            Self::Html => "html",
+            Self::Word => "docx",
+            Self::Pdf => "pdf",
+            Self::Svg => "svg",
+            Self::Png => "png",
+        }
+    }
+
+    fn filter_name(self) -> &'static str {
+        match self {
+            Self::Markdown => "Markdown",
+            Self::Html => "HTML",
+            Self::Word => "Word document",
+            Self::Pdf => "PDF",
+            Self::Svg => "SVG image",
+            Self::Png => "PNG image",
+        }
+    }
+
+    fn default_file_name(self, file_stem: &str) -> String {
+        format!("{}.{}", sanitize_file_stem(file_stem), self.extension())
+    }
+}
+
+fn sanitize_file_stem(file_stem: &str) -> String {
+    let mut result = String::new();
+    let mut previous_was_separator = false;
+
+    for character in file_stem.chars() {
+        if character.is_ascii_alphanumeric() {
+            result.push(character.to_ascii_lowercase());
+            previous_was_separator = false;
+        } else if !result.is_empty() && !previous_was_separator {
+            result.push('-');
+            previous_was_separator = true;
+        }
+    }
+
+    let result = result.trim_matches('-');
+    if result.is_empty() {
+        "clinsize-export".into()
+    } else {
+        result.into()
     }
 }
 
@@ -468,32 +553,112 @@ fn export_blinded_ssre_markdown(
 }
 
 #[tauri::command]
-fn create_project(name: String) -> ProjectFile {
+fn create_project(name: String, state: tauri::State<'_, ProjectFileState>) -> ProjectFile {
+    state.clear_active_path();
     ProjectFile::new(name)
 }
 
 #[tauri::command]
-fn read_project_file(path: String) -> Result<ProjectFile, AppError> {
-    let content = std::fs::read_to_string(&path).map_err(|err| AppError {
-        code: "export".into(),
+async fn open_project_file(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, ProjectFileState>,
+) -> Result<Option<OpenedProjectFile>, AppError> {
+    let selected_path = tauri::async_runtime::spawn_blocking(move || {
+        app.dialog()
+            .file()
+            .add_filter("ClinSize project", &["clinsize.json"])
+            .blocking_pick_file()
+    })
+    .await
+    .map_err(|err| AppError {
+        code: "internal".into(),
         message: err.to_string(),
     })?;
-    serde_json::from_str(&content).map_err(|err| AppError {
-        code: "export".into(),
+
+    let Some(selected_path) = selected_path else {
+        return Ok(None);
+    };
+    let path = selected_path.into_path().map_err(|err| AppError {
+        code: "project_file".into(),
         message: err.to_string(),
-    })
+    })?;
+
+    open_project_at_path(&state, path)
+        .map(Some)
+        .map_err(AppError::from)
 }
 
 #[tauri::command]
-fn write_project_file(path: String, project: ProjectFile) -> Result<(), AppError> {
-    let content = serde_json::to_string_pretty(&project).map_err(|err| AppError {
+async fn save_project_file(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, ProjectFileState>,
+    project: ProjectFile,
+) -> Result<Option<String>, AppError> {
+    if state.active_path().is_some() {
+        return save_project_to_active_path(&state, &project)
+            .map(Some)
+            .map_err(AppError::from);
+    }
+
+    let default_file_name = format!("{}.clinsize.json", project.name);
+    let selected_path = tauri::async_runtime::spawn_blocking(move || {
+        app.dialog()
+            .file()
+            .add_filter("ClinSize project", &["clinsize.json"])
+            .set_file_name(default_file_name)
+            .blocking_save_file()
+    })
+    .await
+    .map_err(|err| AppError {
+        code: "internal".into(),
+        message: err.to_string(),
+    })?;
+
+    let Some(selected_path) = selected_path else {
+        return Ok(None);
+    };
+    let path = selected_path.into_path().map_err(|err| AppError {
+        code: "project_file".into(),
+        message: err.to_string(),
+    })?;
+
+    save_project_at_path(&state, path, &project)
+        .map(Some)
+        .map_err(AppError::from)
+}
+
+#[tauri::command]
+async fn save_export_file(
+    app: tauri::AppHandle,
+    export_type: ExportFileType,
+    file_stem: String,
+    contents: Vec<u8>,
+) -> Result<Option<String>, AppError> {
+    let default_file_name = export_type.default_file_name(&file_stem);
+    let selected_path = tauri::async_runtime::spawn_blocking(move || {
+        app.dialog()
+            .file()
+            .add_filter(export_type.filter_name(), &[export_type.extension()])
+            .set_file_name(default_file_name)
+            .blocking_save_file()
+    })
+    .await
+    .map_err(|err| AppError {
+        code: "internal".into(),
+        message: err.to_string(),
+    })?;
+
+    let Some(selected_path) = selected_path else {
+        return Ok(None);
+    };
+    let path = selected_path.into_path().map_err(|err| AppError {
         code: "export".into(),
         message: err.to_string(),
     })?;
-    std::fs::write(path, content).map_err(|err| AppError {
-        code: "export".into(),
-        message: err.to_string(),
-    })
+
+    write_export_file(&path, &contents)
+        .map(Some)
+        .map_err(AppError::from)
 }
 
 #[tauri::command]
@@ -521,15 +686,16 @@ fn generate_validation_report(method_id: String) -> Result<String, AppError> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .manage(ProjectFileState::default())
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             engine_info,
             list_methods,
             create_project,
-            read_project_file,
-            write_project_file,
+            open_project_file,
+            save_project_file,
+            save_export_file,
             export_markdown_as_html,
             export_markdown_as_docx,
             export_markdown_as_pdf,
@@ -577,4 +743,68 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[cfg(test)]
+mod export_file_tests {
+    use super::*;
+
+    #[test]
+    fn writes_binary_export_content_and_returns_the_file_name() {
+        let path = std::env::temp_dir().join(format!(
+            "clinsize-export-{}-{}.pdf",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .expect("current time")
+                .as_nanos()
+        ));
+        let contents = [0, 1, 2, 255];
+
+        let file_name = write_export_file(&path, &contents).expect("write export file");
+        let saved = std::fs::read(&path).expect("read export file");
+        std::fs::remove_file(&path).expect("remove temporary export file");
+
+        assert_eq!(
+            file_name,
+            path.file_name().expect("file name").to_string_lossy()
+        );
+        assert_eq!(saved, contents);
+    }
+
+    #[test]
+    fn export_file_types_create_safe_default_file_names() {
+        assert_eq!(
+            ExportFileType::Pdf.default_file_name("summary/../../trial"),
+            "summary-trial.pdf"
+        );
+    }
+
+    #[test]
+    fn renderer_has_no_filesystem_plugin_authority() {
+        assert!(!include_str!("../capabilities/default.json").contains("\"fs:"));
+        assert!(!include_str!("../Cargo.toml").contains("tauri-plugin-fs"));
+        assert!(!include_str!("../../package.json").contains("@tauri-apps/plugin-fs"));
+        assert!(!include_str!("../../package.json").contains("@tauri-apps/plugin-dialog"));
+    }
+
+    #[test]
+    fn tauri_config_uses_restrictive_production_and_development_csps() {
+        let config: serde_json::Value =
+            serde_json::from_str(include_str!("../tauri.conf.json")).expect("valid Tauri config");
+        let security = &config["app"]["security"];
+        let production_csp = security["csp"].as_str().expect("configured production CSP");
+        let development_csp = security["devCsp"]
+            .as_str()
+            .expect("configured development CSP");
+
+        assert!(production_csp.contains("default-src 'self'"));
+        assert!(production_csp.contains("connect-src ipc: http://ipc.localhost"));
+        assert!(production_csp.contains("object-src 'none'"));
+        assert!(production_csp.contains("form-action 'none'"));
+        assert!(production_csp.contains("frame-ancestors 'none'"));
+        assert!(!production_csp.contains("http://localhost"));
+        assert!(development_csp.contains("http://localhost:1420"));
+        assert!(development_csp.contains("ws://localhost:1420"));
+    }
 }
