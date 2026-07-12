@@ -92,12 +92,42 @@ export function summarizeResult(methodId: string, result: Record<string, unknown
         secondaryLabel: result.totalN ? "Total enrolled" : undefined,
         secondaryValue: result.totalN ? String(result.totalN) : undefined,
       };
-    case "binary.two_proportion_difference":
+    case "continuous.one_sample_ttest":
+    case "binary.one_sample_binomial":
       return {
-        primaryLabel: "Total N",
-        primaryValue: String(result.totalN ?? "—"),
+        primaryLabel: "N",
+        primaryValue: String(result.n ?? result.nAdjusted ?? "—"),
         secondaryLabel: "Achieved power",
         secondaryValue: formatNumber(result.achievedPower),
+      };
+    case "continuous.paired_ttest":
+    case "continuous.wilcoxon_signed_rank":
+      return {
+        primaryLabel: "Pairs",
+        primaryValue: String(result.nPairs ?? result.nPairsAdjusted ?? "—"),
+        secondaryLabel: "Achieved power",
+        secondaryValue: formatNumber(result.achievedPower),
+      };
+    case "design.multiplicity":
+      return {
+        primaryLabel: "Adjusted α",
+        primaryValue: formatNumber(result.adjustedAlpha),
+        secondaryLabel: "Comparisons",
+        secondaryValue: String(result.numberOfComparisons ?? "—"),
+      };
+    case "design.group_sequential":
+      return {
+        primaryLabel: "Inflation factor",
+        primaryValue: formatNumber(result.sampleSizeInflationFactor),
+        secondaryLabel: "Looks",
+        secondaryValue: String(Array.isArray(result.looks) ? result.looks.length : "—"),
+      };
+    case "design.blinded_ssre":
+      return {
+        primaryLabel: "Re-estimated N",
+        primaryValue: String(result.reEstimatedTotalN ?? result.plannedTotalN ?? "—"),
+        secondaryLabel: "Planned N",
+        secondaryValue: result.plannedTotalN ? String(result.plannedTotalN) : undefined,
       };
     default:
       return {
