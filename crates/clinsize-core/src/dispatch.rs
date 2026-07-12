@@ -30,6 +30,7 @@ use crate::methods::continuous::paired_ttest::{self, PairedTTestInput, PairedTTe
 use crate::methods::continuous::two_sample_ttest::{
     self, TwoSampleTTestInput, TwoSampleTTestResult,
 };
+use crate::methods::continuous::two_way_anova::{self, TwoWayAnovaInput, TwoWayAnovaResult};
 use crate::methods::continuous::wilcoxon_signed_rank::{
     self, WilcoxonSignedRankInput, WilcoxonSignedRankResult,
 };
@@ -149,6 +150,7 @@ dispatch_methods! {
     "continuous.one_sample_ttest"      => one_sample_ttest       : OneSampleTTestInput / OneSampleTTestResult,
     "continuous.paired_ttest"          => paired_ttest           : PairedTTestInput / PairedTTestResult,
     "continuous.one_way_anova"         => one_way_anova          : OneWayAnovaInput / OneWayAnovaResult,
+    "continuous.two_way_anova"         => two_way_anova          : TwoWayAnovaInput / TwoWayAnovaResult,
     "continuous.ancova_two_sample"     => ancova_two_sample      : AncovaTwoSampleInput / AncovaTwoSampleResult,
     "continuous.change_from_baseline"  => change_from_baseline   : ChangeFromBaselineInput / ChangeFromBaselineResult,
     "continuous.mmrm"                  => mmrm                   : MmrmInput / MmrmResult,

@@ -250,8 +250,8 @@ mod tests {
             checked += 1;
         }
         assert!(
-            checked >= 20,
-            "expected >= 20 evidence files, got {checked}"
+            checked >= 21,
+            "expected >= 21 evidence files, got {checked}"
         );
     }
 
