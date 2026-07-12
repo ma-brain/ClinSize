@@ -10,14 +10,10 @@ TODO — what's left to fix
   2. Group sequential / Dunnett numerical precision: fixed 12,000-point Halton QMC gives ~0.02 boundary accuracy
   vs gsDesign's ~1e-6. Upgrade the MVN integration (or at least surface the tolerance in exports — currently
   only documented in validation/).
-  3. find_minimum_integer monotonicity guard — binary search over power assumes a monotone predicate; add a
-  walk-down check after the search.
-  4. Frontend tests: zero unit/component tests (svelte-check only). Start with vitest on buildInput()
+  3. Frontend tests: zero unit/component tests (svelte-check only). Start with vitest on buildInput()
   round-trips and summarizeResult.
-  5. Project history shows "—" for one-sample, paired, multiplicity, and group-sequential records
-  (summarizeResult only knows totalN).
 
   Process
-  6. Recompute any previously exported MMRM results — the old outputs are undersized by ~`(1+(k−1)ρ)/(1−ρ)`;
+  4. Recompute any previously exported MMRM results — the old outputs are undersized by ~`(1+(k−1)ρ)/(1−ρ)`;
   group-sequential exports at "two-sided 0.05" should be re-read as one-sided 0.05 designs. (Both documented in
   the validation history notes, but worth acting on if any numbers left the building.)
