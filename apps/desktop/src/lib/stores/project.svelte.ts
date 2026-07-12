@@ -1,11 +1,11 @@
 import type { CalculationRecord, CalculationSummary, ProjectFile, Scenario } from "$lib/types/project";
 
 function timestamp(): string {
-  return String(Math.floor(Date.now() / 1000));
+  return new Date().toISOString();
 }
 
 function newId(prefix: string): string {
-  return `${prefix}-${Date.now()}`;
+  return `${prefix}-${crypto.randomUUID()}`;
 }
 
 export function createProject(name: string): ProjectFile {

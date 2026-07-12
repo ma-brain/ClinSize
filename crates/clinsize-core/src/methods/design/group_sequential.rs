@@ -139,7 +139,7 @@ fn build_warnings(input: &GroupSequentialInput) -> Vec<CalculationWarning> {
         )),
     }
 
-    if input.sample_size_inflation_factor_would_be_high(input.number_of_looks) {
+    if input.number_of_looks >= 6 {
         warnings.push(CalculationWarning::new(
             "many_looks",
             "Many interim looks increase maximum sample size; review whether fewer looks are feasible.",
@@ -147,16 +147,6 @@ fn build_warnings(input: &GroupSequentialInput) -> Vec<CalculationWarning> {
     }
 
     warnings
-}
-
-trait InflationHeuristic {
-    fn sample_size_inflation_factor_would_be_high(&self, number_of_looks: u32) -> bool;
-}
-
-impl InflationHeuristic for GroupSequentialInput {
-    fn sample_size_inflation_factor_would_be_high(&self, number_of_looks: u32) -> bool {
-        number_of_looks >= 6
-    }
 }
 
 #[cfg(test)]

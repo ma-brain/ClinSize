@@ -96,17 +96,19 @@ fn run(cli: Cli) -> Result<(), String> {
 
 fn cmd_list() -> Result<(), String> {
     for method in registry::list_methods() {
-        let modes: Vec<_> = method
-            .supported_solve_modes
-            .iter()
-            .map(|mode| format!("{mode:?}"))
-            .collect();
+        let modes_str = if method.supported_solve_modes.is_empty() {
+            "n/a".to_string()
+        } else {
+            method
+                .supported_solve_modes
+                .iter()
+                .map(|mode| format!("{mode:?}"))
+                .collect::<Vec<_>>()
+                .join(", ")
+        };
         println!(
             "{}\t{}\t{}\t{}",
-            method.id,
-            method.display_name,
-            method.endpoint_category,
-            modes.join(", ")
+            method.id, method.display_name, method.endpoint_category, modes_str
         );
     }
     Ok(())

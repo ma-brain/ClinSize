@@ -62,6 +62,12 @@ pub fn validate(input: &OddsRatioInput) -> Result<()> {
                 message: "is required when solving for sample size".into(),
             })?;
             validation::validate_power(power)?;
+            if input.control_n.is_some() {
+                return Err(Error::InvalidInput {
+                    field: "controlN".into(),
+                    message: "must not be set when solving for sample size".into(),
+                });
+            }
         }
         SolveMode::Power => {
             let control_n = input.control_n.ok_or_else(|| Error::InvalidInput {
@@ -72,6 +78,12 @@ pub fn validate(input: &OddsRatioInput) -> Result<()> {
                 return Err(Error::InvalidInput {
                     field: "controlN".into(),
                     message: "must be at least 2".into(),
+                });
+            }
+            if input.power.is_some() {
+                return Err(Error::InvalidInput {
+                    field: "power".into(),
+                    message: "must not be set when solving for power".into(),
                 });
             }
         }
@@ -197,5 +209,53 @@ mod tests {
         let result = calculate(input).expect("calculate");
         assert_eq!(result.n_control, 156);
         assert_relative_eq!(result.odds_ratio, 2.0, epsilon = 1e-12);
+    }
+
+    fn base_sample_size_input() -> OddsRatioInput {
+        OddsRatioInput {
+            solve_mode: SolveMode::SampleSize,
+            alpha: 0.05,
+            power: Some(0.8),
+            control_n: None,
+            control_rate: 0.25,
+            treatment_rate: 0.4,
+            allocation_ratio: 1.0,
+            alternative: Alternative::TwoSided,
+            dropout_rate: None,
+        }
+    }
+
+    fn base_power_input() -> OddsRatioInput {
+        OddsRatioInput {
+            solve_mode: SolveMode::Power,
+            alpha: 0.05,
+            power: None,
+            control_n: Some(156),
+            control_rate: 0.25,
+            treatment_rate: 0.4,
+            allocation_ratio: 1.0,
+            alternative: Alternative::TwoSided,
+            dropout_rate: None,
+        }
+    }
+
+    #[test]
+    fn rejects_control_n_in_sample_size_mode() {
+        let mut input = base_sample_size_input();
+        input.control_n = Some(100);
+        let err = calculate(input).unwrap_err();
+        assert!(err
+            .to_string()
+            .contains("must not be set when solving for sample size"));
+    }
+
+    #[test]
+    fn rejects_power_in_power_mode() {
+        let mut input = base_power_input();
+        input.power = Some(0.8);
+        let err = calculate(input).unwrap_err();
+        assert!(err
+            .to_string()
+            .contains("must not be set when solving for power"));
     }
 }
