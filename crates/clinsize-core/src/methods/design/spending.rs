@@ -72,4 +72,25 @@ mod tests {
         assert_relative_eq!(spends[2], 0.01183087, epsilon = 1e-5);
         assert_relative_eq!(spends.iter().sum::<f64>(), 0.05, epsilon = 1e-5);
     }
+
+    #[test]
+    fn obrien_fleming_matches_gsdesign_incremental_k3_alpha_025() {
+        // gsDesign(k=3, test.type=1, alpha=0.025, sfu=sfLDOF)$upper$spend
+        let spends = incremental_spends(0.025, 3, SpendingFunction::ObrienFleming);
+        assert_relative_eq!(spends[0], 0.0001035057, epsilon = 1e-8);
+        assert_relative_eq!(spends[1], 0.0059448834, epsilon = 1e-7);
+        assert_relative_eq!(spends[2], 0.0189516109, epsilon = 1e-7);
+        assert_relative_eq!(spends.iter().sum::<f64>(), 0.025, epsilon = 1e-7);
+    }
+
+    #[test]
+    fn pocock_matches_gsdesign_incremental_k5_alpha_025() {
+        // gsDesign(k=5, test.type=1, alpha=0.025, sfu=sfLDPocock)$upper$spend
+        let spends = incremental_spends(0.025, 5, SpendingFunction::Pocock);
+        assert_relative_eq!(spends[0], 0.0073848632, epsilon = 1e-7);
+        assert_relative_eq!(spends[1], 0.0056935659, epsilon = 1e-7);
+        assert_relative_eq!(spends[2], 0.0046343976, epsilon = 1e-7);
+        assert_relative_eq!(spends[3], 0.0039081665, epsilon = 1e-7);
+        assert_relative_eq!(spends[4], 0.0033790069, epsilon = 1e-7);
+    }
 }

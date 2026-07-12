@@ -1,5 +1,0 @@
-case_id,mean_difference,standard_deviation,alpha,power,alternative,allocation_ratio,dropout_rate,expected_n_control,expected_n_treatment,expected_achieved_power,tolerance,reference_source
-equal_two_sided_d1,1,1,0.05,0.8,two_sided,1,,17,17,0.80704,1e-4,R power.t.test
-equal_two_sided_d05,0.5,1,0.05,0.8,two_sided,1,,64,64,0.80146,1e-4,R power.t.test
-one_sided_d1,1,1,0.05,0.8,greater,1,,14,14,0.82409,1e-4,R power.t.test alternative=one.sided
-dropout_20pct,1,1,0.05,0.8,two_sided,1,0.2,17,17,0.80704,1e-4,ClinSize rounding policy

@@ -13,8 +13,8 @@ use crate::methods::continuous::ancova_two_sample::{AncovaTwoSampleInput, Ancova
 use crate::methods::continuous::change_from_baseline::{
     ChangeFromBaselineInput, ChangeFromBaselineResult,
 };
-use crate::methods::continuous::mmrm::{MmrmInput, MmrmResult};
 use crate::methods::continuous::mann_whitney::{MannWhitneyInput, MannWhitneyResult};
+use crate::methods::continuous::mmrm::{MmrmInput, MmrmResult};
 use crate::methods::continuous::one_sample_ttest::{OneSampleTTestInput, OneSampleTTestResult};
 use crate::methods::continuous::one_way_anova::{OneWayAnovaInput, OneWayAnovaResult};
 use crate::methods::continuous::paired_ttest::{PairedTTestInput, PairedTTestResult};
@@ -23,13 +23,13 @@ use crate::methods::continuous::wilcoxon_signed_rank::{
     WilcoxonSignedRankInput, WilcoxonSignedRankResult,
 };
 use crate::methods::count::negative_binomial::{NegativeBinomialInput, NegativeBinomialResult};
-use crate::methods::ordinal::proportional_odds::{ProportionalOddsInput, ProportionalOddsResult};
 use crate::methods::design::blinded_ssre::{BlindedSsreInput, BlindedSsreResult};
 use crate::methods::design::group_sequential::{GroupSequentialInput, GroupSequentialResult};
 use crate::methods::design::multiplicity::{
     MultiplicityInput, MultiplicityMethod, MultiplicityResult,
 };
 use crate::methods::design::spending::SpendingFunction;
+use crate::methods::ordinal::proportional_odds::{ProportionalOddsInput, ProportionalOddsResult};
 use crate::methods::survival::log_rank::{LogRankInput, LogRankResult};
 use crate::types::{Alternative, CorrelationStructure, SolveMode, StudyObjective};
 
@@ -57,10 +57,7 @@ fn z_beta_value(power: f64) -> f64 {
 
 fn format_z_criticals(alpha: f64, alternative: Alternative, power: f64) -> String {
     let (label, z_alpha) = z_alpha_label_and_value(alpha, alternative);
-    format!(
-        "{label} = {z_alpha:.3}, zβ = {:.3}",
-        z_beta_value(power)
-    )
+    format!("{label} = {z_alpha:.3}, zβ = {:.3}", z_beta_value(power))
 }
 
 fn format_percent_int(rate: f64) -> String {
@@ -146,9 +143,9 @@ pub fn two_sample_ttest_protocol(
                 format_z_criticals(input.alpha, input.alternative, target),
             ));
 
-            let mut p2 = format!(
+            let mut p2 = String::from(
                 "The primary analysis will use an unadjusted two-sample t-test on change from \
-                 baseline, assuming normality and a common pooled SD across arms."
+                 baseline, assuming normality and a common pooled SD across arms.",
             );
             let evaluable = if result.n_control == result.n_treatment {
                 format!("per arm is {}", result.n_control)
@@ -559,63 +556,55 @@ pub fn mmrm_protocol(input: &MmrmInput, result: &MmrmResult) -> String {
     match input.solve_mode {
         SolveMode::SampleSize => {
             let target = input.power.expect("validated for sample size mode");
-            let enroll = two_group_sample_size_phrase(
-                result.n_control_adjusted,
-                result.n_treatment_adjusted,
-                result.total_n_adjusted,
-            );
+            let randomize =
+                two_group_sample_size_phrase(result.n_control, result.n_treatment, result.total_n);
             let mut paragraph = format!(
-                "A sample size of {enroll} is required to detect a treatment effect of δ = {:.2} \
-                 at the final post-baseline visit (residual SD σ = {:.2}, {} correlation ρ = {:.2}, \
-                 k = {} post-baseline visits, GLS variance efficiency factor = {:.2}) with {} \
-                 power at a {} of α = {:.2}.",
+                "A sample size of {randomize} randomized is required to detect a treatment \
+                 effect of δ = {:.2} at the final post-baseline visit (final-visit SD σ = {:.2}, \
+                 {} correlation ρ = {:.2}, k = {} post-baseline visits) with {} power at a {} of \
+                 α = {:.3}, based on the mixed model for repeated measures method of Lu, Luo & \
+                 Chen (2008).",
                 input.treatment_effect,
                 input.residual_standard_deviation,
                 correlation_structure_label(input.correlation_structure),
                 input.correlation,
                 input.n_post_baseline_visits,
-                result.gls_variance_efficiency_factor,
                 format_power_percent(target),
                 significance_level_phrase(input.alternative),
                 input.alpha,
             );
-            if input.per_visit_dropout_rate.is_some() {
+            if let Some(per_visit_dropout_rate) = input.per_visit_dropout_rate {
                 paragraph.push_str(&format!(
-                    " The required number of evaluable subjects per arm is {} control and {} \
-                     treatment (total N = {}). Allowing for an anticipated per-visit withdrawal \
-                     rate of {:.0}% over {} visits (cumulative dropout ≈ {:.0}%), {} subjects per \
-                     arm ({total} in total) will be enrollable.",
-                    result.n_control,
-                    result.n_treatment,
-                    result.total_n,
-                    input.per_visit_dropout_rate.expect("validated") * 100.0,
+                    " This accounts for an anticipated per-visit withdrawal rate of {:.0}% over \
+                     {} visits (final-visit retention {:.0}%): subjects who discontinue \
+                     contribute their observed visits to the analysis, so no additional \
+                     enrollment inflation is applied.",
+                    per_visit_dropout_rate * 100.0,
                     input.n_post_baseline_visits,
-                    result.cumulative_dropout * 100.0,
-                    result.n_control_adjusted,
-                    total = result.total_n_adjusted,
+                    result.final_retention * 100.0,
                 ));
             }
             paragraphs.push(paragraph);
             paragraphs.push(
-                "The primary analysis will compare treatment and control using a mixed model for \
-                 repeated measures (MMRM) with visit as a categorical factor, assuming equal \
-                 residual variance across arms and a simplified within-subject correlation structure."
+                "The primary analysis will compare treatment and control at the final \
+                 post-baseline visit using a mixed model for repeated measures (MMRM) with visit \
+                 as a categorical factor, assuming equal variance and within-subject correlation \
+                 across arms and monotone missingness."
                     .into(),
             );
         }
         SolveMode::Power => {
             paragraphs.push(format!(
-                "With {} evaluable control and {} evaluable treatment subjects (total N = {}), the \
-                 design achieves {:.0} % power to detect a treatment effect of δ = {:.2} at the \
-                 final post-baseline visit (V_eff = {:.2}, GLS variance efficiency factor = {:.2}) \
-                 at a {} of α = {:.2}.",
+                "With {} randomized control and {} randomized treatment subjects (total N = {}), \
+                 the design achieves {:.0} % power to detect a treatment effect of δ = {:.2} at \
+                 the final post-baseline visit (Lu-Luo-Chen variance factor φ = {:.3}) at a {} \
+                 of α = {:.3}.",
                 input.control_n.expect("validated"),
                 result.n_treatment,
                 result.total_n,
                 result.achieved_power * 100.0,
                 input.treatment_effect,
-                result.v_eff,
-                result.gls_variance_efficiency_factor,
+                result.variance_factor,
                 significance_level_phrase(input.alternative),
                 input.alpha,
             ));
@@ -937,14 +926,12 @@ fn binary_effect_protocol(
             } else {
                 format!("subjects are {n_control} control and {n_treatment} treatment")
             };
-            let enrollable =
-                two_group_enrollable_phrase(n_control_adjusted, n_treatment_adjusted, total_n_adjusted);
-            append_dropout_enrollment_sentence(
-                &mut p2,
-                dropout_rate,
-                &evaluable,
-                &enrollable,
+            let enrollable = two_group_enrollable_phrase(
+                n_control_adjusted,
+                n_treatment_adjusted,
+                total_n_adjusted,
             );
+            append_dropout_enrollment_sentence(&mut p2, dropout_rate, &evaluable, &enrollable);
             p2.push_str(&format!(
                 " Sample size was computed using a normal approximation to the {test_statistic} \
                  with n derived from ({z_label} + zβ)² × variance / (log effect)²."
@@ -1222,9 +1209,10 @@ pub fn log_rank_protocol(input: &LogRankInput, result: &LogRankResult) -> String
                 result.events_treatment,
             ));
 
-            let mut p2 = "The primary analysis will use a two-arm log-rank test under proportional \
+            let mut p2 =
+                "The primary analysis will use a two-arm log-rank test under proportional \
                           hazards, based on the Schoenfeld (1981) event-driven approximation."
-                .to_string();
+                    .to_string();
             if let (Some(total_n), Some(n_control), Some(n_treatment)) =
                 (result.total_n, result.n_control, result.n_treatment)
             {
@@ -1310,8 +1298,8 @@ pub fn group_sequential_protocol(
         format!(
             "The study will employ a group sequential design with {} equally spaced interim \
              analyses (including the final analysis) using the {spending} alpha spending \
-             function. The two-sided family-wise significance level is α = {:.4} and the target \
-             power is {:.0} %.",
+             function. The one-sided family-wise significance level for the efficacy boundary is \
+             α = {:.4} and the target power is {:.0} %.",
             input.number_of_looks,
             input.alpha,
             input.target_power * 100.0,
@@ -1351,12 +1339,14 @@ pub fn blinded_ssre_protocol(input: &BlindedSsreInput, result: &BlindedSsreResul
         format!(
             "Re-estimation inflates the planned per-arm sample size by a factor of {:.4}, but a \
              pre-specified cap of {:.1}× limits enrollment to {} control and {} treatment \
-             subjects (total N = {}).",
+             subjects (total N = {}). At the capped enrollment the design provides {:.0} % power \
+             under the blinded interim standard deviation.",
             result.variance_ratio,
             input.max_sample_size_multiplier,
             result.capped_n_control,
             result.capped_n_treatment,
             result.capped_total_n,
+            result.achieved_power_at_capped_interim_sd * 100.0,
         )
     } else {
         format!(

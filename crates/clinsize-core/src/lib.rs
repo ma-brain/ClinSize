@@ -16,9 +16,7 @@ pub mod validation;
 pub mod validation_report;
 
 pub use error::{Error, Result};
-pub use types::{
-    Alternative, CalculationWarning, CorrelationStructure, SolveMode, StudyObjective,
-};
+pub use types::{Alternative, CalculationWarning, CorrelationStructure, SolveMode, StudyObjective};
 
 /// The `clinsize-core` crate version, for embedding in exported reports
 /// per `10-release-distribution.md` ("Result Reproducibility").

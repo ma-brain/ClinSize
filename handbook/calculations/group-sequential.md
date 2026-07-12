@@ -23,7 +23,9 @@ planning.
 
 ## Inputs
 
-- `alpha`: Two-sided family-wise Type I error rate.
+- `alpha`: One-sided family-wise Type I error rate spent on the upper
+  efficacy boundary (gsDesign `test.type = 1` convention). Enter 0.025 for
+  the conventional "two-sided 0.05" superiority setting.
 - `targetPower`: Target power for the group sequential design.
 - `numberOfLooks`: Total number of looks, including the final analysis (2–10).
 - `spendingFunction`: `obrien_fleming` or `pocock`.
@@ -79,8 +81,8 @@ theta_fixed = z_{1-alpha} + z_{power}
 ## Assumptions
 
 - Equally spaced information fractions (`t_k = k/K`).
-- Symmetric two-sided efficacy boundaries (upper boundary only).
-- No futility stopping or non-binding futility bounds.
+- One-sided efficacy testing: the full alpha is spent on the upper boundary.
+- No futility stopping or lower boundary of any kind.
 - Normal standardized test statistic with known variance (planning model).
 
 ## Validation Rules
@@ -106,16 +108,22 @@ yet implemented.
 
 ## Test Cases
 
-| α | Power | K | Spending | Expected inflation |
-| --- | --- | --- | --- | --- |
-| 0.05 | 0.8 | 3 | O'Brien-Fleming | 1.020305 |
-| 0.05 | 0.8 | 5 | Pocock | 1.221578 |
-| 0.05 | 0.8 | 3 | Pocock | 1.176743 |
+All alphas below are one-sided (gsDesign `test.type = 1`, `beta = 0.2`).
 
-| α | K | Spending | Look 1 Z |
+| α (one-sided) | Power | K | Spending | Expected inflation |
+| --- | --- | --- | --- | --- |
+| 0.025 | 0.8 | 3 | O'Brien-Fleming | 1.012795 |
+| 0.025 | 0.8 | 3 | Pocock | 1.170419 |
+| 0.025 | 0.8 | 5 | Pocock | 1.212613 |
+| 0.05 | 0.8 | 3 | O'Brien-Fleming | 1.020305 |
+| 0.05 | 0.8 | 5 | Pocock | 1.221484 |
+
+| α (one-sided) | K | Spending | Boundaries (Z) |
 | --- | --- | --- | --- |
-| 0.05 | 3 | O'Brien-Fleming | 3.200102 |
-| 0.05 | 3 | Pocock | 2.002014 |
+| 0.025 | 3 | O'Brien-Fleming | 3.710303, 2.511427, 1.993048 |
+| 0.025 | 3 | Pocock | 2.279428, 2.294910, 2.295939 |
+| 0.05 | 3 | O'Brien-Fleming | 3.200102, 2.140815, 1.694812 |
+| 0.05 | 3 | Pocock | 2.002014, 1.993797, 1.980304 |
 
 ## Known Limitations
 

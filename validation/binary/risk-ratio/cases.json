@@ -1,0 +1,22 @@
+{
+  "methodId": "binary.risk_ratio",
+  "cases": [
+    {
+      "caseId": "rr_chow_example",
+      "source": "Chow, Shao & Wang log risk-ratio formula, p1 = 0.3, p2 = 0.45 (RR = 1.5)",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "controlRate": 0.3,
+        "treatmentRate": 0.45,
+        "allocationRatio": 1,
+        "alternative": "two_sided"
+      },
+      "expect": {
+        "nControl": 421,
+        "riskRatio": 1.5
+      }
+    }
+  ]
+}

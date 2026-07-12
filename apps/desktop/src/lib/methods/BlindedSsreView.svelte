@@ -98,8 +98,13 @@
             value: result.cappedInflationFactor.toFixed(4),
           },
           {
-            label: "Achieved power at capped N",
+            label: "Power at capped N (planned SD)",
             value: result.achievedPowerAtCapped.toFixed(4),
+          },
+          {
+            label: "Power at capped N (interim SD)",
+            value: result.achievedPowerAtCappedInterimSd.toFixed(4),
+            highlight: result.wasCapped,
           },
         ]
       : [],

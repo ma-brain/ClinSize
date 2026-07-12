@@ -1,7 +1,7 @@
 pub mod ancova_two_sample;
 pub mod change_from_baseline;
-pub mod mmrm;
 pub mod mann_whitney;
+pub mod mmrm;
 pub mod nonparametric;
 pub mod one_sample_ttest;
 pub mod one_way_anova;

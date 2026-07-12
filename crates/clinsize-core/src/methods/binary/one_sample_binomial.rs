@@ -126,6 +126,13 @@ pub fn validate(input: &OneSampleBinomialInput) -> Result<()> {
     Ok(())
 }
 
+/// Normal-approximation power for the one-sample proportion z-test.
+///
+/// The critical region uses the null-hypothesis standard error `√(p₀(1−p₀)/n)`
+/// and power is evaluated under the alternative standard error `√(p₁(1−p₁)/n)`
+/// (Fleiss, Levin & Paik 2003; matches R `EnvStats::propTestPower` with
+/// `approx = TRUE, correct = FALSE`). Two-sided power sums both rejection
+/// tails.
 pub fn achieved_power(
     n: u32,
     reference_rate: f64,
@@ -139,12 +146,16 @@ pub fn achieved_power(
     }
     let tside = tail_multiplier(alternative);
     let z_alpha = normal::upper_tail_critical(alpha / tside);
-    let numerator =
-        shift * (n as f64).sqrt() - z_alpha * (reference_rate * (1.0 - reference_rate)).sqrt();
-    let z = numerator / (response_rate * (1.0 - response_rate)).sqrt();
+    let null_se = (reference_rate * (1.0 - reference_rate)).sqrt();
+    let alt_se = (response_rate * (1.0 - response_rate)).sqrt();
+    let sqrt_n = (n as f64).sqrt();
+    let z_upper = (shift * sqrt_n - z_alpha * null_se) / alt_se;
     match alternative {
-        Alternative::TwoSided => (2.0 * normal::cdf(z) - 1.0).clamp(0.0, 1.0),
-        Alternative::Greater | Alternative::Less => normal::cdf(z).clamp(0.0, 1.0),
+        Alternative::TwoSided => {
+            let z_lower = (-shift * sqrt_n - z_alpha * null_se) / alt_se;
+            (normal::cdf(z_upper) + normal::cdf(z_lower)).clamp(0.0, 1.0)
+        }
+        Alternative::Greater | Alternative::Less => normal::cdf(z_upper).clamp(0.0, 1.0),
     }
 }
 
@@ -253,8 +264,13 @@ mod tests {
         }
     }
 
+    // Reference values from R EnvStats:
+    //   propTestN(p.or.p1, p0.or.p2, alpha, power, sample.type = "one.sample",
+    //             alternative, approx = TRUE, correct = FALSE)
+    //   propTestPower(n.or.n1, ...) at the returned n.
+
     #[test]
-    fn matches_normal_approx_reference_case() {
+    fn matches_envstats_two_sided_p02_to_p04() {
         let result = calculate(sample_size_input(
             0.2,
             0.4,
@@ -264,12 +280,12 @@ mod tests {
         ))
         .expect("calculate");
 
-        assert_eq!(result.n, 50);
-        assert_relative_eq!(result.achieved_power, 0.8, epsilon = 0.02);
+        assert_eq!(result.n, 36);
+        assert_relative_eq!(result.achieved_power, 0.8021367, epsilon = 1e-5);
     }
 
     #[test]
-    fn second_reference_case() {
+    fn matches_envstats_two_sided_p03_to_p05() {
         let result = calculate(sample_size_input(
             0.3,
             0.5,
@@ -279,6 +295,46 @@ mod tests {
         ))
         .expect("calculate");
 
-        assert_eq!(result.n, 60);
+        assert_eq!(result.n, 44);
+        assert_relative_eq!(result.achieved_power, 0.8042717, epsilon = 1e-5);
+    }
+
+    #[test]
+    fn matches_envstats_two_sided_higher_power() {
+        let result = calculate(sample_size_input(
+            0.2,
+            0.4,
+            0.05,
+            0.9,
+            Alternative::TwoSided,
+        ))
+        .expect("calculate");
+
+        assert_eq!(result.n, 50);
+        assert_relative_eq!(result.achieved_power, 0.9008601, epsilon = 1e-5);
+    }
+
+    #[test]
+    fn matches_envstats_one_sided_greater() {
+        let result = calculate(sample_size_input(
+            0.5,
+            0.65,
+            0.025,
+            0.9,
+            Alternative::Greater,
+        ))
+        .expect("calculate");
+
+        assert_eq!(result.n, 113);
+        assert_relative_eq!(result.achieved_power, 0.9012011, epsilon = 1e-5);
+    }
+
+    #[test]
+    fn matches_envstats_one_sided_less() {
+        let result = calculate(sample_size_input(0.4, 0.25, 0.05, 0.8, Alternative::Less))
+            .expect("calculate");
+
+        assert_eq!(result.n, 61);
+        assert_relative_eq!(result.achieved_power, 0.8008358, epsilon = 1e-5);
     }
 }

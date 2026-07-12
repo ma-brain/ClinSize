@@ -293,7 +293,8 @@ mod tests {
     #[test]
     fn matches_zhu_lakkis_halving_rate() {
         // λ₁=2, λ₂=1, k=1, exposure=1, ratio=1, α=0.05, power=0.8 → n_control=58
-        let result = calculate(sample_size_input(2.0, 1.0, 1.0, 0.05, 0.8, 1.0)).expect("calculate");
+        let result =
+            calculate(sample_size_input(2.0, 1.0, 1.0, 0.05, 0.8, 1.0)).expect("calculate");
 
         assert_eq!(result.n_control, 58);
         assert_eq!(result.n_treatment, 58);
@@ -305,7 +306,8 @@ mod tests {
     #[test]
     fn matches_zhu_lakkis_doubling_rate() {
         // λ₁=5, λ₂=10, k=0.5, exposure=1 → n_control=22, total=44
-        let result = calculate(sample_size_input(5.0, 10.0, 0.5, 0.05, 0.8, 1.0)).expect("calculate");
+        let result =
+            calculate(sample_size_input(5.0, 10.0, 0.5, 0.05, 0.8, 1.0)).expect("calculate");
 
         assert_eq!(result.n_control, 22);
         assert_eq!(result.n_treatment, 22);

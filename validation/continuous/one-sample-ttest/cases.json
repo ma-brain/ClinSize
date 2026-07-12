@@ -1,0 +1,37 @@
+{
+  "methodId": "continuous.one_sample_ttest",
+  "cases": [
+    {
+      "caseId": "one_sample_two_sided",
+      "source": "R power.t.test(delta = 1, sd = 1, sig.level = 0.05, power = 0.8, type = \"one.sample\")",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "meanDifference": 1,
+        "standardDeviation": 1,
+        "alternative": "two_sided"
+      },
+      "expect": {
+        "n": 10,
+        "achievedPower": { "value": 0.8030962, "tol": 1e-4 }
+      }
+    },
+    {
+      "caseId": "one_sample_one_sided",
+      "source": "R power.t.test(delta = 1, sd = 1, sig.level = 0.05, power = 0.8, type = \"one.sample\", alternative = \"one.sided\")",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "meanDifference": 1,
+        "standardDeviation": 1,
+        "alternative": "greater"
+      },
+      "expect": {
+        "n": 8,
+        "achievedPower": { "value": 0.8150194, "tol": 1e-4 }
+      }
+    }
+  ]
+}

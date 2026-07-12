@@ -94,8 +94,12 @@ pub struct BlindedSsreResult {
     pub capped_inflation_factor: f64,
     /// `(s_b / σ₀)²`.
     pub variance_ratio: f64,
-    /// Achieved power at capped allocation using planned `Δ` and `σ₀`.
+    /// Achieved power at capped allocation using planned `Δ` and the planned
+    /// SD `σ₀` (optimistic if the interim SD is higher).
     pub achieved_power_at_capped: f64,
+    /// Achieved power at capped allocation using planned `Δ` and the blinded
+    /// interim SD `s_b` — the realistic estimate when variance has changed.
+    pub achieved_power_at_capped_interim_sd: f64,
     /// Whether the cap reduced the re-estimated sample size.
     pub was_capped: bool,
     pub warnings: Vec<CalculationWarning>,
@@ -190,8 +194,21 @@ pub fn calculate(input: BlindedSsreInput) -> Result<BlindedSsreResult> {
         input.alpha,
         input.alternative,
     );
+    let achieved_power_at_capped_interim_sd = two_sample_ttest::achieved_power(
+        capped_n_control,
+        capped_n_treatment,
+        input.mean_difference,
+        blinded_sd,
+        input.alpha,
+        input.alternative,
+    );
 
-    let warnings = build_warnings(&input, blinded_sd, was_capped);
+    let warnings = build_warnings(
+        &input,
+        blinded_sd,
+        was_capped,
+        achieved_power_at_capped_interim_sd,
+    );
 
     Ok(BlindedSsreResult {
         planned_n_control: planned.n_control,
@@ -210,6 +227,7 @@ pub fn calculate(input: BlindedSsreInput) -> Result<BlindedSsreResult> {
         capped_inflation_factor,
         variance_ratio,
         achieved_power_at_capped,
+        achieved_power_at_capped_interim_sd,
         was_capped,
         warnings,
     })
@@ -223,6 +241,7 @@ fn build_warnings(
     input: &BlindedSsreInput,
     blinded_sd: f64,
     was_capped: bool,
+    power_at_capped_interim_sd: f64,
 ) -> Vec<CalculationWarning> {
     let mut warnings = vec![
         CalculationWarning::new(
@@ -256,7 +275,11 @@ fn build_warnings(
     if was_capped {
         warnings.push(CalculationWarning::new(
             "cap_applied",
-            "Re-estimated sample size exceeds the maximum multiplier and was reduced to the pre-specified cap.",
+            format!(
+                "Re-estimated sample size exceeds the maximum multiplier and was reduced to the pre-specified cap. At the capped size, power under the blinded interim SD is {:.1}% (target {:.0}%) — the design is underpowered if the interim SD reflects the true variability.",
+                power_at_capped_interim_sd * 100.0,
+                input.target_power * 100.0,
+            ),
         ));
     }
 
@@ -300,6 +323,7 @@ mod tests {
     #[test]
     fn re_estimation_matches_manual_reference_when_sd_increases() {
         // R reference: n_planned=17, sb=1.2 -> ratio 1.44 -> n_re=25
+        // power.t.test(n=25, delta=1, sd=1.2, sig.level=0.05) = 0.8230090
         let result = calculate(base_input(Some(1.2), 0.5, 1.5)).expect("calculate");
 
         assert_eq!(result.planned_n_control, 17);
@@ -308,17 +332,44 @@ mod tests {
         assert_eq!(result.capped_n_control, 25);
         assert!(!result.was_capped);
         assert_relative_eq!(result.achieved_power_at_capped, 0.93371, epsilon = 1e-4);
+        assert_relative_eq!(
+            result.achieved_power_at_capped_interim_sd,
+            0.8230090,
+            epsilon = 1e-5
+        );
     }
 
     #[test]
     fn cap_reduces_re_estimated_sample_size() {
         // Integer planned n=17, sb=1.5 -> ratio 2.25 -> n_re=ceil(38.25)=39, cap at ceil(25.5)=26
+        // R: power.t.test(n=26, delta=1, sd=1.5, sig.level=0.05) = 0.6544534
         let result = calculate(base_input(Some(1.5), 0.5, 1.5)).expect("calculate");
 
         assert_eq!(result.re_estimated_n_control, 39);
         assert_eq!(result.capped_n_control, 26);
         assert!(result.was_capped);
         assert_relative_eq!(result.capped_inflation_factor, 26.0 / 17.0, epsilon = 1e-12);
+        assert_relative_eq!(
+            result.achieved_power_at_capped_interim_sd,
+            0.6544534,
+            epsilon = 1e-5
+        );
+        let cap_warning = result
+            .warnings
+            .iter()
+            .find(|warning| warning.code == "cap_applied")
+            .expect("cap warning");
+        assert!(cap_warning.message.contains("65.4%"));
+    }
+
+    #[test]
+    fn interim_sd_power_equals_planned_sd_power_without_variance_change() {
+        let result = calculate(base_input(None, 0.5, 1.5)).expect("calculate");
+        assert_relative_eq!(
+            result.achieved_power_at_capped,
+            result.achieved_power_at_capped_interim_sd,
+            epsilon = 1e-12
+        );
     }
 
     #[test]

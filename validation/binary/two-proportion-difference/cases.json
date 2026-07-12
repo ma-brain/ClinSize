@@ -1,0 +1,79 @@
+{
+  "methodId": "binary.two_proportion_difference",
+  "cases": [
+    {
+      "caseId": "prop_superiority_two_sided",
+      "source": "R power.prop.test(p1 = 0.3, p2 = 0.45, sig.level = 0.05, power = 0.8)",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "controlRate": 0.3,
+        "treatmentRate": 0.45,
+        "allocationRatio": 1,
+        "alternative": "two_sided",
+        "studyObjective": "superiority"
+      },
+      "expect": {
+        "nControl": 163,
+        "nTreatment": 163,
+        "achievedPower": { "value": 0.8016161, "tol": 1e-4 }
+      }
+    },
+    {
+      "caseId": "prop_superiority_one_sided",
+      "source": "R power.prop.test(p1 = 0.3, p2 = 0.45, sig.level = 0.05, power = 0.8, alternative = \"one.sided\")",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "controlRate": 0.3,
+        "treatmentRate": 0.45,
+        "allocationRatio": 1,
+        "alternative": "greater",
+        "studyObjective": "superiority"
+      },
+      "expect": {
+        "nControl": 128,
+        "nTreatment": 128,
+        "achievedPower": { "value": 0.801, "tol": 1e-3 }
+      }
+    },
+    {
+      "caseId": "prop_power_mode",
+      "source": "R power.prop.test(n = 163, p1 = 0.3, p2 = 0.45, sig.level = 0.05)",
+      "input": {
+        "solveMode": "power",
+        "alpha": 0.05,
+        "controlN": 163,
+        "controlRate": 0.3,
+        "treatmentRate": 0.45,
+        "allocationRatio": 1,
+        "alternative": "two_sided",
+        "studyObjective": "superiority"
+      },
+      "expect": {
+        "achievedPower": { "value": 0.8016161, "tol": 1e-4 }
+      }
+    },
+    {
+      "caseId": "prop_noninferiority",
+      "source": "R TrialSize::TwoSampleProportion.NIS, p1 = 0.3, p2 = 0.35, margin = 0.1 (n pinned; target power 0.8)",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "controlRate": 0.3,
+        "treatmentRate": 0.35,
+        "allocationRatio": 1,
+        "alternative": "greater",
+        "studyObjective": "non_inferiority",
+        "noninferiorityMargin": 0.1
+      },
+      "expect": {
+        "nControl": 121,
+        "nTreatment": 121
+      }
+    }
+  ]
+}

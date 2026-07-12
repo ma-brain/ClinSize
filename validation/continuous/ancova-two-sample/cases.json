@@ -1,0 +1,62 @@
+{
+  "methodId": "continuous.ancova_two_sample",
+  "cases": [
+    {
+      "caseId": "ancova_sd10_rho05",
+      "source": "R power.t.test(delta = 3, sd = 10 * sqrt(1 - 0.5^2) = 8.660254, sig.level = 0.05, power = 0.8)",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "meanDifference": 3,
+        "standardDeviation": 10,
+        "baselineOutcomeCorrelation": 0.5,
+        "allocationRatio": 1,
+        "alternative": "two_sided"
+      },
+      "expect": {
+        "nControl": 132,
+        "nTreatment": 132,
+        "adjustedStandardDeviation": { "value": 8.660254, "tol": 1e-5 },
+        "achievedPower": { "value": 0.80065, "tol": 1e-4 }
+      }
+    },
+    {
+      "caseId": "ancova_sd1_rho03",
+      "source": "R power.t.test(delta = 0.5, sd = sqrt(1 - 0.3^2) = 0.9539392, sig.level = 0.05, power = 0.8)",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "meanDifference": 0.5,
+        "standardDeviation": 1,
+        "baselineOutcomeCorrelation": 0.3,
+        "allocationRatio": 1,
+        "alternative": "two_sided"
+      },
+      "expect": {
+        "nControl": 59,
+        "nTreatment": 59,
+        "adjustedStandardDeviation": { "value": 0.9539392, "tol": 1e-6 },
+        "achievedPower": { "value": 0.8059902, "tol": 1e-4 }
+      }
+    },
+    {
+      "caseId": "ancova_power_mode",
+      "source": "R power.t.test(n = 132, delta = 3, sd = 8.660254, sig.level = 0.05)",
+      "input": {
+        "solveMode": "power",
+        "alpha": 0.05,
+        "controlN": 132,
+        "meanDifference": 3,
+        "standardDeviation": 10,
+        "baselineOutcomeCorrelation": 0.5,
+        "allocationRatio": 1,
+        "alternative": "two_sided"
+      },
+      "expect": {
+        "achievedPower": { "value": 0.80065, "tol": 1e-4 }
+      }
+    }
+  ]
+}

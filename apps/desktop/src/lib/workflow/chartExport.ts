@@ -1,5 +1,4 @@
-import { save } from "@tauri-apps/plugin-dialog";
-import { writeFile, writeTextFile } from "@tauri-apps/plugin-fs";
+import { invoke } from "@tauri-apps/api/core";
 
 const CHART_WIDTH = 520;
 const CHART_HEIGHT = 220;
@@ -96,30 +95,22 @@ export async function exportChartAsSvg(
   svg: SVGSVGElement,
   defaultStem: string,
 ): Promise<boolean> {
-  const path = await save({
-    defaultPath: `${defaultStem}.svg`,
-    filters: [{ name: "SVG image", extensions: ["svg"] }],
+  const fileName = await invoke<string | null>("save_export_file", {
+    exportType: "svg",
+    fileStem: defaultStem,
+    contents: Array.from(new TextEncoder().encode(inlineSvgStyles(svg))),
   });
-  if (!path) {
-    return false;
-  }
-
-  await writeTextFile(path, inlineSvgStyles(svg));
-  return true;
+  return fileName !== null;
 }
 
 export async function exportChartAsPng(
   svg: SVGSVGElement,
   defaultStem: string,
 ): Promise<boolean> {
-  const path = await save({
-    defaultPath: `${defaultStem}.png`,
-    filters: [{ name: "PNG image", extensions: ["png"] }],
+  const fileName = await invoke<string | null>("save_export_file", {
+    exportType: "png",
+    fileStem: defaultStem,
+    contents: Array.from(await renderPngBytes(svg)),
   });
-  if (!path) {
-    return false;
-  }
-
-  await writeFile(path, await renderPngBytes(svg));
-  return true;
+  return fileName !== null;
 }

@@ -1,62 +1,42 @@
 import { invoke } from "@tauri-apps/api/core";
-import { save } from "@tauri-apps/plugin-dialog";
-import { writeFile, writeTextFile } from "@tauri-apps/plugin-fs";
 
 export type ExportFormat = "markdown" | "html" | "word" | "pdf";
-
-const EXTENSIONS: Record<ExportFormat, string> = {
-  markdown: "md",
-  html: "html",
-  word: "docx",
-  pdf: "pdf",
-};
-
-const FILTER_NAMES: Record<ExportFormat, string> = {
-  markdown: "Markdown",
-  html: "HTML",
-  word: "Word document",
-  pdf: "PDF",
-};
 
 export async function exportCalculationSummary(options: {
   markdown: string;
   title: string;
   format: ExportFormat;
 }) {
-  const extension = EXTENSIONS[options.format];
-  const path = await save({
-    defaultPath: `clinsize-${slugify(options.title)}.${extension}`,
-    filters: [{ name: FILTER_NAMES[options.format], extensions: [extension] }],
-  });
-  if (!path) return;
+  let contents: Uint8Array;
 
   if (options.format === "pdf") {
     const pdfBytes = await invoke<number[]>("export_markdown_as_pdf", {
       markdown: options.markdown,
       title: options.title,
     });
-    await writeFile(path, new Uint8Array(pdfBytes));
-    return;
-  }
-
-  if (options.format === "word") {
+    contents = new Uint8Array(pdfBytes);
+  } else if (options.format === "word") {
     const docxBytes = await invoke<number[]>("export_markdown_as_docx", {
       markdown: options.markdown,
       title: options.title,
     });
-    await writeFile(path, new Uint8Array(docxBytes));
-    return;
+    contents = new Uint8Array(docxBytes);
+  } else {
+    let text = options.markdown;
+    if (options.format === "html") {
+      text = await invoke<string>("export_markdown_as_html", {
+        markdown: options.markdown,
+        title: options.title,
+      });
+    }
+    contents = new TextEncoder().encode(text);
   }
 
-  let contents = options.markdown;
-  if (options.format === "html") {
-    contents = await invoke<string>("export_markdown_as_html", {
-      markdown: options.markdown,
-      title: options.title,
-    });
-  }
-
-  await writeTextFile(path, contents);
+  await invoke<string | null>("save_export_file", {
+    exportType: options.format,
+    fileStem: `clinsize-${slugify(options.title)}`,
+    contents: Array.from(contents),
+  });
 }
 
 function slugify(value: string): string {

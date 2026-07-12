@@ -1,0 +1,73 @@
+{
+  "methodId": "design.blinded_ssre",
+  "cases": [
+    {
+      "caseId": "no_change",
+      "source": "R power.t.test(delta = 1, sd = 1, sig.level = 0.05, power = 0.8) -> n = 17/arm; no interim SD, so no re-estimation",
+      "input": {
+        "alpha": 0.05,
+        "targetPower": 0.8,
+        "meanDifference": 1,
+        "plannedStandardDeviation": 1,
+        "interimFraction": 0.5,
+        "allocationRatio": 1,
+        "maxSampleSizeMultiplier": 1.5,
+        "alternative": "two_sided"
+      },
+      "expect": {
+        "plannedNControl": 17,
+        "reEstimatedNControl": 17,
+        "cappedNControl": 17,
+        "wasCapped": false,
+        "achievedPowerAtCapped": { "value": 0.80704, "tol": 1e-4 },
+        "achievedPowerAtCappedInterimSd": { "value": 0.80704, "tol": 1e-4 }
+      }
+    },
+    {
+      "caseId": "sd_increase_20pct",
+      "source": "Friede-Kieser n_re = ceil(17 * 1.2^2) = 25; R power.t.test(n = 25, delta = 1, sd = 1.2) = 0.8230090; sd = 1 view = 0.9337100",
+      "input": {
+        "alpha": 0.05,
+        "targetPower": 0.8,
+        "meanDifference": 1,
+        "plannedStandardDeviation": 1,
+        "blindedInterimStandardDeviation": 1.2,
+        "interimFraction": 0.5,
+        "allocationRatio": 1,
+        "maxSampleSizeMultiplier": 1.5,
+        "alternative": "two_sided"
+      },
+      "expect": {
+        "plannedNControl": 17,
+        "reEstimatedNControl": 25,
+        "cappedNControl": 25,
+        "wasCapped": false,
+        "achievedPowerAtCapped": { "value": 0.93371, "tol": 1e-5 },
+        "achievedPowerAtCappedInterimSd": { "value": 0.823009, "tol": 1e-5 }
+      }
+    },
+    {
+      "caseId": "sd_increase_50pct_capped",
+      "source": "Friede-Kieser n_re = ceil(17 * 1.5^2) = 39, cap = ceil(17 * 1.5) = 26; R power.t.test(n = 26, delta = 1, sd = 1.5) = 0.6544534; sd = 1 view = 0.9424303",
+      "input": {
+        "alpha": 0.05,
+        "targetPower": 0.8,
+        "meanDifference": 1,
+        "plannedStandardDeviation": 1,
+        "blindedInterimStandardDeviation": 1.5,
+        "interimFraction": 0.5,
+        "allocationRatio": 1,
+        "maxSampleSizeMultiplier": 1.5,
+        "alternative": "two_sided"
+      },
+      "expect": {
+        "plannedNControl": 17,
+        "reEstimatedNControl": 39,
+        "cappedNControl": 26,
+        "wasCapped": true,
+        "achievedPowerAtCapped": { "value": 0.9424303, "tol": 1e-5 },
+        "achievedPowerAtCappedInterimSd": { "value": 0.6544534, "tol": 1e-5 }
+      }
+    }
+  ]
+}

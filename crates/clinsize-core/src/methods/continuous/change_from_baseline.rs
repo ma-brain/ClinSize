@@ -167,7 +167,9 @@ mod tests {
         let low_corr =
             calculate(sample_size_input(3.0, 10.0, 0.2, 0.05, 0.8, 1.0, None)).expect("low");
 
-        assert!(high_corr.change_score_standard_deviation < low_corr.change_score_standard_deviation);
+        assert!(
+            high_corr.change_score_standard_deviation < low_corr.change_score_standard_deviation
+        );
         assert!(high_corr.total_n < low_corr.total_n);
     }
 

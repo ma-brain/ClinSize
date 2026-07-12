@@ -182,17 +182,14 @@ export interface MmrmInput {
 }
 
 export interface MmrmResult {
+  /** Randomized counts; dropout is modeled inside the MMRM variance. */
   nControl: number;
   nTreatment: number;
   totalN: number;
-  nControlAdjusted: number;
-  nTreatmentAdjusted: number;
-  totalNAdjusted: number;
   achievedPower: number;
-  rhoFinal: number;
-  glsFactor: number;
-  glsVarianceEfficiencyFactor: number;
-  vEff: number;
+  /** Lu-Luo-Chen variance factor φ (1 with complete data). */
+  varianceFactor: number;
+  finalRetention: number;
   cumulativeDropout: number;
   warnings: CalculationWarning[];
 }
@@ -442,6 +439,7 @@ export interface MultiplicityResult {
 export type SpendingFunction = "obrien_fleming" | "pocock";
 
 export interface GroupSequentialInput {
+  /** One-sided alpha spent on the upper efficacy boundary (0.025 ≙ two-sided 0.05). */
   alpha: number;
   targetPower: number;
   numberOfLooks: number;
@@ -494,7 +492,10 @@ export interface BlindedSsreResult {
   sampleSizeInflationFactor: number;
   cappedInflationFactor: number;
   varianceRatio: number;
+  /** Power at capped N under the planned SD (optimistic if variance rose). */
   achievedPowerAtCapped: number;
+  /** Power at capped N under the blinded interim SD — the realistic estimate. */
+  achievedPowerAtCappedInterimSd: number;
   wasCapped: boolean;
   warnings: CalculationWarning[];
 }

@@ -3,23 +3,23 @@
 use std::borrow::Cow;
 use std::io::Cursor;
 
-use docx::core::Core;
-use docx::document::{Paragraph, Run, Text};
-use docx::formatting::CharacterProperty;
-use docx::Docx;
+use docx_rust::core::{Core, CoreNamespace};
+use docx_rust::document::{Paragraph, Run, Text};
+use docx_rust::formatting::CharacterProperty;
+use docx_rust::Docx;
 use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag, TagEnd};
 
 use crate::error::{Error, Result};
 
-const BODY_SIZE_HALF_POINTS: usize = 21;
-const H1_SIZE_HALF_POINTS: usize = 40;
-const H2_SIZE_HALF_POINTS: usize = 24;
+const BODY_SIZE_HALF_POINTS: isize = 21;
+const H1_SIZE_HALF_POINTS: isize = 40;
+const H2_SIZE_HALF_POINTS: isize = 24;
 
 fn owned(text: &str) -> Cow<'static, str> {
     Cow::Owned(text.to_owned())
 }
 
-fn text_run(text: &str, bold: bool, size: usize, color: Option<String>) -> Run<'static> {
+fn text_run(text: &str, bold: bool, size: isize, color: Option<String>) -> Run<'static> {
     let mut property = CharacterProperty::default().size(size);
     if bold {
         property = property.bold(true);
@@ -39,17 +39,17 @@ struct DocxBuilder {
     heading: Option<HeadingLevel>,
     list_prefix: Option<&'static str>,
     bold: bool,
-    body_size: usize,
+    body_size: isize,
 }
 
 impl DocxBuilder {
     fn new(title: &str) -> Self {
         let docx = Docx {
-            core: Some(Core {
+            core: Some(Core::CoreNamespace(CoreNamespace {
                 title: Some(owned(title)),
                 creator: Some(owned("ClinSize")),
                 ..Default::default()
-            }),
+            })),
             ..Default::default()
         };
 
@@ -131,10 +131,13 @@ impl DocxBuilder {
         self.flush_paragraph();
     }
 
-    fn into_bytes(mut self) -> Result<Vec<u8>> {
+    fn into_bytes(self) -> Result<Vec<u8>> {
+        // `Docx::write` borrows self for the struct's own lifetime parameter,
+        // so move the document into a fresh binding, letting `'static` shorten
+        // to the local region (covariance) before writing.
+        let mut docx: Docx<'_> = self.docx;
         let mut buffer = Cursor::new(Vec::new());
-        self.docx
-            .write(&mut buffer)
+        docx.write(&mut buffer)
             .map_err(|err| Error::Export(format!("{err:?}")))?;
         Ok(buffer.into_inner())
     }

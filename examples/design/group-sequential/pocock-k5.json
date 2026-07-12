@@ -1,5 +1,5 @@
 {
-  "alpha": 0.05,
+  "alpha": 0.025,
   "targetPower": 0.8,
   "numberOfLooks": 5,
   "spendingFunction": "pocock"

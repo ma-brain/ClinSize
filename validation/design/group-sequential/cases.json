@@ -1,0 +1,85 @@
+{
+  "methodId": "design.group_sequential",
+  "cases": [
+    {
+      "caseId": "of_k3_alpha025",
+      "source": "R gsDesign(k = 3, test.type = 1, alpha = 0.025, beta = 0.2, sfu = sfLDOF); QMC boundary tolerance 0.02",
+      "input": {
+        "alpha": 0.025,
+        "targetPower": 0.8,
+        "numberOfLooks": 3,
+        "spendingFunction": "obrien_fleming"
+      },
+      "expect": {
+        "looks/0/upperZBoundary": { "value": 3.710303, "tol": 0.02 },
+        "looks/1/upperZBoundary": { "value": 2.511427, "tol": 0.02 },
+        "looks/2/upperZBoundary": { "value": 1.993048, "tol": 0.02 },
+        "sampleSizeInflationFactor": { "value": 1.012795, "tol": 0.02 }
+      }
+    },
+    {
+      "caseId": "pocock_k3_alpha025",
+      "source": "R gsDesign(k = 3, test.type = 1, alpha = 0.025, beta = 0.2, sfu = sfLDPocock); QMC boundary tolerance 0.02",
+      "input": {
+        "alpha": 0.025,
+        "targetPower": 0.8,
+        "numberOfLooks": 3,
+        "spendingFunction": "pocock"
+      },
+      "expect": {
+        "looks/0/upperZBoundary": { "value": 2.279428, "tol": 0.02 },
+        "looks/1/upperZBoundary": { "value": 2.29491, "tol": 0.02 },
+        "looks/2/upperZBoundary": { "value": 2.295939, "tol": 0.02 },
+        "sampleSizeInflationFactor": { "value": 1.170419, "tol": 0.02 }
+      }
+    },
+    {
+      "caseId": "of_k3_alpha05",
+      "source": "R gsDesign(k = 3, test.type = 1, alpha = 0.05, beta = 0.2, sfu = sfLDOF); QMC boundary tolerance 0.02",
+      "input": {
+        "alpha": 0.05,
+        "targetPower": 0.8,
+        "numberOfLooks": 3,
+        "spendingFunction": "obrien_fleming"
+      },
+      "expect": {
+        "looks/0/upperZBoundary": { "value": 3.200102, "tol": 0.02 },
+        "looks/1/upperZBoundary": { "value": 2.140815, "tol": 0.02 },
+        "looks/2/upperZBoundary": { "value": 1.694812, "tol": 0.02 },
+        "sampleSizeInflationFactor": { "value": 1.020305, "tol": 0.02 }
+      }
+    },
+    {
+      "caseId": "pocock_k5_alpha025",
+      "source": "R gsDesign(k = 5, test.type = 1, alpha = 0.025, beta = 0.2, sfu = sfLDPocock); looks 1-3 pinned",
+      "input": {
+        "alpha": 0.025,
+        "targetPower": 0.8,
+        "numberOfLooks": 5,
+        "spendingFunction": "pocock"
+      },
+      "expect": {
+        "looks/0/upperZBoundary": { "value": 2.437977, "tol": 0.02 },
+        "looks/1/upperZBoundary": { "value": 2.426814, "tol": 0.02 },
+        "looks/2/upperZBoundary": { "value": 2.410194, "tol": 0.02 },
+        "sampleSizeInflationFactor": { "value": 1.212613, "tol": 0.02 }
+      }
+    },
+    {
+      "caseId": "of_k4_alpha025",
+      "source": "R gsDesign(k = 4, test.type = 1, alpha = 0.025, beta = 0.2, sfu = sfLDOF); looks 1-3 pinned",
+      "input": {
+        "alpha": 0.025,
+        "targetPower": 0.8,
+        "numberOfLooks": 4,
+        "spendingFunction": "obrien_fleming"
+      },
+      "expect": {
+        "looks/0/upperZBoundary": { "value": 4.332634, "tol": 0.02 },
+        "looks/1/upperZBoundary": { "value": 2.963131, "tol": 0.02 },
+        "looks/2/upperZBoundary": { "value": 2.359044, "tol": 0.02 },
+        "sampleSizeInflationFactor": { "value": 1.019637, "tol": 0.02 }
+      }
+    }
+  ]
+}

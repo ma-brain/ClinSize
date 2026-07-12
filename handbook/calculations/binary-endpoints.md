@@ -33,11 +33,13 @@ Log risk-ratio normal approximation (Chow et al. 2003).
 
 Compares a single-arm response rate to a reference (null) proportion using a normal approximation to the binomial distribution.
 
-**Formula:** For sample size, finds the smallest integer `N` such that achieved power meets the target. Power uses separate variance estimates at the reference and hypothesized rates:
+**Formula:** For sample size, finds the smallest integer `N` such that achieved power meets the target. The critical region uses the null-hypothesis standard error and power is evaluated under the alternative (Fleiss, Levin & Paik 2003, §2.5):
 
 `z = (|p_alt − p_ref| × √N − z_{α/2} × √(p_ref(1 − p_ref))) / √(p_alt(1 − p_alt))`
 
-One-sided alternatives use `z_α` and the corresponding tail probability.
+Two-sided power is `Φ(z) + Φ(z_lower)` where `z_lower` replaces `|p_alt − p_ref|` with its negative; one-sided alternatives use `z_α` and `Φ(z)`.
+
+**Validation source:** R `EnvStats::propTestN` / `propTestPower` (`approx = TRUE, correct = FALSE`); see `validation/binary/one-sample-binomial/`.
 
 **Inputs:** reference rate, hypothesized response rate, alpha, target power or sample size, alternative, optional dropout rate.
 
