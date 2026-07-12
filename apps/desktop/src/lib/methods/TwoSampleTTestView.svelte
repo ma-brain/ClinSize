@@ -15,6 +15,10 @@
   import WarningList from "$lib/components/ui/WarningList.svelte";
   import { twoSampleSensitivityOptions } from "$lib/sensitivity/configs";
   import { persistCalculation } from "$lib/workflow/record";
+  import {
+    calculateMethod,
+    exportMethodMarkdown,
+  } from "$lib/workflow/methodDispatch";
   import { fetchCalculationRationale, fetchProtocolText } from "$lib/workflow/rationale";
   import type {
     Alternative,
@@ -22,7 +26,6 @@
     TwoSampleTTestInput,
     TwoSampleTTestResult,
   } from "$lib/types";
-  import { invoke } from "@tauri-apps/api/core";
 
   let solveMode = $state<SolveMode>("sample_size");
   let alpha = $state("0.05");
@@ -156,13 +159,14 @@
 
     try {
       const input = buildInput();
-      result = await invoke<TwoSampleTTestResult>("calculate_two_sample_ttest", {
+      result = await calculateMethod<TwoSampleTTestInput, TwoSampleTTestResult>(
+        "continuous.two_sample_ttest",
         input,
-      });
-      exportMarkdown = await invoke<string>("export_two_sample_ttest_markdown", {
-        input,
-        result,
-      });
+      );
+      exportMarkdown = await exportMethodMarkdown<
+        TwoSampleTTestInput,
+        TwoSampleTTestResult
+      >("continuous.two_sample_ttest", input, result);
       rationale = await fetchCalculationRationale(
         "continuous.two_sample_ttest",
         input,
