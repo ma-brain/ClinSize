@@ -1,0 +1,54 @@
+{
+  "methodId": "continuous.wilcoxon_signed_rank",
+  "cases": [
+    {
+      "caseId": "two_sided_d0253",
+      "source": "Noether (1987) one-sample/sample-size formula for the Wilcoxon signed-rank test, JASA 82(398); p = 0.6, two-sided alpha 0.05, power 0.8",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "meanDifference": 0.2533,
+        "standardDeviation": 1.0,
+        "alternative": "two_sided"
+      },
+      "expect": {
+        "nPairs": 131,
+        "probabilityPositiveDifference": { "value": 0.6, "tol": 1e-3 },
+        "achievedPower": { "value": 0.8, "tol": 0.01 }
+      }
+    },
+    {
+      "caseId": "one_sided_d0253",
+      "source": "Noether (1987) signed-rank formula, one-sided alpha 0.05, p = 0.6, power 0.8",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "meanDifference": 0.2533,
+        "standardDeviation": 1.0,
+        "alternative": "greater"
+      },
+      "expect": {
+        "nPairs": 104,
+        "achievedPower": { "value": 0.8, "tol": 0.01 }
+      }
+    },
+    {
+      "caseId": "power_round_trip",
+      "source": "Noether (1987) signed-rank power formula at n = 131 pairs (round-trip of two_sided_d0253)",
+      "input": {
+        "solveMode": "power",
+        "alpha": 0.05,
+        "meanDifference": 0.2533,
+        "standardDeviation": 1.0,
+        "alternative": "two_sided",
+        "nPairs": 131
+      },
+      "expect": {
+        "nPairs": 131,
+        "achievedPower": { "value": 0.8, "tol": 0.01 }
+      }
+    }
+  ]
+}

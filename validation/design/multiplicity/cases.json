@@ -1,0 +1,159 @@
+{
+  "methodId": "design.multiplicity",
+  "cases": [
+    {
+      "caseId": "bonferroni_m2",
+      "source": "Bonferroni (1936) alpha/m = 0.05/2 = 0.025",
+      "input": {
+        "familyWiseAlpha": 0.05,
+        "numberOfComparisons": 2,
+        "adjustmentMethod": "bonferroni"
+      },
+      "expect": {
+        "adjustedAlpha": { "value": 0.025, "tol": 1e-6 },
+        "alphaReductionFactor": { "value": 0.5, "tol": 1e-6 }
+      }
+    },
+    {
+      "caseId": "bonferroni_m5",
+      "source": "Bonferroni (1936) alpha/m = 0.05/5 = 0.01",
+      "input": {
+        "familyWiseAlpha": 0.05,
+        "numberOfComparisons": 5,
+        "adjustmentMethod": "bonferroni"
+      },
+      "expect": {
+        "adjustedAlpha": { "value": 0.01, "tol": 1e-6 }
+      }
+    },
+    {
+      "caseId": "sidak_m2",
+      "source": "Sidak (1967) 1 - (1 - alpha)^(1/m) = 1 - 0.95^0.5 = 0.025320566",
+      "input": {
+        "familyWiseAlpha": 0.05,
+        "numberOfComparisons": 2,
+        "adjustmentMethod": "sidak"
+      },
+      "expect": {
+        "adjustedAlpha": { "value": 0.025320566, "tol": 1e-6 }
+      }
+    },
+    {
+      "caseId": "sidak_m5",
+      "source": "Sidak (1967) 1 - 0.95^(1/5) = 0.010206212",
+      "input": {
+        "familyWiseAlpha": 0.05,
+        "numberOfComparisons": 5,
+        "adjustmentMethod": "sidak"
+      },
+      "expect": {
+        "adjustedAlpha": { "value": 0.010206212, "tol": 1e-6 }
+      }
+    },
+    {
+      "caseId": "dunnett_m2",
+      "source": "Dunnett (1955) two-sided equicorrelated (rho = 0.5) normal quantile; m = 2 vs control",
+      "input": {
+        "familyWiseAlpha": 0.05,
+        "numberOfComparisons": 2,
+        "adjustmentMethod": "dunnett"
+      },
+      "expect": {
+        "adjustedAlpha": { "value": 0.026957839, "tol": 1e-4 }
+      }
+    },
+    {
+      "caseId": "dunnett_m3",
+      "source": "Dunnett (1955) two-sided equicorrelated (rho = 0.5) normal quantile; m = 3 vs control",
+      "input": {
+        "familyWiseAlpha": 0.05,
+        "numberOfComparisons": 3,
+        "adjustmentMethod": "dunnett"
+      },
+      "expect": {
+        "adjustedAlpha": { "value": 0.018825394, "tol": 1e-4 }
+      }
+    },
+    {
+      "caseId": "holm_gate1_of_5",
+      "source": "Holm (1979) step-down; gate k = 1: alpha/(m - k + 1) = 0.05/5 = 0.01",
+      "input": {
+        "familyWiseAlpha": 0.05,
+        "numberOfComparisons": 5,
+        "adjustmentMethod": "holm",
+        "gatePosition": 1
+      },
+      "expect": {
+        "adjustedAlpha": { "value": 0.01, "tol": 1e-6 }
+      }
+    },
+    {
+      "caseId": "holm_gate5_of_5",
+      "source": "Holm (1979) step-down; gate k = m: alpha/(m - m + 1) = 0.05/1 = 0.05",
+      "input": {
+        "familyWiseAlpha": 0.05,
+        "numberOfComparisons": 5,
+        "adjustmentMethod": "holm",
+        "gatePosition": 5
+      },
+      "expect": {
+        "adjustedAlpha": { "value": 0.05, "tol": 1e-6 }
+      }
+    },
+    {
+      "caseId": "hochberg_gate1_of_5",
+      "source": "Hochberg (1988) step-up; gate k = 1: alpha/k = 0.05/1 = 0.05",
+      "input": {
+        "familyWiseAlpha": 0.05,
+        "numberOfComparisons": 5,
+        "adjustmentMethod": "hochberg",
+        "gatePosition": 1
+      },
+      "expect": {
+        "adjustedAlpha": { "value": 0.05, "tol": 1e-6 }
+      }
+    },
+    {
+      "caseId": "hochberg_gate5_of_5",
+      "source": "Hochberg (1988) step-up; gate k = m: alpha/5 = 0.01",
+      "input": {
+        "familyWiseAlpha": 0.05,
+        "numberOfComparisons": 5,
+        "adjustmentMethod": "hochberg",
+        "gatePosition": 5
+      },
+      "expect": {
+        "adjustedAlpha": { "value": 0.01, "tol": 1e-6 }
+      }
+    },
+    {
+      "caseId": "graphical_equal_weights_gate2",
+      "source": "Bretz et al. (2011) graphical multiple comparison; equal normalized weights 1/m = 0.2, gate 2: alpha * w = 0.05 * 0.2 = 0.01",
+      "input": {
+        "familyWiseAlpha": 0.05,
+        "numberOfComparisons": 5,
+        "adjustmentMethod": "graphical",
+        "gatePosition": 2
+      },
+      "expect": {
+        "adjustedAlpha": { "value": 0.01, "tol": 1e-6 },
+        "comparisonWeight": { "value": 0.2, "tol": 1e-6 }
+      }
+    },
+    {
+      "caseId": "graphical_weighted_gate2",
+      "source": "Bretz et al. (2011) graphical; weights [0.5,0.3,0.2] already normalized, gate 2: 0.05 * 0.3 = 0.015",
+      "input": {
+        "familyWiseAlpha": 0.05,
+        "numberOfComparisons": 3,
+        "adjustmentMethod": "graphical",
+        "gatePosition": 2,
+        "comparisonWeights": [0.5, 0.3, 0.2]
+      },
+      "expect": {
+        "adjustedAlpha": { "value": 0.015, "tol": 1e-6 },
+        "comparisonWeight": { "value": 0.3, "tol": 1e-6 }
+      }
+    }
+  ]
+}

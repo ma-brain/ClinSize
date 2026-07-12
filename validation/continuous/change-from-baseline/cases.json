@@ -1,0 +1,65 @@
+{
+  "methodId": "continuous.change_from_baseline",
+  "cases": [
+    {
+      "caseId": "two_sided_rho05",
+      "source": "R power.t.test(delta = 3, sd = 10, sig.level = 0.05, power = 0.8, type = \"two.sample\") with change-score SD; Frison & Pocock (1992) sigma_cfb = sigma * sqrt(2(1 - rho)), rho = 0.5",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "meanDifference": 3,
+        "standardDeviation": 10,
+        "baselineOutcomeCorrelation": 0.5,
+        "allocationRatio": 1,
+        "alternative": "two_sided"
+      },
+      "expect": {
+        "nControl": 176,
+        "nTreatment": 176,
+        "totalN": 352,
+        "changeScoreStandardDeviation": { "value": 10, "tol": 1e-5 },
+        "effectSize": { "value": 0.3, "tol": 1e-12 },
+        "achievedPower": { "value": 0.8013794, "tol": 1e-4 }
+      }
+    },
+    {
+      "caseId": "one_sided_rho05",
+      "source": "R power.t.test one-sided, change-score SD with rho = 0.5",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "meanDifference": 3,
+        "standardDeviation": 10,
+        "baselineOutcomeCorrelation": 0.5,
+        "allocationRatio": 1,
+        "alternative": "greater"
+      },
+      "expect": {
+        "nControl": 139,
+        "nTreatment": 139,
+        "achievedPower": { "value": 0.8023399, "tol": 1e-4 }
+      }
+    },
+    {
+      "caseId": "power_round_trip",
+      "source": "R power.t.test two-sample at n = 176 per arm with change-score SD 10",
+      "input": {
+        "solveMode": "power",
+        "alpha": 0.05,
+        "meanDifference": 3,
+        "standardDeviation": 10,
+        "baselineOutcomeCorrelation": 0.5,
+        "allocationRatio": 1,
+        "alternative": "two_sided",
+        "controlN": 176
+      },
+      "expect": {
+        "nControl": 176,
+        "nTreatment": 176,
+        "achievedPower": { "value": 0.8013794, "tol": 1e-4 }
+      }
+    }
+  ]
+}

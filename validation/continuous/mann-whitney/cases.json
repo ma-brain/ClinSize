@@ -1,0 +1,61 @@
+{
+  "methodId": "continuous.mann_whitney",
+  "cases": [
+    {
+      "caseId": "two_sided_d0358",
+      "source": "Noether (1987) Sample Size Formula for the Mann-Whitney U / Wilcoxon Rank-Sum Test, JASA 82(398); p = 0.6, two-sided alpha 0.05, power 0.8",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "meanDifference": 0.3583,
+        "standardDeviation": 1.0,
+        "allocationRatio": 1,
+        "alternative": "two_sided"
+      },
+      "expect": {
+        "nControl": 131,
+        "nTreatment": 131,
+        "totalN": 262,
+        "probabilitySuperiority": { "value": 0.6, "tol": 1e-3 },
+        "achievedPower": { "value": 0.8, "tol": 0.01 }
+      }
+    },
+    {
+      "caseId": "one_sided_d0358",
+      "source": "Noether (1987), one-sided alpha 0.05, p = 0.6, power 0.8",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "meanDifference": 0.3583,
+        "standardDeviation": 1.0,
+        "allocationRatio": 1,
+        "alternative": "greater"
+      },
+      "expect": {
+        "nControl": 103,
+        "nTreatment": 104,
+        "achievedPower": { "value": 0.8, "tol": 0.01 }
+      }
+    },
+    {
+      "caseId": "power_round_trip",
+      "source": "Noether (1987) power formula at n = 131 per arm (round-trip of two_sided_d0358)",
+      "input": {
+        "solveMode": "power",
+        "alpha": 0.05,
+        "meanDifference": 0.3583,
+        "standardDeviation": 1.0,
+        "allocationRatio": 1,
+        "alternative": "two_sided",
+        "controlN": 131
+      },
+      "expect": {
+        "nControl": 131,
+        "nTreatment": 131,
+        "achievedPower": { "value": 0.8, "tol": 0.01 }
+      }
+    }
+  ]
+}
