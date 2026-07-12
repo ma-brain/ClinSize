@@ -53,7 +53,12 @@
 
 <nav class="rail" aria-label="Application navigation">
   <header class="brand">
-    <h1><a href="/" class:active={$page.url.pathname === "/"}>ClinSize</a></h1>
+    <h1>
+      <a href="/" class:active={$page.url.pathname === "/"}>
+        <img src="/clinsize-icon.png" alt="" />
+        <span>ClinSize</span>
+      </a>
+    </h1>
     <p>Sample size and power</p>
   </header>
 
@@ -122,6 +127,18 @@
     font-family: var(--font-display);
     font-size: 1.125rem;
     font-weight: 600;
+  }
+
+  .brand h1 a {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .brand h1 img {
+    width: 23px;
+    height: 23px;
+    object-fit: contain;
   }
 
   .brand p {
