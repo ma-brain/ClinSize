@@ -22,6 +22,7 @@ use crate::methods::continuous::wilcoxon_signed_rank::{
     WilcoxonSignedRankInput, WilcoxonSignedRankResult,
 };
 use crate::methods::count::negative_binomial::{NegativeBinomialInput, NegativeBinomialResult};
+use crate::methods::count::poisson::{PoissonInput, PoissonResult};
 use crate::methods::design::blinded_ssre::{BlindedSsreInput, BlindedSsreResult};
 use crate::methods::design::group_sequential::{GroupSequentialInput, GroupSequentialResult};
 use crate::methods::design::multiplicity::{
@@ -727,7 +728,68 @@ pub fn negative_binomial_rationale(
     join_paragraphs(paragraphs)
 }
 
-/// Narrative rationale for a proportional odds calculation.
+/// Narrative rationale for a Poisson calculation.
+pub fn poisson_rationale(input: &PoissonInput, result: &PoissonResult) -> String {
+    let mut paragraphs = Vec::new();
+
+    paragraphs.push(format!(
+        "This calculation addresses a two-group comparison of event counts using a Poisson model \
+         with variance Var(Y) = μ (no overdispersion). The control event rate is λ₁ = {:.4} and \
+         the treatment rate is λ₂ = {:.4} (rate ratio {:.4}) over exposure time {:.4}.",
+        input.control_rate, input.treatment_rate, result.rate_ratio, input.exposure_time,
+    ));
+
+    paragraphs.push(format!(
+        "Sample size follows the Signorini (1991) Wald test for the log rate ratio. The Type I \
+         error rate is α = {}. The alternative hypothesis is {}.",
+        alpha_phrase(input.alpha, input.alternative),
+        alternative_phrase(input.alternative),
+    ));
+
+    match input.solve_mode {
+        SolveMode::SampleSize => {
+            let target = input.power.expect("validated for sample size mode");
+            paragraphs.push(format!(
+                "The target power is {:.0}%. With an allocation ratio of {}, ClinSize computes \
+                 control-group size from the closed-form formula and verifies power by iterative \
+                 check after rounding treatment-group size.",
+                target * 100.0,
+                allocation_phrase(input.allocation_ratio),
+            ));
+            paragraphs.push(format!(
+                "The resulting sample sizes are {} control and {} treatment subjects (total N = \
+                 {}). After integer rounding, the achieved power is {:.2}%.",
+                result.n_control,
+                result.n_treatment,
+                result.total_n,
+                result.achieved_power * 100.0,
+            ));
+        }
+        SolveMode::Power => {
+            let control_n = input.control_n.expect("validated for power mode");
+            paragraphs.push(format!(
+                "For a fixed control-group size of {} and allocation ratio of {}, the rounded \
+                 treatment-group size is {} (total N = {}). The achieved power is {:.2}%.",
+                control_n,
+                allocation_phrase(input.allocation_ratio),
+                result.n_treatment,
+                result.total_n,
+                result.achieved_power * 100.0,
+            ));
+        }
+        SolveMode::DetectableEffect => unreachable!("not implemented for Poisson"),
+    }
+
+    append_dropout_paragraph(
+        &mut paragraphs,
+        input.dropout_rate,
+        result.n_control_adjusted,
+        result.n_treatment_adjusted,
+        result.total_n_adjusted,
+    );
+
+    join_paragraphs(paragraphs)
+}
 pub fn proportional_odds_rationale(
     input: &ProportionalOddsInput,
     result: &ProportionalOddsResult,

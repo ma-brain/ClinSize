@@ -12,6 +12,7 @@
   import ChangeFromBaselineView from "$lib/methods/ChangeFromBaselineView.svelte";
   import MmrmView from "$lib/methods/MmrmView.svelte";
   import NegativeBinomialView from "$lib/methods/NegativeBinomialView.svelte";
+  import PoissonView from "$lib/methods/PoissonView.svelte";
   import ProportionalOddsView from "$lib/methods/ProportionalOddsView.svelte";
   import OneWayAnovaView from "$lib/methods/OneWayAnovaView.svelte";
   import SingleSampleTTestView from "$lib/methods/SingleSampleTTestView.svelte";
@@ -77,6 +78,8 @@
   />
 {:else if methodId === "count.negative_binomial"}
   <NegativeBinomialView />
+{:else if methodId === "count.poisson"}
+  <PoissonView />
 {:else if methodId === "ordinal.proportional_odds"}
   <ProportionalOddsView />
 {:else if methodId === "survival.log_rank"}

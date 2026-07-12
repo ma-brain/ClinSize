@@ -29,6 +29,7 @@ use crate::methods::continuous::wilcoxon_signed_rank::{
     WilcoxonSignedRankInput, WilcoxonSignedRankResult,
 };
 use crate::methods::count::negative_binomial::{NegativeBinomialInput, NegativeBinomialResult};
+use crate::methods::count::poisson::{PoissonInput, PoissonResult};
 use crate::methods::design::blinded_ssre::{BlindedSsreInput, BlindedSsreResult};
 use crate::methods::design::group_sequential::{GroupSequentialInput, GroupSequentialResult};
 use crate::methods::design::multiplicity::{MultiplicityInput, MultiplicityResult};
@@ -1149,7 +1150,63 @@ pub fn negative_binomial_markdown(
     lines.join("\n")
 }
 
-/// Render a proportional odds calculation summary as Markdown.
+/// Render a Poisson calculation summary as Markdown.
+pub fn poisson_markdown(
+    input: &PoissonInput,
+    result: &PoissonResult,
+    engine_version: &str,
+) -> String {
+    let dropout = input
+        .dropout_rate
+        .map(|rate| format!("{rate:.4}"))
+        .unwrap_or_else(|| "none".into());
+
+    let mut lines = vec![
+        "# ClinSize calculation summary".into(),
+        String::new(),
+        "## Method".into(),
+        "- **Method:** Two-sample Poisson (event counts)".into(),
+        "- **Endpoint:** Count".into(),
+        format!("- **Solve mode:** {:?}", input.solve_mode),
+        format!("- **Alternative:** {:?}", input.alternative),
+        String::new(),
+        "## Inputs".into(),
+        format!("- **Alpha:** {:.4}", input.alpha),
+        format!(
+            "- **Target power:** {}",
+            input
+                .power
+                .map(|p| format!("{p:.4}"))
+                .unwrap_or_else(|| "n/a".into())
+        ),
+        format!("- **Control rate λ₁:** {:.4}", input.control_rate),
+        format!("- **Treatment rate λ₂:** {:.4}", input.treatment_rate),
+        format!("- **Exposure time:** {:.4}", input.exposure_time),
+        format!("- **Allocation ratio:** {:.4}", input.allocation_ratio),
+        format!("- **Dropout rate:** {dropout}"),
+        String::new(),
+        "## Results".into(),
+        format!("- **Control N:** {}", result.n_control),
+        format!("- **Treatment N:** {}", result.n_treatment),
+        format!("- **Total N:** {}", result.total_n),
+        format!(
+            "- **Dropout-adjusted total N:** {}",
+            result.total_n_adjusted
+        ),
+        format!("- **Achieved power:** {:.4}", result.achieved_power),
+        format!("- **Rate ratio (λ₂/λ₁):** {:.4}", result.rate_ratio),
+    ];
+
+    append_rationale(&mut lines, rationale::poisson_rationale(input, result));
+    append_protocol_text(&mut lines, protocol::poisson_protocol(input, result));
+    append_warnings(&mut lines, &result.warnings);
+    lines.push(String::new());
+    lines.push("## Reproducibility".into());
+    lines.push(format!("- **Engine version:** {engine_version}"));
+    lines.push("- **Validation source:** Signorini (1991) Wald test for the log rate ratio".into());
+
+    lines.join("\n")
+}
 pub fn proportional_odds_markdown(
     input: &ProportionalOddsInput,
     result: &ProportionalOddsResult,

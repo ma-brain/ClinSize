@@ -116,6 +116,13 @@ const METHODS: &[MethodDescriptor] = &[
         documentation_path: Some("handbook/calculations/count-endpoints.md"),
     },
     MethodDescriptor {
+        id: "count.poisson",
+        display_name: "Poisson",
+        endpoint_category: "Count",
+        supported_solve_modes: &[SolveMode::SampleSize, SolveMode::Power],
+        documentation_path: Some("handbook/calculations/count-endpoints.md"),
+    },
+    MethodDescriptor {
         id: "ordinal.proportional_odds",
         display_name: "Proportional odds",
         endpoint_category: "Ordinal",
@@ -164,14 +171,15 @@ mod tests {
     #[test]
     fn list_methods_includes_continuous_ttests() {
         let methods = list_methods();
-        assert_eq!(methods.len(), 19);
+        assert_eq!(methods.len(), 20);
         assert_eq!(methods[0].id, "continuous.two_sample_ttest");
         assert_eq!(methods[5].id, "continuous.change_from_baseline");
         assert_eq!(methods[6].id, "continuous.mmrm");
         assert_eq!(methods[7].id, "continuous.mann_whitney");
         assert_eq!(methods[12].id, "binary.risk_ratio");
         assert_eq!(methods[13].id, "count.negative_binomial");
-        assert_eq!(methods[14].id, "ordinal.proportional_odds");
-        assert_eq!(methods[18].id, "design.blinded_ssre");
+        assert_eq!(methods[14].id, "count.poisson");
+        assert_eq!(methods[15].id, "ordinal.proportional_odds");
+        assert_eq!(methods[19].id, "design.blinded_ssre");
     }
 }

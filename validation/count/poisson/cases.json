@@ -1,0 +1,66 @@
+{
+  "methodId": "count.poisson",
+  "cases": [
+    {
+      "caseId": "halving_rate",
+      "source": "Signorini (1991) Wald test for the log rate ratio; controlRate 2 -> treatmentRate 1, two-sided alpha 0.05, power 0.8",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "controlRate": 2,
+        "treatmentRate": 1,
+        "exposureTime": 1,
+        "allocationRatio": 1,
+        "alternative": "two_sided"
+      },
+      "expect": {
+        "nControl": 25,
+        "nTreatment": 25,
+        "totalN": 50,
+        "rateRatio": { "value": 0.5, "tol": 1e-12 },
+        "achievedPower": { "value": 0.8, "tol": 0.02 }
+      }
+    },
+    {
+      "caseId": "doubling_rate",
+      "source": "Signorini (1991) Wald test; controlRate 5 -> treatmentRate 10, two-sided alpha 0.05, power 0.8",
+      "input": {
+        "solveMode": "sample_size",
+        "alpha": 0.05,
+        "power": 0.8,
+        "controlRate": 5,
+        "treatmentRate": 10,
+        "exposureTime": 1,
+        "allocationRatio": 1,
+        "alternative": "two_sided"
+      },
+      "expect": {
+        "nControl": 5,
+        "nTreatment": 5,
+        "totalN": 10,
+        "rateRatio": { "value": 2.0, "tol": 1e-12 },
+        "achievedPower": { "value": 0.8, "tol": 0.02 }
+      }
+    },
+    {
+      "caseId": "power_round_trip",
+      "source": "Signorini (1991) power at n = 25 per arm (round-trip of halving_rate)",
+      "input": {
+        "solveMode": "power",
+        "alpha": 0.05,
+        "controlRate": 2,
+        "treatmentRate": 1,
+        "exposureTime": 1,
+        "allocationRatio": 1,
+        "alternative": "two_sided",
+        "controlN": 25
+      },
+      "expect": {
+        "nControl": 25,
+        "nTreatment": 25,
+        "achievedPower": { "value": 0.8, "tol": 0.02 }
+      }
+    }
+  ]
+}

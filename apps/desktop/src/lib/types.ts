@@ -220,6 +220,31 @@ export interface NegativeBinomialResult {
   warnings: CalculationWarning[];
 }
 
+export interface PoissonInput {
+  solveMode: SolveMode;
+  alpha: number;
+  power?: number;
+  controlN?: number;
+  controlRate: number;
+  treatmentRate: number;
+  exposureTime?: number;
+  allocationRatio: number;
+  alternative: Alternative;
+  dropoutRate?: number;
+}
+
+export interface PoissonResult {
+  nControl: number;
+  nTreatment: number;
+  totalN: number;
+  nControlAdjusted: number;
+  nTreatmentAdjusted: number;
+  totalNAdjusted: number;
+  achievedPower: number;
+  rateRatio: number;
+  warnings: CalculationWarning[];
+}
+
 export interface ProportionalOddsInput {
   solveMode: SolveMode;
   alpha: number;

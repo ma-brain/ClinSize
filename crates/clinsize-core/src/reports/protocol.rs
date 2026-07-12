@@ -23,6 +23,7 @@ use crate::methods::continuous::wilcoxon_signed_rank::{
     WilcoxonSignedRankInput, WilcoxonSignedRankResult,
 };
 use crate::methods::count::negative_binomial::{NegativeBinomialInput, NegativeBinomialResult};
+use crate::methods::count::poisson::{PoissonInput, PoissonResult};
 use crate::methods::design::blinded_ssre::{BlindedSsreInput, BlindedSsreResult};
 use crate::methods::design::group_sequential::{GroupSequentialInput, GroupSequentialResult};
 use crate::methods::design::multiplicity::{
@@ -668,7 +669,54 @@ pub fn negative_binomial_protocol(
     join_paragraphs(paragraphs)
 }
 
-/// Protocol text for a proportional odds calculation.
+/// Protocol text for a Poisson calculation.
+pub fn poisson_protocol(input: &PoissonInput, result: &PoissonResult) -> String {
+    let mut paragraphs = Vec::new();
+
+    match input.solve_mode {
+        SolveMode::SampleSize => {
+            let target = input.power.expect("validated for sample size mode");
+            let enroll = two_group_sample_size_phrase(
+                result.n_control_adjusted,
+                result.n_treatment_adjusted,
+                result.total_n_adjusted,
+            );
+            paragraphs.push(format!(
+                "A sample size of {enroll} is required to detect a rate ratio of {:.2} between \
+                 treatment (λ₂ = {:.2}) and control (λ₁ = {:.2}) over exposure {:.2}, assuming \
+                 Poisson counts with no overdispersion, with {} power at a {} of α = {:.2}.",
+                result.rate_ratio,
+                input.treatment_rate,
+                input.control_rate,
+                input.exposure_time,
+                format_power_percent(target),
+                significance_level_phrase(input.alternative),
+                input.alpha,
+            ));
+            paragraphs.push(
+                "The primary analysis will compare event rates using a Wald test on the log rate \
+                 ratio under a Poisson model with fixed exposure."
+                    .into(),
+            );
+        }
+        SolveMode::Power => {
+            paragraphs.push(format!(
+                "With {} control and {} treatment subjects (total N = {}), the design achieves \
+                 {:.0} % power to detect rate ratio {:.2} at a {} of α = {:.2}.",
+                input.control_n.expect("validated"),
+                result.n_treatment,
+                result.total_n,
+                result.achieved_power * 100.0,
+                result.rate_ratio,
+                significance_level_phrase(input.alternative),
+                input.alpha,
+            ));
+        }
+        SolveMode::DetectableEffect => unreachable!("not implemented for Poisson"),
+    }
+
+    join_paragraphs(paragraphs)
+}
 pub fn proportional_odds_protocol(
     input: &ProportionalOddsInput,
     result: &ProportionalOddsResult,

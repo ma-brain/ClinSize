@@ -36,6 +36,7 @@ use crate::methods::continuous::wilcoxon_signed_rank::{
 use crate::methods::count::negative_binomial::{
     self, NegativeBinomialInput, NegativeBinomialResult,
 };
+use crate::methods::count::poisson::{self, PoissonInput, PoissonResult};
 use crate::methods::design::blinded_ssre::{self, BlindedSsreInput, BlindedSsreResult};
 use crate::methods::design::group_sequential::{self, GroupSequentialInput, GroupSequentialResult};
 use crate::methods::design::multiplicity::{self, MultiplicityInput, MultiplicityResult};
@@ -158,6 +159,7 @@ dispatch_methods! {
     "binary.one_sample_binomial"       => one_sample_binomial    : OneSampleBinomialInput / OneSampleBinomialResult,
     "binary.risk_ratio"                => risk_ratio             : RiskRatioInput / RiskRatioResult,
     "count.negative_binomial"          => negative_binomial      : NegativeBinomialInput / NegativeBinomialResult,
+    "count.poisson"                    => poisson                : PoissonInput / PoissonResult,
     "ordinal.proportional_odds"        => proportional_odds      : ProportionalOddsInput / ProportionalOddsResult,
     "survival.log_rank"                => log_rank               : LogRankInput / LogRankResult,
     "design.multiplicity"              => multiplicity           : MultiplicityInput / MultiplicityResult,
