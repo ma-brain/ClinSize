@@ -12,7 +12,8 @@
 
   const categoryOrder = ["Continuous", "Binary", "Count", "Ordinal", "Survival", "Design"];
 
-  let collapsedCategories = $state(new Set<string>());
+  // Categories start collapsed on launch; the user expands the ones they need.
+  let collapsedCategories = $state(new Set(categoryOrder));
 
   function toggleCategory(category: string) {
     const next = new Set(collapsedCategories);
