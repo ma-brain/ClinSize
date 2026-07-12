@@ -15,6 +15,7 @@
   import WarningList from "$lib/components/ui/WarningList.svelte";
   import { oneSampleBinomialSensitivityOptions } from "$lib/sensitivity/configs";
   import { persistCalculation } from "$lib/workflow/record";
+  import { calculateMethod, exportMethodMarkdown } from "$lib/workflow/methodDispatch";
   import { fetchCalculationRationale, fetchProtocolText } from "$lib/workflow/rationale";
   import type {
     Alternative,
@@ -22,7 +23,6 @@
     OneSampleBinomialResult,
     SolveMode,
   } from "$lib/types";
-  import { invoke } from "@tauri-apps/api/core";
 
   let solveMode = $state<SolveMode>("sample_size");
   let alpha = $state("0.05");
@@ -146,13 +146,15 @@
 
     try {
       const input = buildInput();
-      result = await invoke<OneSampleBinomialResult>("calculate_one_sample_binomial", {
+      result = await calculateMethod<OneSampleBinomialInput, OneSampleBinomialResult>(
+        "binary.one_sample_binomial",
         input,
-      });
-      exportMarkdown = await invoke<string>("export_one_sample_binomial_markdown", {
+      );
+      exportMarkdown = await exportMethodMarkdown<OneSampleBinomialInput, OneSampleBinomialResult>(
+        "binary.one_sample_binomial",
         input,
         result,
-      });
+      );
       rationale = await fetchCalculationRationale(
         "binary.one_sample_binomial",
         input,
@@ -291,7 +293,7 @@
           defaultExpanded={true}
           chartFileStem="clinsize-sensitivity-one-sample-binomial"
           inputSignature={lastCalculatedSignature ?? inputSignature}
-          command="calculate_one_sample_binomial"
+          methodId="binary.one_sample_binomial"
           buildInput={buildInput}
           options={sensitivityOptions}
           getOutputValue={(value) => {

@@ -15,13 +15,13 @@
   import WarningList from "$lib/components/ui/WarningList.svelte";
   import { proportionalOddsSensitivityOptions } from "$lib/sensitivity/configs";
   import { persistCalculation } from "$lib/workflow/record";
+  import { calculateMethod, exportMethodMarkdown } from "$lib/workflow/methodDispatch";
   import { fetchCalculationRationale, fetchProtocolText } from "$lib/workflow/rationale";
   import type {
     ProportionalOddsInput,
     ProportionalOddsResult,
     SolveMode,
   } from "$lib/types";
-  import { invoke } from "@tauri-apps/api/core";
 
   let solveMode = $state<SolveMode>("sample_size");
   let alpha = $state("0.05");
@@ -148,8 +148,15 @@
 
     try {
       const input = buildInput();
-      result = await invoke<ProportionalOddsResult>("calculate_proportional_odds", { input });
-      exportMarkdown = await invoke<string>("export_proportional_odds_markdown", { input, result });
+      result = await calculateMethod<ProportionalOddsInput, ProportionalOddsResult>(
+        "ordinal.proportional_odds",
+        input,
+      );
+      exportMarkdown = await exportMethodMarkdown<ProportionalOddsInput, ProportionalOddsResult>(
+        "ordinal.proportional_odds",
+        input,
+        result,
+      );
       rationale = await fetchCalculationRationale("ordinal.proportional_odds", input, result);
       protocolText = await fetchProtocolText("ordinal.proportional_odds", input, result);
       lastCalculatedSignature = inputSignature;
@@ -276,7 +283,7 @@
           defaultExpanded={true}
           chartFileStem="clinsize-sensitivity-proportional-odds"
           inputSignature={lastCalculatedSignature ?? inputSignature}
-          command="calculate_proportional_odds"
+          methodId="ordinal.proportional_odds"
           buildInput={buildInput}
           options={sensitivityOptions}
           getOutputValue={(value) => {

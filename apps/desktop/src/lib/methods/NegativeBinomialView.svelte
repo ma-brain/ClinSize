@@ -15,6 +15,7 @@
   import WarningList from "$lib/components/ui/WarningList.svelte";
   import { negativeBinomialSensitivityOptions } from "$lib/sensitivity/configs";
   import { persistCalculation } from "$lib/workflow/record";
+  import { calculateMethod, exportMethodMarkdown } from "$lib/workflow/methodDispatch";
   import { fetchCalculationRationale, fetchProtocolText } from "$lib/workflow/rationale";
   import type {
     Alternative,
@@ -22,7 +23,6 @@
     NegativeBinomialResult,
     SolveMode,
   } from "$lib/types";
-  import { invoke } from "@tauri-apps/api/core";
 
   let solveMode = $state<SolveMode>("sample_size");
   let alpha = $state("0.05");
@@ -160,8 +160,15 @@
 
     try {
       const input = buildInput();
-      result = await invoke<NegativeBinomialResult>("calculate_negative_binomial", { input });
-      exportMarkdown = await invoke<string>("export_negative_binomial_markdown", { input, result });
+      result = await calculateMethod<NegativeBinomialInput, NegativeBinomialResult>(
+        "count.negative_binomial",
+        input,
+      );
+      exportMarkdown = await exportMethodMarkdown<NegativeBinomialInput, NegativeBinomialResult>(
+        "count.negative_binomial",
+        input,
+        result,
+      );
       rationale = await fetchCalculationRationale("count.negative_binomial", input, result);
       protocolText = await fetchProtocolText("count.negative_binomial", input, result);
       lastCalculatedSignature = inputSignature;
@@ -310,7 +317,7 @@
           defaultExpanded={true}
           chartFileStem="clinsize-sensitivity-negative-binomial"
           inputSignature={lastCalculatedSignature ?? inputSignature}
-          command="calculate_negative_binomial"
+          methodId="count.negative_binomial"
           buildInput={buildInput}
           options={sensitivityOptions}
           getOutputValue={(value) => {

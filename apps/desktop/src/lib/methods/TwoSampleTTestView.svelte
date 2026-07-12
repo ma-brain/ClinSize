@@ -311,7 +311,7 @@
           defaultExpanded={true}
           chartFileStem="clinsize-sensitivity-two-sample-ttest"
           inputSignature={lastCalculatedSignature ?? inputSignature}
-          command="calculate_two_sample_ttest"
+          methodId="continuous.two_sample_ttest"
           buildInput={buildInput}
           options={sensitivityOptions}
           getOutputValue={(value) => sensitivityOutput(value as TwoSampleTTestResult)}

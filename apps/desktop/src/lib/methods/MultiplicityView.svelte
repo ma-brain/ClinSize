@@ -13,13 +13,13 @@
   import Section from "$lib/components/ui/Section.svelte";
   import WarningList from "$lib/components/ui/WarningList.svelte";
   import { persistCalculation } from "$lib/workflow/record";
+  import { calculateMethod, exportMethodMarkdown } from "$lib/workflow/methodDispatch";
   import { fetchCalculationRationale, fetchProtocolText } from "$lib/workflow/rationale";
   import type {
     MultiplicityInput,
     MultiplicityMethod,
     MultiplicityResult,
   } from "$lib/types";
-  import { invoke } from "@tauri-apps/api/core";
 
   let familyWiseAlpha = $state("0.05");
   let numberOfComparisons = $state("2");
@@ -138,11 +138,15 @@
 
     try {
       const input = buildInput();
-      result = await invoke<MultiplicityResult>("calculate_multiplicity", { input });
-      exportMarkdown = await invoke<string>("export_multiplicity_markdown", {
+      result = await calculateMethod<MultiplicityInput, MultiplicityResult>(
+        "design.multiplicity",
+        input,
+      );
+      exportMarkdown = await exportMethodMarkdown<MultiplicityInput, MultiplicityResult>(
+        "design.multiplicity",
         input,
         result,
-      });
+      );
       rationale = await fetchCalculationRationale("design.multiplicity", input, result);
       protocolText = await fetchProtocolText("design.multiplicity", input, result);
       lastCalculatedSignature = inputSignature;

@@ -13,13 +13,13 @@
   import Section from "$lib/components/ui/Section.svelte";
   import WarningList from "$lib/components/ui/WarningList.svelte";
   import { persistCalculation } from "$lib/workflow/record";
+  import { calculateMethod, exportMethodMarkdown } from "$lib/workflow/methodDispatch";
   import { fetchCalculationRationale, fetchProtocolText } from "$lib/workflow/rationale";
   import type {
     GroupSequentialInput,
     GroupSequentialResult,
     SpendingFunction,
   } from "$lib/types";
-  import { invoke } from "@tauri-apps/api/core";
 
   let alpha = $state("0.025");
   let targetPower = $state("0.8");
@@ -76,11 +76,15 @@
 
     try {
       const input = buildInput();
-      result = await invoke<GroupSequentialResult>("calculate_group_sequential", { input });
-      exportMarkdown = await invoke<string>("export_group_sequential_markdown", {
+      result = await calculateMethod<GroupSequentialInput, GroupSequentialResult>(
+        "design.group_sequential",
+        input,
+      );
+      exportMarkdown = await exportMethodMarkdown<GroupSequentialInput, GroupSequentialResult>(
+        "design.group_sequential",
         input,
         result,
-      });
+      );
       rationale = await fetchCalculationRationale("design.group_sequential", input, result);
       protocolText = await fetchProtocolText("design.group_sequential", input, result);
       lastCalculatedSignature = inputSignature;

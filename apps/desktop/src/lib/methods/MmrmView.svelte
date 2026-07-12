@@ -15,6 +15,7 @@
   import WarningList from "$lib/components/ui/WarningList.svelte";
   import { mmrmSensitivityOptions } from "$lib/sensitivity/configs";
   import { persistCalculation } from "$lib/workflow/record";
+  import { calculateMethod, exportMethodMarkdown } from "$lib/workflow/methodDispatch";
   import { fetchCalculationRationale, fetchProtocolText } from "$lib/workflow/rationale";
   import type {
     Alternative,
@@ -23,7 +24,6 @@
     MmrmResult,
     SolveMode,
   } from "$lib/types";
-  import { invoke } from "@tauri-apps/api/core";
 
   let solveMode = $state<SolveMode>("sample_size");
   let alpha = $state("0.05");
@@ -166,8 +166,12 @@
 
     try {
       const input = buildInput();
-      result = await invoke<MmrmResult>("calculate_mmrm", { input });
-      exportMarkdown = await invoke<string>("export_mmrm_markdown", { input, result });
+      result = await calculateMethod<MmrmInput, MmrmResult>("continuous.mmrm", input);
+      exportMarkdown = await exportMethodMarkdown<MmrmInput, MmrmResult>(
+        "continuous.mmrm",
+        input,
+        result,
+      );
       rationale = await fetchCalculationRationale("continuous.mmrm", input, result);
       protocolText = await fetchProtocolText("continuous.mmrm", input, result);
       lastCalculatedSignature = inputSignature;
@@ -331,7 +335,7 @@
           defaultExpanded={true}
           chartFileStem="clinsize-sensitivity-mmrm"
           inputSignature={lastCalculatedSignature ?? inputSignature}
-          command="calculate_mmrm"
+          methodId="continuous.mmrm"
           buildInput={buildInput}
           options={sensitivityOptions}
           getOutputValue={(value) => {
