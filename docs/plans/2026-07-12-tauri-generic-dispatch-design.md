@@ -41,4 +41,3 @@ errors with the existing error shape. Unsupported ids remain
 Add Rust boundary tests for a representative calculation, report generation,
 and unsupported ids. Keep the core registry-dispatch guard. Run Rust tests,
 format/lint checks, and Svelte type checking after migrating all views.
-

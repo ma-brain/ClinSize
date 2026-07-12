@@ -54,4 +54,3 @@
 1. Run `git diff main...HEAD --check` and inspect the stat.
 2. Confirm calculation results, Markdown exports, rationale/protocol calls, history, and sensitivity sweeps retain their contracts.
 3. Commit this plan document.
-
