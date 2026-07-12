@@ -194,6 +194,43 @@ fn list_methods() -> Vec<MethodDescriptorDto> {
 }
 
 #[tauri::command]
+fn calculate_method(
+    method_id: String,
+    input: serde_json::Value,
+) -> Result<serde_json::Value, AppError> {
+    let input_json = serde_json::to_string(&input).map_err(|err| AppError {
+        code: "internal".into(),
+        message: err.to_string(),
+    })?;
+    let result_json =
+        clinsize_core::dispatch::calculate_json(&method_id, &input_json).map_err(AppError::from)?;
+
+    serde_json::from_str(&result_json).map_err(|err| AppError {
+        code: "internal".into(),
+        message: err.to_string(),
+    })
+}
+
+#[tauri::command]
+fn export_method_markdown(
+    method_id: String,
+    input: serde_json::Value,
+    result: serde_json::Value,
+) -> Result<String, AppError> {
+    let input_json = serde_json::to_string(&input).map_err(|err| AppError {
+        code: "internal".into(),
+        message: err.to_string(),
+    })?;
+    let result_json = serde_json::to_string(&result).map_err(|err| AppError {
+        code: "internal".into(),
+        message: err.to_string(),
+    })?;
+
+    clinsize_core::dispatch::report_markdown_json(&method_id, &input_json, &result_json)
+        .map_err(AppError::from)
+}
+
+#[tauri::command]
 fn calculate_two_sample_ttest(
     input: TwoSampleTTestInput,
 ) -> Result<TwoSampleTTestResult, AppError> {
@@ -707,6 +744,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             engine_info,
             list_methods,
+            calculate_method,
+            export_method_markdown,
             create_project,
             open_project_file,
             save_project_file,
@@ -765,6 +804,59 @@ pub fn run() {
 #[cfg(test)]
 mod export_file_tests {
     use super::*;
+
+    fn two_sample_ttest_input() -> serde_json::Value {
+        serde_json::json!({
+            "solveMode": "sample_size",
+            "alpha": 0.05,
+            "power": 0.8,
+            "meanDifference": 1,
+            "standardDeviation": 1,
+            "allocationRatio": 1,
+            "alternative": "two_sided"
+        })
+    }
+
+    #[test]
+    fn generic_method_calculates_from_json_value() {
+        let result = calculate_method(
+            "continuous.two_sample_ttest".into(),
+            two_sample_ttest_input(),
+        )
+        .expect("calculate method");
+
+        assert_eq!(result["nControl"], 17);
+        assert_eq!(result["nTreatment"], 17);
+    }
+
+    #[test]
+    fn generic_method_exports_markdown_from_json_values() {
+        let input = two_sample_ttest_input();
+        let result = calculate_method("continuous.two_sample_ttest".into(), input.clone())
+            .expect("calculate method");
+
+        let markdown = export_method_markdown("continuous.two_sample_ttest".into(), input, result)
+            .expect("export markdown");
+
+        assert!(markdown.contains("# ClinSize calculation summary"));
+        assert!(markdown.contains("Two-sample t-test"));
+    }
+
+    #[test]
+    fn generic_method_rejects_unsupported_method_id() {
+        let error = calculate_method("unsupported.method".into(), serde_json::json!({}))
+            .expect_err("unsupported method should fail");
+
+        assert_eq!(error.code, "unsupported_method");
+    }
+
+    #[test]
+    fn generic_method_commands_are_registered_with_tauri() {
+        let source = include_str!("lib.rs");
+
+        assert!(source.contains("            calculate_method,\n"));
+        assert!(source.contains("            export_method_markdown,\n"));
+    }
 
     #[test]
     fn writes_binary_export_content_and_returns_the_file_name() {
