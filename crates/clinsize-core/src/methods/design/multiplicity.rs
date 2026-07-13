@@ -369,7 +369,7 @@ mod tests {
         })
         .expect("calculate");
 
-        assert_relative_eq!(result.adjusted_alpha, 0.02695777, epsilon = 1e-4);
+        assert_relative_eq!(result.adjusted_alpha, 0.026957839, epsilon = 1e-8);
         assert!(result.adjusted_alpha > 0.025);
     }
 
@@ -382,7 +382,7 @@ mod tests {
         })
         .expect("calculate");
 
-        assert_relative_eq!(result.adjusted_alpha, 0.01882430, epsilon = 1e-4);
+        assert_relative_eq!(result.adjusted_alpha, 0.018825394, epsilon = 1e-8);
     }
 
     #[test]

@@ -59,7 +59,7 @@
         "adjustmentMethod": "dunnett"
       },
       "expect": {
-        "adjustedAlpha": { "value": 0.026957839, "tol": 1e-4 }
+        "adjustedAlpha": { "value": 0.026957839, "tol": 1e-8 }
       }
     },
     {
@@ -71,7 +71,7 @@
         "adjustmentMethod": "dunnett"
       },
       "expect": {
-        "adjustedAlpha": { "value": 0.018825394, "tol": 1e-4 }
+        "adjustedAlpha": { "value": 0.018825394, "tol": 1e-8 }
       }
     },
     {

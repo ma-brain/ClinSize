@@ -126,6 +126,10 @@ fn build_warnings(input: &GroupSequentialInput) -> Vec<CalculationWarning> {
             "equally_spaced_looks",
             "Assumes equally spaced information fractions; custom timing is not yet supported.",
         ),
+        CalculationWarning::new(
+            "boundary_numerical_precision",
+            "Boundaries are computed by a 12,000-point quasi-Monte-Carlo integration of the multivariate normal, accurate to roughly \u{00b1}0.02 absolute Z. gsDesign is authoritative where they differ.",
+        ),
     ];
 
     match input.spending_function {
