@@ -4,9 +4,19 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to build and attach installers to (e.g. v0.1.0)"
+        required: true
+        type: string
 
 permissions:
   contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+  RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
 
 jobs:
   build:
@@ -27,11 +37,16 @@ jobs:
             target: x86_64-unknown-linux-gnu
             artifact_name: ClinSize-linux
     runs-on: ${{ matrix.platform }}
+    env:
+      CARGO_TARGET_DIR: ${{ github.workspace }}/apps/desktop/src-tauri/target
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
+      - uses: extractions/setup-just@v4
       - uses: pnpm/action-setup@v5
         with:
           version: 9.15.4
@@ -53,10 +68,45 @@ jobs:
         run: just setup
       - name: Build installers
         run: cd apps/desktop && pnpm tauri build --target ${{ matrix.target }}
+      - name: List bundle outputs
+        if: always()
+        shell: bash
+        run: |
+          echo "CARGO_TARGET_DIR=${CARGO_TARGET_DIR:-unset}"
+          find "${CARGO_TARGET_DIR:-apps/desktop/src-tauri/target}" -path '*/bundle/*' -type f 2>/dev/null | sort || true
+          find "${{ github.workspace }}/target" -path '*/bundle/*' -type f 2>/dev/null | sort || true
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
           path: |
             apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/**/*
+            target/${{ matrix.target }}/release/bundle/**/*
           if-no-files-found: error
+
+  publish:
+    needs: build
+    if: always() && !cancelled()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: ClinSize-*
+      - name: Attach installers to GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG="${{ env.RELEASE_TAG }}"
+          echo "Attaching installers to ${TAG}"
+          find dist -type f | sort
+          mapfile -t files < <(find dist -type f \( \
+            -name '*.dmg' -o -name '*.exe' -o -name '*.msi' \
+            -o -name '*.deb' -o -name '*.AppImage' \))
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No installer files found in artifacts"
+            exit 1
+          fi
+          gh release upload "${TAG}" "${files[@]}" --repo "${{ github.repository }}" --clobber
