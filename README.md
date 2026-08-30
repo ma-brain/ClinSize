@@ -53,13 +53,13 @@ for a given study from the cases and sources under `validation/`.
 
 ## Install
 
-Build from source on the machine you will run. Cross-compiling the desktop
-app is not supported.
+Download the installer for your OS from
+[Releases](https://github.com/ma-brain/ClinSize/releases). Tagged
+releases (`v*`) attach macOS (Apple Silicon and Intel), Windows (NSIS),
+and Linux (`.deb` and AppImage) files.
 
-Tagged releases (`v*`) build macOS (Apple Silicon and Intel), Windows
-(NSIS), and Linux (`.deb` and AppImage) installers and attach them to the
-GitHub release. Download the `.dmg` for your Mac from
-[Releases](https://github.com/ma-brain/ClinSize/releases).
+Local desktop builds stay on the host OS. Cross-compiling the desktop
+app is not supported.
 
 ### Prerequisites
 
