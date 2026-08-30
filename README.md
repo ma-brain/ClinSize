@@ -56,9 +56,10 @@ for a given study from the cases and sources under `validation/`.
 Build from source on the machine you will run. Cross-compiling the desktop
 app is not supported.
 
-Pushing a `v*` tag runs a GitHub Actions workflow that builds macOS (Apple
-Silicon and Intel), Windows (NSIS), and Linux (`.deb` and AppImage)
-installers. Download those artifacts from the Actions tab for that run.
+Tagged releases (`v*`) build macOS (Apple Silicon and Intel), Windows
+(NSIS), and Linux (`.deb` and AppImage) installers and attach them to the
+GitHub release. Download the `.dmg` for your Mac from
+[Releases](https://github.com/ma-brain/ClinSize/releases).
 
 ### Prerequisites
 
@@ -135,16 +136,20 @@ apps/desktop/src-tauri/target/release/bundle/
 | Windows | NSIS `.exe` |
 | Linux | `.deb`, AppImage |
 
-To produce a Windows installer without a Windows machine, push a version tag
-and take the `ClinSize-windows` artifact from the Release workflow:
+To produce installers without a matching local machine, push a version tag
+and download the files from the GitHub release the workflow updates:
 
 ```bash
 git tag v0.1.0
 git push origin v0.1.0
 ```
 
-The workflow runs `pnpm tauri build --target x86_64-pc-windows-msvc` on
-`windows-latest`.
+A failed tag run can be retried without moving the tag: run the Release
+workflow with `workflow_dispatch` and the existing tag, or push a
+`v<version>-rebuild` tag. Both check out that version and attach
+installers to its GitHub release. macOS jobs run
+`pnpm tauri build --target aarch64-apple-darwin` and
+`--target x86_64-apple-darwin` on `macos-latest`.
 
 The `clinsize` CLI can be cross-compiled without Tauri:
 

@@ -4,9 +4,18 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to build and attach installers to (e.g. v0.1.0)"
+        required: true
+        type: string
 
 permissions:
   contents: write
+
+env:
+  CARGO_TERM_COLOR: always
 
 jobs:
   build:
@@ -27,11 +36,40 @@ jobs:
             target: x86_64-unknown-linux-gnu
             artifact_name: ClinSize-linux
     runs-on: ${{ matrix.platform }}
+    env:
+      CARGO_TARGET_DIR: ${{ github.workspace }}/apps/desktop/src-tauri/target
     steps:
+      - name: Resolve source and release tag
+        id: refs
+        shell: bash
+        env:
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+        run: |
+          set -euo pipefail
+          if [ -n "${INPUT_TAG}" ]; then
+            SOURCE_REF="${INPUT_TAG}"
+            RELEASE_TAG="${INPUT_TAG}"
+          elif [[ "${GITHUB_REF_NAME}" == *-rebuild ]]; then
+            SOURCE_REF="${GITHUB_REF_NAME%-rebuild}"
+            RELEASE_TAG="${SOURCE_REF}"
+          else
+            SOURCE_REF="${GITHUB_REF}"
+            RELEASE_TAG="${GITHUB_REF_NAME}"
+          fi
+          if [[ ! "${RELEASE_TAG}" =~ ^v[A-Za-z0-9._-]+$ ]]; then
+            echo "Refusing to use invalid release tag: ${RELEASE_TAG}"
+            exit 1
+          fi
+          echo "source_ref=${SOURCE_REF}" >> "$GITHUB_OUTPUT"
+          echo "release_tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "Building ${SOURCE_REF} and attaching to ${RELEASE_TAG}"
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ steps.refs.outputs.source_ref }}
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
+      - uses: extractions/setup-just@v4
       - uses: pnpm/action-setup@v5
         with:
           version: 9.15.4
@@ -53,10 +91,63 @@ jobs:
         run: just setup
       - name: Build installers
         run: cd apps/desktop && pnpm tauri build --target ${{ matrix.target }}
+      - name: List bundle outputs
+        if: always()
+        shell: bash
+        run: |
+          echo "CARGO_TARGET_DIR=${CARGO_TARGET_DIR:-unset}"
+          find "${CARGO_TARGET_DIR:-apps/desktop/src-tauri/target}" -path '*/bundle/*' -type f 2>/dev/null | sort || true
+          find "${{ github.workspace }}/target" -path '*/bundle/*' -type f 2>/dev/null | sort || true
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
           path: |
             apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/**/*
+            target/${{ matrix.target }}/release/bundle/**/*
           if-no-files-found: error
+
+  publish:
+    needs: build
+    if: always() && !cancelled()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve release tag
+        id: refs
+        env:
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+        run: |
+          set -euo pipefail
+          if [ -n "${INPUT_TAG}" ]; then
+            RELEASE_TAG="${INPUT_TAG}"
+          elif [[ "${GITHUB_REF_NAME}" == *-rebuild ]]; then
+            RELEASE_TAG="${GITHUB_REF_NAME%-rebuild}"
+          else
+            RELEASE_TAG="${GITHUB_REF_NAME}"
+          fi
+          if [[ ! "${RELEASE_TAG}" =~ ^v[A-Za-z0-9._-]+$ ]]; then
+            echo "Refusing to use invalid release tag: ${RELEASE_TAG}"
+            exit 1
+          fi
+          echo "release_tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: ClinSize-*
+      - name: Attach installers to GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.refs.outputs.release_tag }}
+        run: |
+          set -euo pipefail
+          echo "Attaching installers to ${TAG}"
+          find dist -type f | sort
+          mapfile -t files < <(find dist -type f \( \
+            -name '*.dmg' -o -name '*.exe' -o -name '*.msi' \
+            -o -name '*.deb' -o -name '*.AppImage' \))
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No installer files found in artifacts"
+            exit 1
+          fi
+          gh release upload "${TAG}" "${files[@]}" --repo "${{ github.repository }}" --clobber

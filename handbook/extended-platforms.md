@@ -18,8 +18,10 @@ Signing and notarization are platform-specific and documented in
 `10-release-distribution.md`.
 
 Tagged releases (`v*`) trigger `.github/workflows/release.yml`, which builds
-installers on macOS, Windows, and Linux runners and uploads them as CI
-artifacts.
+installers on macOS (Apple Silicon and Intel), Windows, and Linux runners,
+uploads them as CI artifacts, and attaches the installer files to the GitHub
+release. A failed tag run can be rebuilt with `workflow_dispatch` against
+the existing tag, or by pushing `v<version>-rebuild`.
 
 ## CLI
 
