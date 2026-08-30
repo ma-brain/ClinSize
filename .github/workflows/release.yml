@@ -16,7 +16,6 @@ permissions:
 
 env:
   CARGO_TERM_COLOR: always
-  RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
 
 jobs:
   build:
@@ -40,9 +39,33 @@ jobs:
     env:
       CARGO_TARGET_DIR: ${{ github.workspace }}/apps/desktop/src-tauri/target
     steps:
+      - name: Resolve source and release tag
+        id: refs
+        shell: bash
+        env:
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+        run: |
+          set -euo pipefail
+          if [ -n "${INPUT_TAG}" ]; then
+            SOURCE_REF="${INPUT_TAG}"
+            RELEASE_TAG="${INPUT_TAG}"
+          elif [[ "${GITHUB_REF_NAME}" == *-rebuild ]]; then
+            SOURCE_REF="${GITHUB_REF_NAME%-rebuild}"
+            RELEASE_TAG="${SOURCE_REF}"
+          else
+            SOURCE_REF="${GITHUB_REF}"
+            RELEASE_TAG="${GITHUB_REF_NAME}"
+          fi
+          if [[ ! "${RELEASE_TAG}" =~ ^v[A-Za-z0-9._-]+$ ]]; then
+            echo "Refusing to use invalid release tag: ${RELEASE_TAG}"
+            exit 1
+          fi
+          echo "source_ref=${SOURCE_REF}" >> "$GITHUB_OUTPUT"
+          echo "release_tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "Building ${SOURCE_REF} and attaching to ${RELEASE_TAG}"
       - uses: actions/checkout@v5
         with:
-          ref: ${{ github.event.inputs.tag || github.ref }}
+          ref: ${{ steps.refs.outputs.source_ref }}
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
@@ -89,6 +112,24 @@ jobs:
     if: always() && !cancelled()
     runs-on: ubuntu-latest
     steps:
+      - name: Resolve release tag
+        id: refs
+        env:
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+        run: |
+          set -euo pipefail
+          if [ -n "${INPUT_TAG}" ]; then
+            RELEASE_TAG="${INPUT_TAG}"
+          elif [[ "${GITHUB_REF_NAME}" == *-rebuild ]]; then
+            RELEASE_TAG="${GITHUB_REF_NAME%-rebuild}"
+          else
+            RELEASE_TAG="${GITHUB_REF_NAME}"
+          fi
+          if [[ ! "${RELEASE_TAG}" =~ ^v[A-Za-z0-9._-]+$ ]]; then
+            echo "Refusing to use invalid release tag: ${RELEASE_TAG}"
+            exit 1
+          fi
+          echo "release_tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
@@ -97,9 +138,9 @@ jobs:
       - name: Attach installers to GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.refs.outputs.release_tag }}
         run: |
           set -euo pipefail
-          TAG="${{ env.RELEASE_TAG }}"
           echo "Attaching installers to ${TAG}"
           find dist -type f | sort
           mapfile -t files < <(find dist -type f \( \

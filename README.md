@@ -144,8 +144,10 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
-A failed tag run can be retried from Actions with `workflow_dispatch` and
-the existing tag, without moving it. macOS jobs run
+A failed tag run can be retried without moving the tag: run the Release
+workflow with `workflow_dispatch` and the existing tag, or push a
+`v<version>-rebuild` tag. Both check out that version and attach
+installers to its GitHub release. macOS jobs run
 `pnpm tauri build --target aarch64-apple-darwin` and
 `--target x86_64-apple-darwin` on `macos-latest`.
 
