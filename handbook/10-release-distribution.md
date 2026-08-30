@@ -28,7 +28,12 @@ Before release:
 - Validation reports are updated.
 - Method documentation matches implementation.
 - Release notes list new methods and known limitations.
-- Installers build on target platforms.
+- Installers build on target platforms via `.github/workflows/release.yml`.
+- The Release workflow installs `just`, builds each platform, and attaches
+  `.dmg`, NSIS `.exe`, `.deb`, and AppImage files to the GitHub release for
+  that tag. It can also be started by hand (`workflow_dispatch`) with an
+  existing tag, which is how a failed tag run is retried without moving the
+  tag.
 - macOS app is signed and notarized if distributed publicly.
 - Windows installer is signed if distributed publicly.
 
