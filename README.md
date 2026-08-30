@@ -1,45 +1,64 @@
 # ClinSize
 
-Cross-platform clinical trial sample size and power desktop app, built with
-SvelteKit, Tauri, and Rust. macOS first; Windows and Linux follow.
+Sample size, power, and design calculations for clinical trials.
 
-Engineering, statistical, and AI-collaboration standards live in
-[`handbook/`](handbook/README.md) — read that before making architectural or
-statistical decisions. Cursor rules derived from it live in `.cursor/rules/`.
+ClinSize is a desktop workbench and a command-line tool. Both call the same
+Rust engine, `clinsize-core`. The app runs offline on macOS, Windows, and
+Linux. Nothing leaves the machine.
 
-## Layout
+It is for statisticians, trial methodologists, and study teams who need
+reproducible numbers with the assumptions printed next to the result.
 
-```text
-apps/desktop/       SvelteKit + Tauri application
-crates/clinsize-core/  Pure Rust statistical engine (no Tauri/UI deps)
-crates/clinsize-cli/   Thin CLI wrapper around clinsize-core
-handbook/            Engineering handbook (source of truth)
-validation/          Independent validation evidence, per method
-examples/            Example inputs, outputs, and reports
-```
+## Features
 
-## Getting started
+- Twenty-one methods across continuous, binary, count, ordinal, survival,
+  and design problems.
+- Sample size and power solve modes on the endpoint methods.
+- One-parameter sensitivity sweeps with a chart on each method screen.
+- Local project files (`.clinsize.json`) with calculation history.
+- Side-by-side scenario comparison.
+- Export to Markdown, HTML, Word-compatible HTML, and printable PDF.
+- A scriptable `clinsize` CLI for batch work and CI.
+- Independent validation cases in [`validation/`](validation/), checked in
+  CI against published R references.
 
-Requires Rust (via `rustup`), Node.js, and `pnpm`. See
-[`handbook/03-development-environment.md`](handbook/03-development-environment.md)
-for the full list.
+ClinSize is not a certified system for regulatory submission. Judge fitness
+for a given study from the cases and sources under `validation/`.
 
-```bash
-just setup   # cargo fetch + pnpm install
-just dev     # pnpm tauri dev
-just test    # cargo test --workspace + pnpm check
-just lint    # cargo fmt --check + cargo clippy -D warnings + pnpm check
-just build   # release build (Rust + Tauri installer)
-just cli list   # list registered methods
-just cli calculate --method continuous.two_sample_ttest \
-  --input examples/continuous/two-sample-ttest/sample-size.json
-```
+## Methods
 
-## Compiling
+| Category | Method | Identifier |
+| --- | --- | --- |
+| Continuous | One-sample t-test | `continuous.one_sample_ttest` |
+| Continuous | Two-sample t-test | `continuous.two_sample_ttest` |
+| Continuous | Paired t-test | `continuous.paired_ttest` |
+| Continuous | One-way ANOVA | `continuous.one_way_anova` |
+| Continuous | Two-way ANOVA | `continuous.two_way_anova` |
+| Continuous | Two-sample ANCOVA | `continuous.ancova_two_sample` |
+| Continuous | Change from baseline | `continuous.change_from_baseline` |
+| Continuous | MMRM (longitudinal) | `continuous.mmrm` |
+| Continuous | Mann-Whitney U | `continuous.mann_whitney` |
+| Continuous | Wilcoxon signed-rank | `continuous.wilcoxon_signed_rank` |
+| Binary | Difference in proportions | `binary.two_proportion_difference` |
+| Binary | Odds ratio | `binary.odds_ratio` |
+| Binary | One-sample binomial | `binary.one_sample_binomial` |
+| Binary | Risk ratio | `binary.risk_ratio` |
+| Count | Negative binomial | `count.negative_binomial` |
+| Count | Poisson | `count.poisson` |
+| Ordinal | Proportional odds | `ordinal.proportional_odds` |
+| Survival | Log-rank test | `survival.log_rank` |
+| Design | Multiplicity adjustment | `design.multiplicity` |
+| Design | Group sequential design | `design.group_sequential` |
+| Design | Blinded sample size re-estimation | `design.blinded_ssre` |
 
-ClinSize desktop installers are built with Tauri. Build on the target OS for
-reliable results — cross-compiling the full desktop app from macOS to Windows
-is not supported in this project.
+## Install
+
+Build from source on the machine you will run. Cross-compiling the desktop
+app is not supported.
+
+Pushing a `v*` tag runs a GitHub Actions workflow that builds macOS (Apple
+Silicon and Intel), Windows (NSIS), and Linux (`.deb` and AppImage)
+installers. Download those artifacts from the Actions tab for that run.
 
 ### Prerequisites
 
@@ -55,12 +74,42 @@ Platform-specific:
 | Platform | Additional requirements |
 | --- | --- |
 | macOS | Xcode Command Line Tools |
-| Windows | [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) with **Desktop development with C++**; WebView2 runtime (included on Windows 10/11) |
-| Linux | `libwebkit2gtk-4.1-dev`, `libappindicator3-dev`, `librsvg2-dev`, `patchelf` (see `.github/workflows/release.yml` for the apt list) |
+| Windows | [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) with Desktop development with C++. WebView2 is included on Windows 10/11. |
+| Linux | `libwebkit2gtk-4.1-dev`, `libappindicator3-dev`, `librsvg2-dev`, `patchelf` |
 
-### Local release build
+### Desktop app
 
-From the repository root:
+```bash
+just setup   # cargo fetch + pnpm install
+just dev     # pnpm tauri dev
+```
+
+Without `just`:
+
+```bash
+cargo fetch
+cd apps/desktop && pnpm install && pnpm tauri dev
+```
+
+### Command line
+
+```bash
+just cli list
+just cli calculate --method continuous.two_sample_ttest \
+  --input examples/continuous/two-sample-ttest/sample-size.json \
+  --output result.json
+just cli report --method continuous.two_sample_ttest \
+  --input examples/continuous/two-sample-ttest/sample-size.json \
+  --result result.json
+just cli validation-report --method continuous.two_sample_ttest
+```
+
+Without `just`, use `cargo run -p clinsize-cli --` in place of `just cli`.
+More example inputs live in [`examples/`](examples/).
+
+### Release installers
+
+From the repository root, on the target OS:
 
 ```bash
 just setup
@@ -71,8 +120,7 @@ Without `just`:
 
 ```bash
 cargo fetch
-cd apps/desktop && pnpm install
-cd apps/desktop && pnpm tauri build
+cd apps/desktop && pnpm install && pnpm tauri build
 ```
 
 Installers are written under:
@@ -87,26 +135,16 @@ apps/desktop/src-tauri/target/release/bundle/
 | Windows | NSIS `.exe` |
 | Linux | `.deb`, AppImage |
 
-### Windows from macOS or Linux
-
-To produce a Windows installer without a local Windows machine, use the GitHub
-Actions release workflow:
+To produce a Windows installer without a Windows machine, push a version tag
+and take the `ClinSize-windows` artifact from the Release workflow:
 
 ```bash
 git tag v0.1.0
 git push origin v0.1.0
 ```
 
-When the **Release** workflow finishes, download the `ClinSize-windows` artifact
-from the repository **Actions** tab. The workflow runs:
-
-```bash
-cd apps/desktop && pnpm tauri build --target x86_64-pc-windows-msvc
-```
-
-on a `windows-latest` runner.
-
-### CLI only (no desktop UI)
+The workflow runs `pnpm tauri build --target x86_64-pc-windows-msvc` on
+`windows-latest`.
 
 The `clinsize` CLI can be cross-compiled without Tauri:
 
@@ -115,22 +153,46 @@ rustup target add x86_64-pc-windows-msvc   # once per toolchain
 cargo build -p clinsize-cli --release --target x86_64-pc-windows-msvc
 ```
 
-The binary is at `target/x86_64-pc-windows-msvc/release/clinsize.exe`.
+The binary lands at `target/x86_64-pc-windows-msvc/release/clinsize.exe`.
 
-More detail: [`handbook/extended-platforms.md`](handbook/extended-platforms.md),
-[`handbook/03-development-environment.md`](handbook/03-development-environment.md).
+## Validation
 
-## Status
+Every method has a folder under [`validation/`](validation/) with:
 
-**20 validated methods** across six endpoint categories — continuous,
-binary, count, ordinal, survival, and design — each independently checked
-against published R references (Noether 1987, Zhu & Lakkis 2014,
-Whitehead 1993, Signorini 1991, R `power.t.test`, `gsDesign`, `longpower`,
-`EnvStats`, `Hmisc`). See [`validation/`](validation/) for the evidence
-and [`handbook/08-validation-testing.md`](handbook/08-validation-testing.md)
-for the testing framework.
+- `cases.json`. Inputs and expected values, re-run through the engine in CI.
+- `reference-output.md`. The R commands or published tables those values
+  came from.
 
-Windows and Linux installers via Tauri, GitHub Actions release builds, and
-a scriptable `clinsize` CLI are available. See
-[`handbook/11-roadmap.md`](handbook/11-roadmap.md) and
-[`handbook/extended-platforms.md`](handbook/extended-platforms.md).
+Expected values come from the external reference, never from the engine
+itself. Current sources include Noether (1987), Zhu and Lakkis (2014),
+Whitehead (1993), Signorini (1991), and the R functions `power.t.test`,
+`gsDesign`, `longpower`, `EnvStats`, and `Hmisc`.
+
+Generate a report for one method:
+
+```bash
+just cli validation-report --method continuous.two_sample_ttest
+```
+
+The desktop app has a Validation page that shows the same evidence.
+
+## Repository layout
+
+```text
+apps/desktop/          SvelteKit + Tauri desktop app
+crates/clinsize-core/  Statistical engine (no UI or Tauri deps)
+crates/clinsize-cli/   clinsize CLI
+validation/            Per-method reference cases
+examples/              Example JSON inputs
+```
+
+Statistical formulas live in `clinsize-core`. The UI and CLI never
+implement them.
+
+## Development
+
+```bash
+just test    # cargo test --workspace + pnpm check
+just lint    # rustfmt, clippy -D warnings, pnpm check
+just build   # release build (Rust + Tauri installer)
+```
