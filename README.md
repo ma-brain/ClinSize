@@ -140,8 +140,8 @@ To produce installers without a matching local machine, push a version tag
 and download the files from the GitHub release the workflow updates:
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.2.0
+git push origin v0.2.0
 ```
 
 A failed tag run can be retried without moving the tag: run the Release
