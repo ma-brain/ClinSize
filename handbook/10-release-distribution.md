@@ -29,11 +29,12 @@ Before release:
 - Method documentation matches implementation.
 - Release notes list new methods and known limitations.
 - Installers build on target platforms via `.github/workflows/release.yml`.
-- The Release workflow installs `just`, builds each platform, and attaches
-  `.dmg`, NSIS `.exe`, `.deb`, and AppImage files to the GitHub release for
-  that tag. A failed tag run can be retried without moving the tag via
-  `workflow_dispatch` (tag input) or by pushing `v<version>-rebuild`, which
-  checks out `<version>` and attaches installers to that release.
+- The Release workflow installs `just`, builds each platform, creates the
+  GitHub release for that tag if it doesn't already exist, and attaches
+  `.dmg`, NSIS `.exe`, `.deb`, and AppImage files to it. A failed tag run
+  can be retried without moving the tag via `workflow_dispatch` (tag input)
+  or by pushing `v<version>-rebuild`, which checks out `<version>` and
+  attaches installers to that (already-existing) release.
 - macOS app is signed and notarized if distributed publicly.
 - Windows installer is signed if distributed publicly.
 
