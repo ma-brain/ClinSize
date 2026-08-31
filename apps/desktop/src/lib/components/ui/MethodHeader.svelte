@@ -1,23 +1,32 @@
 <script lang="ts">
+  import ExportMenu from "$lib/components/ExportMenu.svelte";
+
   let {
     title,
     description,
     category,
     badges = [],
+    exportMarkdown = null,
+    exportDisabled = false,
   }: {
     title: string;
     description: string;
     category?: string;
     badges?: string[];
+    exportMarkdown?: string | null;
+    exportDisabled?: boolean;
   } = $props();
 </script>
 
 <header class="method-header">
-  <div class="title-row">
-    <h2 class="title">{title}</h2>
-    {#if category}
-      <span class="category-chip">{category}</span>
-    {/if}
+  <div class="header-top">
+    <div class="title-row">
+      <h2 class="title">{title}</h2>
+      {#if category}
+        <span class="category-chip">{category}</span>
+      {/if}
+    </div>
+    <ExportMenu {title} markdown={exportMarkdown} disabled={exportDisabled} />
   </div>
   {#if badges.length > 0}
     <ul class="badges" aria-label="Method attributes">
@@ -32,6 +41,14 @@
 <style>
   .method-header {
     margin-bottom: 1.25rem;
+  }
+
+  .header-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
   }
 
   .title-row {

@@ -111,7 +111,7 @@ export function summarizeResult(methodId: string, result: Record<string, unknown
     case "design.multiplicity":
       return {
         primaryLabel: "Adjusted α",
-        primaryValue: formatNumber(result.adjustedAlpha),
+        primaryValue: formatAlpha(result.adjustedAlpha),
         secondaryLabel: "Comparisons",
         secondaryValue: String(result.numberOfComparisons ?? "—"),
       };
@@ -140,5 +140,11 @@ export function summarizeResult(methodId: string, result: Record<string, unknown
 }
 
 function formatNumber(value: unknown): string {
+  return typeof value === "number" ? value.toFixed(2) : "—";
+}
+
+// Alpha can be a small fraction (e.g. a gatekeeping-adjusted value); keep it more
+// precise than other summary numbers so it doesn't round away to 0.00.
+function formatAlpha(value: unknown): string {
   return typeof value === "number" ? value.toFixed(4) : "—";
 }

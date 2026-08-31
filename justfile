@@ -9,9 +9,10 @@ setup:
 dev:
     cd apps/desktop && pnpm tauri dev
 
-# Run all tests (Rust workspace + desktop app checks).
+# Run all tests (Rust workspace + frontend vitest + desktop app checks).
 test:
     cargo test --workspace
+    cd apps/desktop && pnpm test
     cd apps/desktop && pnpm check
 
 # Lint and format-check everything.

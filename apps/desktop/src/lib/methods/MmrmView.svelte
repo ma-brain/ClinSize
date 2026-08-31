@@ -1,10 +1,11 @@
 <script lang="ts">
-  import ExportMenu from "$lib/components/ExportMenu.svelte";
   import MethodPage from "$lib/components/MethodPage.svelte";
   import SensitivityPanel from "$lib/components/SensitivityPanel.svelte";
   import AssumptionsCard from "$lib/components/ui/AssumptionsCard.svelte";
+  import CollapsibleSection from "$lib/components/ui/CollapsibleSection.svelte";
   import Field from "$lib/components/ui/Field.svelte";
   import MethodHeader from "$lib/components/ui/MethodHeader.svelte";
+  import NotesCard from "$lib/components/ui/NotesCard.svelte";
   import Panel from "$lib/components/ui/Panel.svelte";
   import PrimaryButton from "$lib/components/ui/PrimaryButton.svelte";
   import RationaleCard from "$lib/components/ui/RationaleCard.svelte";
@@ -12,7 +13,6 @@
   import ResultGrid from "$lib/components/ui/ResultGrid.svelte";
   import ResultHero from "$lib/components/ui/ResultHero.svelte";
   import Section from "$lib/components/ui/Section.svelte";
-  import WarningList from "$lib/components/ui/WarningList.svelte";
   import { mmrmSensitivityOptions } from "$lib/sensitivity/configs";
   import { persistCalculation } from "$lib/workflow/record";
   import { calculateMethod, exportMethodMarkdown } from "$lib/workflow/methodDispatch";
@@ -107,7 +107,7 @@
     result
       ? solveMode === "sample_size"
         ? String(result.totalN)
-        : result.achievedPower.toFixed(4)
+        : result.achievedPower.toFixed(2)
       : "—",
   );
 
@@ -117,10 +117,10 @@
           { label: "Control N (randomized)", value: String(result.nControl) },
           { label: "Treatment N (randomized)", value: String(result.nTreatment) },
           { label: "Total N (randomized)", value: String(result.totalN), highlight: true },
-          { label: "Achieved power", value: result.achievedPower.toFixed(4) },
+          { label: "Achieved power", value: result.achievedPower.toFixed(2) },
           {
             label: "Variance factor (φ)",
-            value: result.varianceFactor.toFixed(4),
+            value: result.varianceFactor.toFixed(2),
           },
           {
             label: "Final-visit retention",
@@ -201,6 +201,8 @@
       description="Parallel-group comparison at the final post-baseline visit under a mixed model for repeated measures."
       category="Continuous"
       badges={[solveModeLabel, alternativeLabel, "Superiority"]}
+      exportMarkdown={exportMarkdown}
+      exportDisabled={calculating}
     />
   {/snippet}
 
@@ -310,17 +312,35 @@
   {/snippet}
 
   {#snippet results()}
-    <Panel title="Results">
+    <CollapsibleSection title="Results">
       {#if result}
         <ResultHero label={heroLabel} value={heroValue} />
         <ResultGrid items={resultItems} />
-        {#if rationale}
-          <RationaleCard text={rationale} />
-        {/if}
-        {#if protocolText}
-          <ProtocolTextCard text={protocolText} />
-        {/if}
-        <WarningList warnings={result.warnings} />
+      {:else}
+        <p class="empty text-muted">Enter parameters and calculate to see results.</p>
+      {/if}
+    </CollapsibleSection>
+
+    {#if rationale}
+      <CollapsibleSection title="Sample size calculation rationale" defaultCollapsed={true}>
+        <RationaleCard text={rationale} />
+      </CollapsibleSection>
+    {/if}
+
+    {#if protocolText}
+      <CollapsibleSection title="Protocol text" defaultCollapsed={true}>
+        <ProtocolTextCard text={protocolText} />
+      </CollapsibleSection>
+    {/if}
+
+    {#if result && result.warnings.length > 0}
+      <CollapsibleSection title="Notes" defaultCollapsed={true}>
+        <NotesCard warnings={result.warnings} />
+      </CollapsibleSection>
+    {/if}
+
+    {#if result}
+      <CollapsibleSection title="Assumptions" defaultCollapsed={true}>
         <AssumptionsCard
           items={[
             "Lu, Luo & Chen (2008) MMRM variance with visit as a categorical factor.",
@@ -329,10 +349,10 @@
             "Monotone dropout with constant per-visit rate; dropouts contribute observed visits (N is randomized count).",
           ]}
         />
-        <ExportMenu title="MMRM (longitudinal)" markdown={exportMarkdown} />
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Sensitivity analysis" defaultCollapsed={true}>
         <SensitivityPanel
-          ready={true}
-          defaultExpanded={true}
           chartFileStem="clinsize-sensitivity-mmrm"
           inputSignature={lastCalculatedSignature ?? inputSignature}
           methodId="continuous.mmrm"
@@ -344,10 +364,8 @@
           }}
           outputLabel={sensitivityOutputLabel}
         />
-      {:else}
-        <p class="empty text-muted">Enter parameters and calculate to see results.</p>
-      {/if}
-    </Panel>
+      </CollapsibleSection>
+    {/if}
   {/snippet}
 </MethodPage>
 

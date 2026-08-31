@@ -1,10 +1,11 @@
 <script lang="ts">
-  import ExportMenu from "$lib/components/ExportMenu.svelte";
   import MethodPage from "$lib/components/MethodPage.svelte";
   import SensitivityPanel from "$lib/components/SensitivityPanel.svelte";
   import AssumptionsCard from "$lib/components/ui/AssumptionsCard.svelte";
+  import CollapsibleSection from "$lib/components/ui/CollapsibleSection.svelte";
   import Field from "$lib/components/ui/Field.svelte";
   import MethodHeader from "$lib/components/ui/MethodHeader.svelte";
+  import NotesCard from "$lib/components/ui/NotesCard.svelte";
   import Panel from "$lib/components/ui/Panel.svelte";
   import PrimaryButton from "$lib/components/ui/PrimaryButton.svelte";
   import RationaleCard from "$lib/components/ui/RationaleCard.svelte";
@@ -12,7 +13,6 @@
   import ResultGrid from "$lib/components/ui/ResultGrid.svelte";
   import ResultHero from "$lib/components/ui/ResultHero.svelte";
   import Section from "$lib/components/ui/Section.svelte";
-  import WarningList from "$lib/components/ui/WarningList.svelte";
   import {
     oneSampleSensitivityOptions,
     pairedSensitivityOptions,
@@ -129,11 +129,11 @@
     oneSampleResult
       ? solveMode === "sample_size"
         ? String(oneSampleResult.n)
-        : oneSampleResult.achievedPower.toFixed(4)
+        : oneSampleResult.achievedPower.toFixed(2)
       : pairedResult
         ? solveMode === "sample_size"
           ? String(pairedResult.nPairs)
-          : pairedResult.achievedPower.toFixed(4)
+          : pairedResult.achievedPower.toFixed(2)
         : "—",
   );
 
@@ -141,8 +141,8 @@
     oneSampleResult
       ? [
           { label: sizeLabel, value: String(oneSampleResult.n) },
-          { label: "Achieved power", value: oneSampleResult.achievedPower.toFixed(4) },
-          { label: "Effect size (Cohen's d)", value: oneSampleResult.effectSize.toFixed(4) },
+          { label: "Achieved power", value: oneSampleResult.achievedPower.toFixed(2) },
+          { label: "Effect size (Cohen's d)", value: oneSampleResult.effectSize.toFixed(2) },
           ...(oneSampleResult.nAdjusted !== oneSampleResult.n
             ? [
                 {
@@ -156,8 +156,8 @@
       : pairedResult
         ? [
             { label: sizeLabel, value: String(pairedResult.nPairs) },
-            { label: "Achieved power", value: pairedResult.achievedPower.toFixed(4) },
-            { label: "Effect size (Cohen's d)", value: pairedResult.effectSize.toFixed(4) },
+            { label: "Achieved power", value: pairedResult.achievedPower.toFixed(2) },
+            { label: "Effect size (Cohen's d)", value: pairedResult.effectSize.toFixed(2) },
             ...(pairedResult.nPairsAdjusted !== pairedResult.nPairs
               ? [
                   {
@@ -286,6 +286,8 @@
       {description}
       category="Continuous"
       badges={[solveModeLabel, alternativeLabel, "Superiority"]}
+      exportMarkdown={exportMarkdown}
+      exportDisabled={calculating}
     />
   {/snippet}
 
@@ -363,17 +365,35 @@
   {/snippet}
 
   {#snippet results()}
-    <Panel title="Results">
+    <CollapsibleSection title="Results">
       {#if oneSampleResult || pairedResult}
         <ResultHero label={heroLabel} value={heroValue} />
         <ResultGrid items={resultItems} />
-        {#if rationale}
-          <RationaleCard text={rationale} />
-        {/if}
-        {#if protocolText}
-          <ProtocolTextCard text={protocolText} />
-        {/if}
-        <WarningList warnings={activeWarnings} />
+      {:else}
+        <p class="empty text-muted">Enter parameters and calculate to see results.</p>
+      {/if}
+    </CollapsibleSection>
+
+    {#if rationale}
+      <CollapsibleSection title="Sample size calculation rationale" defaultCollapsed={true}>
+        <RationaleCard text={rationale} />
+      </CollapsibleSection>
+    {/if}
+
+    {#if protocolText}
+      <CollapsibleSection title="Protocol text" defaultCollapsed={true}>
+        <ProtocolTextCard text={protocolText} />
+      </CollapsibleSection>
+    {/if}
+
+    {#if activeWarnings.length > 0}
+      <CollapsibleSection title="Notes" defaultCollapsed={true}>
+        <NotesCard warnings={activeWarnings} />
+      </CollapsibleSection>
+    {/if}
+
+    {#if oneSampleResult || pairedResult}
+      <CollapsibleSection title="Assumptions" defaultCollapsed={true}>
         <AssumptionsCard
           items={variant === "one_sample"
             ? [
@@ -387,42 +407,44 @@
                 "Superiority design; use adjusted alpha from multiplicity tools when applicable.",
               ]}
         />
-        <ExportMenu {title} markdown={exportMarkdown} />
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Sensitivity analysis" defaultCollapsed={true}>
         {#if oneSampleResult}
           <SensitivityPanel
-            ready={true}
-            defaultExpanded={true}
             chartFileStem="clinsize-sensitivity-one-sample-ttest"
             inputSignature={lastCalculatedSignature ?? inputSignature}
             methodId="continuous.one_sample_ttest"
             buildInput={buildOneSampleInput}
             options={oneSampleSensitivity}
-            getOutputValue={(value) => {
+            getOutputValue={(value, parameterId) => {
               const row = value as OneSampleTTestResult;
-              return solveMode === "sample_size" ? row.n : row.achievedPower;
+              if (solveMode === "sample_size") {
+                return parameterId === "dropoutRate" ? row.nAdjusted : row.n;
+              }
+              return row.achievedPower;
             }}
             outputLabel={sensitivityOutputLabel}
           />
         {:else if pairedResult}
           <SensitivityPanel
-            ready={true}
-            defaultExpanded={true}
             chartFileStem="clinsize-sensitivity-paired-ttest"
             inputSignature={lastCalculatedSignature ?? inputSignature}
             methodId="continuous.paired_ttest"
             buildInput={buildPairedInput}
             options={pairedSensitivity}
-            getOutputValue={(value) => {
+            getOutputValue={(value, parameterId) => {
               const row = value as PairedTTestResult;
-              return solveMode === "sample_size" ? row.nPairs : row.achievedPower;
+              if (solveMode === "sample_size") {
+                return parameterId === "dropoutRate" ? row.nPairsAdjusted : row.nPairs;
+              }
+              return row.achievedPower;
             }}
             outputLabel={sensitivityOutputLabel}
           />
         {/if}
-      {:else}
-        <p class="empty text-muted">Enter parameters and calculate to see results.</p>
-      {/if}
-    </Panel>
+      </CollapsibleSection>
+    {/if}
   {/snippet}
 </MethodPage>
 

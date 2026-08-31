@@ -1,9 +1,10 @@
 <script lang="ts">
-  import ExportMenu from "$lib/components/ExportMenu.svelte";
   import MethodPage from "$lib/components/MethodPage.svelte";
   import AssumptionsCard from "$lib/components/ui/AssumptionsCard.svelte";
+  import CollapsibleSection from "$lib/components/ui/CollapsibleSection.svelte";
   import Field from "$lib/components/ui/Field.svelte";
   import MethodHeader from "$lib/components/ui/MethodHeader.svelte";
+  import NotesCard from "$lib/components/ui/NotesCard.svelte";
   import Panel from "$lib/components/ui/Panel.svelte";
   import PrimaryButton from "$lib/components/ui/PrimaryButton.svelte";
   import RationaleCard from "$lib/components/ui/RationaleCard.svelte";
@@ -11,7 +12,6 @@
   import ResultGrid from "$lib/components/ui/ResultGrid.svelte";
   import ResultHero from "$lib/components/ui/ResultHero.svelte";
   import Section from "$lib/components/ui/Section.svelte";
-  import WarningList from "$lib/components/ui/WarningList.svelte";
   import { persistCalculation } from "$lib/workflow/record";
   import { calculateMethod, exportMethodMarkdown } from "$lib/workflow/methodDispatch";
   import { fetchCalculationRationale, fetchProtocolText } from "$lib/workflow/rationale";
@@ -53,10 +53,10 @@
       ? [
           {
             label: "Sample size inflation factor",
-            value: result.sampleSizeInflationFactor.toFixed(4),
+            value: result.sampleSizeInflationFactor.toFixed(2),
           },
-          { label: "Achieved power", value: result.achievedPower.toFixed(4) },
-          { label: "Fixed-design drift", value: result.fixedDesignDrift.toFixed(4) },
+          { label: "Achieved power", value: result.achievedPower.toFixed(2) },
+          { label: "Fixed-design drift", value: result.fixedDesignDrift.toFixed(2) },
         ]
       : [],
   );
@@ -114,6 +114,8 @@
       description="Plan interim efficacy boundaries and sample size inflation for equally spaced looks using Lan-DeMets alpha spending."
       category="Design"
       badges={[spendingLabel, `${numberOfLooks} looks`]}
+      exportMarkdown={exportMarkdown}
+      exportDisabled={calculating}
     />
   {/snippet}
 
@@ -162,19 +164,13 @@
   {/snippet}
 
   {#snippet results()}
-    <Panel title="Results">
+    <CollapsibleSection title="Results">
       {#if result}
         <ResultHero
           label="Sample size inflation factor"
-          value={result.sampleSizeInflationFactor.toFixed(4)}
+          value={result.sampleSizeInflationFactor.toFixed(2)}
         />
         <ResultGrid items={resultItems} />
-        {#if rationale}
-          <RationaleCard text={rationale} />
-        {/if}
-        {#if protocolText}
-          <ProtocolTextCard text={protocolText} />
-        {/if}
 
         <table class="looks">
           <thead>
@@ -190,7 +186,7 @@
               <tr>
                 <td>{look.look}</td>
                 <td>{(look.informationFraction * 100).toFixed(0)}</td>
-                <td>{look.upperZBoundary.toFixed(3)}</td>
+                <td>{look.upperZBoundary.toFixed(2)}</td>
                 <td>{look.cumulativeAlphaSpent.toFixed(4)}</td>
               </tr>
             {/each}
@@ -202,7 +198,31 @@
           sample size under this group sequential plan.
         </p>
 
-        <WarningList warnings={result.warnings} />
+      {:else}
+        <p class="empty text-muted">Run a calculation to see interim boundaries.</p>
+      {/if}
+    </CollapsibleSection>
+
+    {#if rationale}
+      <CollapsibleSection title="Sample size calculation rationale" defaultCollapsed={true}>
+        <RationaleCard text={rationale} />
+      </CollapsibleSection>
+    {/if}
+
+    {#if protocolText}
+      <CollapsibleSection title="Protocol text" defaultCollapsed={true}>
+        <ProtocolTextCard text={protocolText} />
+      </CollapsibleSection>
+    {/if}
+
+    {#if result && result.warnings.length > 0}
+      <CollapsibleSection title="Notes" defaultCollapsed={true}>
+        <NotesCard warnings={result.warnings} />
+      </CollapsibleSection>
+    {/if}
+
+    {#if result}
+      <CollapsibleSection title="Assumptions" defaultCollapsed={true}>
         <AssumptionsCard
           items={[
             "Alpha is one-sided and spent entirely on the upper efficacy boundary (no futility bound).",
@@ -211,15 +231,8 @@
             "Boundaries apply to a single primary efficacy comparison.",
           ]}
         />
-        <ExportMenu
-          title="Group sequential design"
-          markdown={exportMarkdown}
-          disabled={calculating}
-        />
-      {:else}
-        <p class="empty text-muted">Run a calculation to see interim boundaries.</p>
-      {/if}
-    </Panel>
+      </CollapsibleSection>
+    {/if}
   {/snippet}
 </MethodPage>
 

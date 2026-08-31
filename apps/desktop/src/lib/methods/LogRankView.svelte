@@ -1,10 +1,11 @@
 <script lang="ts">
-  import ExportMenu from "$lib/components/ExportMenu.svelte";
   import MethodPage from "$lib/components/MethodPage.svelte";
   import SensitivityPanel from "$lib/components/SensitivityPanel.svelte";
   import AssumptionsCard from "$lib/components/ui/AssumptionsCard.svelte";
+  import CollapsibleSection from "$lib/components/ui/CollapsibleSection.svelte";
   import Field from "$lib/components/ui/Field.svelte";
   import MethodHeader from "$lib/components/ui/MethodHeader.svelte";
+  import NotesCard from "$lib/components/ui/NotesCard.svelte";
   import Panel from "$lib/components/ui/Panel.svelte";
   import PrimaryButton from "$lib/components/ui/PrimaryButton.svelte";
   import RationaleCard from "$lib/components/ui/RationaleCard.svelte";
@@ -12,7 +13,6 @@
   import ResultGrid from "$lib/components/ui/ResultGrid.svelte";
   import ResultHero from "$lib/components/ui/ResultHero.svelte";
   import Section from "$lib/components/ui/Section.svelte";
-  import WarningList from "$lib/components/ui/WarningList.svelte";
   import { logRankSensitivityOptions } from "$lib/sensitivity/configs";
   import { persistCalculation } from "$lib/workflow/record";
   import { calculateMethod, exportMethodMarkdown } from "$lib/workflow/methodDispatch";
@@ -108,7 +108,7 @@
         ? includeAccrual
           ? String(result.totalN ?? result.requiredEvents)
           : String(result.requiredEvents)
-        : result.achievedPower.toFixed(4)
+        : result.achievedPower.toFixed(2)
       : "—",
   );
 
@@ -118,8 +118,8 @@
           { label: "Required total events", value: String(result.requiredEvents) },
           { label: "Expected control events", value: String(result.eventsControl) },
           { label: "Expected treatment events", value: String(result.eventsTreatment) },
-          { label: "Achieved power", value: result.achievedPower.toFixed(4) },
-          { label: "Hazard ratio", value: result.hazardRatio.toFixed(4) },
+          { label: "Achieved power", value: result.achievedPower.toFixed(2) },
+          { label: "Hazard ratio", value: result.hazardRatio.toFixed(2) },
           ...(result.totalN
             ? [
                 { label: "Control N", value: String(result.nControl) },
@@ -196,6 +196,8 @@
       description="Two-arm time-to-event design using the Schoenfeld approximation. Provide accrual assumptions to translate required events into enrolled subjects."
       category="Survival"
       badges={[solveModeLabel, alternativeLabel]}
+      exportMarkdown={exportMarkdown}
+      exportDisabled={calculating}
     />
   {/snippet}
 
@@ -298,17 +300,35 @@
   {/snippet}
 
   {#snippet results()}
-    <Panel title="Results">
+    <CollapsibleSection title="Results">
       {#if result}
         <ResultHero label={heroLabel} value={heroValue} />
         <ResultGrid items={resultItems} />
-        {#if rationale}
-          <RationaleCard text={rationale} />
-        {/if}
-        {#if protocolText}
-          <ProtocolTextCard text={protocolText} />
-        {/if}
-        <WarningList warnings={result.warnings} />
+      {:else}
+        <p class="empty text-muted">Enter parameters and calculate to see results.</p>
+      {/if}
+    </CollapsibleSection>
+
+    {#if rationale}
+      <CollapsibleSection title="Sample size calculation rationale" defaultCollapsed={true}>
+        <RationaleCard text={rationale} />
+      </CollapsibleSection>
+    {/if}
+
+    {#if protocolText}
+      <CollapsibleSection title="Protocol text" defaultCollapsed={true}>
+        <ProtocolTextCard text={protocolText} />
+      </CollapsibleSection>
+    {/if}
+
+    {#if result && result.warnings.length > 0}
+      <CollapsibleSection title="Notes" defaultCollapsed={true}>
+        <NotesCard warnings={result.warnings} />
+      </CollapsibleSection>
+    {/if}
+
+    {#if result}
+      <CollapsibleSection title="Assumptions" defaultCollapsed={true}>
         <AssumptionsCard
           items={[
             "Proportional hazards with exponentially distributed event and censoring times.",
@@ -316,10 +336,10 @@
             "Accrual model uses uniform entry over the accrual period when enabled.",
           ]}
         />
-        <ExportMenu title="Log-rank test" markdown={exportMarkdown} />
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Sensitivity analysis" defaultCollapsed={true}>
         <SensitivityPanel
-          ready={true}
-          defaultExpanded={true}
           chartFileStem="clinsize-sensitivity-log-rank"
           inputSignature={lastCalculatedSignature ?? inputSignature}
           methodId="survival.log_rank"
@@ -334,10 +354,8 @@
           }}
           outputLabel={sensitivityOutputLabel}
         />
-      {:else}
-        <p class="empty text-muted">Enter parameters and calculate to see results.</p>
-      {/if}
-    </Panel>
+      </CollapsibleSection>
+    {/if}
   {/snippet}
 </MethodPage>
 

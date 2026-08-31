@@ -1,10 +1,11 @@
 <script lang="ts">
-  import ExportMenu from "$lib/components/ExportMenu.svelte";
   import MethodPage from "$lib/components/MethodPage.svelte";
   import SensitivityPanel from "$lib/components/SensitivityPanel.svelte";
   import AssumptionsCard from "$lib/components/ui/AssumptionsCard.svelte";
+  import CollapsibleSection from "$lib/components/ui/CollapsibleSection.svelte";
   import Field from "$lib/components/ui/Field.svelte";
   import MethodHeader from "$lib/components/ui/MethodHeader.svelte";
+  import NotesCard from "$lib/components/ui/NotesCard.svelte";
   import Panel from "$lib/components/ui/Panel.svelte";
   import PrimaryButton from "$lib/components/ui/PrimaryButton.svelte";
   import RationaleCard from "$lib/components/ui/RationaleCard.svelte";
@@ -12,7 +13,6 @@
   import ResultGrid from "$lib/components/ui/ResultGrid.svelte";
   import ResultHero from "$lib/components/ui/ResultHero.svelte";
   import Section from "$lib/components/ui/Section.svelte";
-  import WarningList from "$lib/components/ui/WarningList.svelte";
   import { twoSampleSensitivityOptions } from "$lib/sensitivity/configs";
   import { persistCalculation } from "$lib/workflow/record";
   import {
@@ -101,7 +101,7 @@
     result
       ? solveMode === "sample_size"
         ? String(result.totalN)
-        : result.achievedPower.toFixed(4)
+        : result.achievedPower.toFixed(2)
       : "—",
   );
 
@@ -111,8 +111,8 @@
           { label: "Control N", value: String(result.nControl) },
           { label: "Treatment N", value: String(result.nTreatment) },
           { label: "Total N", value: String(result.totalN) },
-          { label: "Achieved power", value: result.achievedPower.toFixed(4) },
-          { label: "Effect size (Cohen's d)", value: result.effectSize.toFixed(4) },
+          { label: "Achieved power", value: result.achievedPower.toFixed(2) },
+          { label: "Effect size (Cohen's d)", value: result.effectSize.toFixed(2) },
           ...(result.nControlAdjusted !== result.nControl
             ? [
                 {
@@ -126,8 +126,14 @@
       : [],
   );
 
-  function sensitivityOutput(value: TwoSampleTTestResult): number {
-    return solveMode === "sample_size" ? value.totalN : value.achievedPower;
+  function sensitivityOutput(value: TwoSampleTTestResult, parameterId: string): number {
+    if (solveMode === "sample_size") {
+      // Dropout rate doesn't change the statistically required N — it only inflates
+      // how many subjects must be enrolled to end up with that many evaluable. Plot
+      // the enrollment-adjusted total when that's the parameter being varied.
+      return parameterId === "dropoutRate" ? value.totalNAdjusted : value.totalN;
+    }
+    return value.achievedPower;
   }
 
   function buildInput(): TwoSampleTTestInput {
@@ -204,6 +210,8 @@
       description="Continuous endpoint superiority design with equal within-group variance."
       category="Continuous"
       badges={[solveModeLabel, alternativeLabel, "Superiority"]}
+      exportMarkdown={exportMarkdown}
+      exportDisabled={calculating}
     />
   {/snippet}
 
@@ -287,17 +295,35 @@
   {/snippet}
 
   {#snippet results()}
-    <Panel title="Results">
+    <CollapsibleSection title="Results">
       {#if result}
         <ResultHero label={heroLabel} value={heroValue} />
         <ResultGrid items={resultItems} />
-        {#if rationale}
-          <RationaleCard text={rationale} />
-        {/if}
-        {#if protocolText}
-          <ProtocolTextCard text={protocolText} />
-        {/if}
-        <WarningList warnings={result.warnings} />
+      {:else}
+        <p class="empty text-muted">Enter parameters and calculate to see results.</p>
+      {/if}
+    </CollapsibleSection>
+
+    {#if rationale}
+      <CollapsibleSection title="Sample size calculation rationale" defaultCollapsed={true}>
+        <RationaleCard text={rationale} />
+      </CollapsibleSection>
+    {/if}
+
+    {#if protocolText}
+      <CollapsibleSection title="Protocol text" defaultCollapsed={true}>
+        <ProtocolTextCard text={protocolText} />
+      </CollapsibleSection>
+    {/if}
+
+    {#if result && result.warnings.length > 0}
+      <CollapsibleSection title="Notes" defaultCollapsed={true}>
+        <NotesCard warnings={result.warnings} />
+      </CollapsibleSection>
+    {/if}
+
+    {#if result}
+      <CollapsibleSection title="Assumptions" defaultCollapsed={true}>
         <AssumptionsCard
           items={[
             "Equal within-group variance in control and treatment arms.",
@@ -305,22 +331,21 @@
             "Superiority design; use adjusted alpha from multiplicity tools when applicable.",
           ]}
         />
-        <ExportMenu title="Two-sample t-test" markdown={exportMarkdown} />
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Sensitivity analysis" defaultCollapsed={true}>
         <SensitivityPanel
-          ready={true}
-          defaultExpanded={true}
           chartFileStem="clinsize-sensitivity-two-sample-ttest"
           inputSignature={lastCalculatedSignature ?? inputSignature}
           methodId="continuous.two_sample_ttest"
           buildInput={buildInput}
           options={sensitivityOptions}
-          getOutputValue={(value) => sensitivityOutput(value as TwoSampleTTestResult)}
+          getOutputValue={(value, parameterId) =>
+            sensitivityOutput(value as TwoSampleTTestResult, parameterId)}
           outputLabel={sensitivityOutputLabel}
         />
-      {:else}
-        <p class="empty text-muted">Enter parameters and calculate to see results.</p>
-      {/if}
-    </Panel>
+      </CollapsibleSection>
+    {/if}
   {/snippet}
 </MethodPage>
 

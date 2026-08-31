@@ -135,7 +135,7 @@ pub fn two_sample_ttest_protocol(
             paragraphs.push(format!(
                 "A sample size of {enroll} is required to detect a treatment difference of \
                  Δ = {:.2} (pooled SD = {:.2}, Cohen's d = {:.2}) with {} power at a {} of α = \
-                 {:.2} ({}).",
+                 {:.4} ({}).",
                 input.mean_difference,
                 input.standard_deviation,
                 result.effect_size,
@@ -179,7 +179,7 @@ pub fn two_sample_ttest_protocol(
             paragraphs.push(format!(
                 "With {} control and {} treatment subjects enrolled (total N = {}), the study \
                  achieves {:.0} % power to detect a treatment difference of Δ = {:.2} (pooled SD \
-                 = {:.2}, Cohen's d = {:.2}) at a {} of α = {:.2} ({}).",
+                 = {:.2}, Cohen's d = {:.2}) at a {} of α = {:.4} ({}).",
                 control_n,
                 result.n_treatment,
                 result.total_n,
@@ -220,7 +220,7 @@ pub fn one_sample_ttest_protocol(
             paragraphs.push(format!(
                 "A sample size of {enroll_n} subjects (single arm) is required to detect a mean \
                  difference of Δ = {:.2} from the reference value (SD = {:.2}, Cohen's d = {:.2}) \
-                 with {} power at a {} of α = {:.2} ({}).",
+                 with {} power at a {} of α = {:.4} ({}).",
                 input.mean_difference,
                 input.standard_deviation,
                 result.effect_size,
@@ -250,7 +250,7 @@ pub fn one_sample_ttest_protocol(
             paragraphs.push(format!(
                 "With {n} enrolled subjects (single arm), the study achieves {:.0} % power to \
                  detect a mean difference of Δ = {:.2} from the reference value (SD = {:.2}, \
-                 Cohen's d = {:.2}) at a {} of α = {:.2} ({}).",
+                 Cohen's d = {:.2}) at a {} of α = {:.4} ({}).",
                 result.achieved_power * 100.0,
                 input.mean_difference,
                 input.standard_deviation,
@@ -283,7 +283,7 @@ pub fn paired_ttest_protocol(input: &PairedTTestInput, result: &PairedTTestResul
             paragraphs.push(format!(
                 "A sample size of {enroll_pairs} paired subjects is required to detect a mean \
                  paired difference of Δ = {:.2} (SD of differences = {:.2}, Cohen's d = {:.2}) \
-                 with {} power at a {} of α = {:.2} ({}).",
+                 with {} power at a {} of α = {:.4} ({}).",
                 input.mean_difference,
                 input.standard_deviation,
                 result.effect_size,
@@ -313,7 +313,7 @@ pub fn paired_ttest_protocol(input: &PairedTTestInput, result: &PairedTTestResul
             paragraphs.push(format!(
                 "With {n_pairs} paired subjects enrolled, the study achieves {:.0} % power to \
                  detect a mean paired difference of Δ = {:.2} (SD of differences = {:.2}, \
-                 Cohen's d = {:.2}) at a {} of α = {:.2} ({}).",
+                 Cohen's d = {:.2}) at a {} of α = {:.4} ({}).",
                 result.achieved_power * 100.0,
                 input.mean_difference,
                 input.standard_deviation,
@@ -344,7 +344,7 @@ pub fn one_way_anova_protocol(input: &OneWayAnovaInput, result: &OneWayAnovaResu
             paragraphs.push(format!(
                 "A sample size of {} subjects per group ({} groups; total N = {}) is required \
                  to detect the specified between-group variance component (Cohen's f = {:.2}) \
-                 with {} power at a two-sided omnibus significance level of α = {:.2}.",
+                 with {} power at a two-sided omnibus significance level of α = {:.4}.",
                 result.n_per_group_adjusted,
                 input.n_groups,
                 result.total_n_adjusted,
@@ -377,7 +377,7 @@ pub fn one_way_anova_protocol(input: &OneWayAnovaInput, result: &OneWayAnovaResu
             let n_per_group = input.n_per_group.expect("validated for power mode");
             paragraphs.push(format!(
                 "With {n_per_group} subjects per group ({} groups; total N = {}), the omnibus \
-                 one-way ANOVA achieves {:.0} % power (Cohen's f = {:.2}) at α = {:.2}.",
+                 one-way ANOVA achieves {:.0} % power (Cohen's f = {:.2}) at α = {:.4}.",
                 input.n_groups,
                 result.total_n,
                 result.achieved_power * 100.0,
@@ -412,7 +412,7 @@ pub fn two_way_anova_protocol(input: &TwoWayAnovaInput, result: &TwoWayAnovaResu
             paragraphs.push(format!(
                 "A balanced two-way design with factor A at {} levels and factor B at {} levels \
                  requires {} subjects per cell (total N = {}) to detect {effect_label} with \
-                 Cohen's f = {:.2} at {} power and a two-sided α of {:.2}.",
+                 Cohen's f = {:.2} at {} power and a two-sided α of {:.4}.",
                 input.n_levels_a,
                 input.n_levels_b,
                 result.n_per_cell_adjusted,
@@ -428,7 +428,7 @@ pub fn two_way_anova_protocol(input: &TwoWayAnovaInput, result: &TwoWayAnovaResu
         SolveMode::Power => {
             paragraphs.push(format!(
                 "With {} subjects per cell (total N = {}), the design achieves {:.0}% power to \
-                 detect {effect_label} with Cohen's f = {:.2} at a two-sided α of {:.2}.",
+                 detect {effect_label} with Cohen's f = {:.2} at a two-sided α of {:.4}.",
                 input.n_per_cell.expect("validated"),
                 result.total_n,
                 result.achieved_power * 100.0,
@@ -462,7 +462,7 @@ pub fn ancova_two_sample_protocol(
                 "A sample size of {enroll} is required to detect a treatment difference of \
                  Δ = {:.2} after adjusting for a baseline covariate (unadjusted SD = {:.2}, \
                  adjusted SD = {:.2}, baseline-outcome correlation ρ = {:.2}, Cohen's d = {:.2}) \
-                 with {} power at a {} of α = {:.2} ({}).",
+                 with {} power at a {} of α = {:.4} ({}).",
                 input.mean_difference,
                 input.standard_deviation,
                 result.adjusted_standard_deviation,
@@ -510,7 +510,7 @@ pub fn ancova_two_sample_protocol(
             paragraphs.push(format!(
                 "With {} control and {} treatment subjects enrolled (total N = {}), the \
                  ANCOVA-adjusted design achieves {:.0} % power to detect Δ = {:.2} (adjusted SD \
-                 = {:.2}) at a {} of α = {:.2}.",
+                 = {:.2}) at a {} of α = {:.4}.",
                 control_n,
                 result.n_treatment,
                 result.total_n,
@@ -550,7 +550,7 @@ pub fn change_from_baseline_protocol(
             paragraphs.push(format!(
                 "A sample size of {enroll} is required to detect a mean change-from-baseline \
                  difference of Δ = {:.2} (outcome SD = {:.2}, change-score SD σ_cfb = {:.2}, \
-                 baseline-outcome correlation ρ = {:.2}) with {} power at a {} of α = {:.2}.",
+                 baseline-outcome correlation ρ = {:.2}) with {} power at a {} of α = {:.4}.",
                 input.mean_difference,
                 input.standard_deviation,
                 result.change_score_standard_deviation,
@@ -570,7 +570,7 @@ pub fn change_from_baseline_protocol(
             paragraphs.push(format!(
                 "With {} control and {} treatment subjects (total N = {}), the design achieves \
                  {:.0} % power to detect a mean CFB difference of {:.2} (σ_cfb = {:.2}) at a {} \
-                 of α = {:.2}.",
+                 of α = {:.4}.",
                 input.control_n.expect("validated"),
                 result.n_treatment,
                 result.total_n,
@@ -610,7 +610,7 @@ pub fn mmrm_protocol(input: &MmrmInput, result: &MmrmResult) -> String {
                 "A sample size of {randomize} randomized is required to detect a treatment \
                  effect of δ = {:.2} at the final post-baseline visit (final-visit SD σ = {:.2}, \
                  {} correlation ρ = {:.2}, k = {} post-baseline visits) with {} power at a {} of \
-                 α = {:.3}, based on the mixed model for repeated measures method of Lu, Luo & \
+                 α = {:.4}, based on the mixed model for repeated measures method of Lu, Luo & \
                  Chen (2008).",
                 input.treatment_effect,
                 input.residual_standard_deviation,
@@ -645,8 +645,8 @@ pub fn mmrm_protocol(input: &MmrmInput, result: &MmrmResult) -> String {
             paragraphs.push(format!(
                 "With {} randomized control and {} randomized treatment subjects (total N = {}), \
                  the design achieves {:.0} % power to detect a treatment effect of δ = {:.2} at \
-                 the final post-baseline visit (Lu-Luo-Chen variance factor φ = {:.3}) at a {} \
-                 of α = {:.3}.",
+                 the final post-baseline visit (Lu-Luo-Chen variance factor φ = {:.2}) at a {} \
+                 of α = {:.4}.",
                 input.control_n.expect("validated"),
                 result.n_treatment,
                 result.total_n,
@@ -681,7 +681,7 @@ pub fn negative_binomial_protocol(
             paragraphs.push(format!(
                 "A sample size of {enroll} is required to detect a rate ratio of {:.2} between \
                  treatment (λ₂ = {:.2}) and control (λ₁ = {:.2}) over exposure {:.2}, assuming \
-                 NB2 dispersion k = {:.2}, with {} power at a {} of α = {:.2}.",
+                 NB2 dispersion k = {:.2}, with {} power at a {} of α = {:.4}.",
                 result.rate_ratio,
                 input.treatment_rate,
                 input.control_rate,
@@ -700,7 +700,7 @@ pub fn negative_binomial_protocol(
         SolveMode::Power => {
             paragraphs.push(format!(
                 "With {} control and {} treatment subjects (total N = {}), the design achieves \
-                 {:.0} % power to detect rate ratio {:.2} at a {} of α = {:.2}.",
+                 {:.0} % power to detect rate ratio {:.2} at a {} of α = {:.4}.",
                 input.control_n.expect("validated"),
                 result.n_treatment,
                 result.total_n,
@@ -731,7 +731,7 @@ pub fn poisson_protocol(input: &PoissonInput, result: &PoissonResult) -> String 
             paragraphs.push(format!(
                 "A sample size of {enroll} is required to detect a rate ratio of {:.2} between \
                  treatment (λ₂ = {:.2}) and control (λ₁ = {:.2}) over exposure {:.2}, assuming \
-                 Poisson counts with no overdispersion, with {} power at a {} of α = {:.2}.",
+                 Poisson counts with no overdispersion, with {} power at a {} of α = {:.4}.",
                 result.rate_ratio,
                 input.treatment_rate,
                 input.control_rate,
@@ -749,7 +749,7 @@ pub fn poisson_protocol(input: &PoissonInput, result: &PoissonResult) -> String 
         SolveMode::Power => {
             paragraphs.push(format!(
                 "With {} control and {} treatment subjects (total N = {}), the design achieves \
-                 {:.0} % power to detect rate ratio {:.2} at a {} of α = {:.2}.",
+                 {:.0} % power to detect rate ratio {:.2} at a {} of α = {:.4}.",
                 input.control_n.expect("validated"),
                 result.n_treatment,
                 result.total_n,
@@ -780,8 +780,8 @@ pub fn proportional_odds_protocol(
             );
             paragraphs.push(format!(
                 "A sample size of {enroll} is required to detect an ordinal odds ratio of {:.2} \
-                 (efficiency ps = {:.3}) with treatment fraction {:.0}% and {} power at a \
-                 two-sided significance level of α = {:.2}.",
+                 (efficiency ps = {:.2}) with treatment fraction {:.0}% and {} power at a \
+                 two-sided significance level of α = {:.4}.",
                 input.odds_ratio,
                 result.efficiency,
                 input.treatment_fraction * 100.0,
@@ -797,7 +797,7 @@ pub fn proportional_odds_protocol(
         SolveMode::Power => {
             paragraphs.push(format!(
                 "With {} control and {} treatment subjects (total N = {}), the design achieves \
-                 {:.0} % power to detect odds ratio {:.2} at α = {:.2} (two-sided).",
+                 {:.0} % power to detect odds ratio {:.2} at α = {:.4} (two-sided).",
                 input.control_n.expect("validated"),
                 result.n_treatment,
                 result.total_n,
@@ -853,7 +853,7 @@ pub fn two_proportion_difference_protocol(
             paragraphs.push(format!(
                 "A sample size of {enroll} is required for a two-group {objective} comparison \
                  of binary endpoints, assuming {rate_phrase}, with {} power at a {} of α = \
-                 {:.2} ({}).",
+                 {:.4} ({}).",
                 format_power_percent(target),
                 significance_level_phrase(input.alternative),
                 input.alpha,
@@ -894,7 +894,7 @@ pub fn two_proportion_difference_protocol(
             paragraphs.push(format!(
                 "With {} control and {} treatment subjects enrolled (total N = {}), the study \
                  achieves {:.0} % power for a {objective} comparison of proportions (control \
-                 {:.0}%, treatment {:.0}%) at a {} of α = {:.2}.",
+                 {:.0}%, treatment {:.0}%) at a {} of α = {:.4}.",
                 control_n,
                 result.n_treatment,
                 result.total_n,
@@ -1003,7 +1003,7 @@ fn binary_effect_protocol(
             paragraphs.push(format!(
                 "A sample size of {enroll} is required to detect a {effect_label} of \
                  {effect_value:.2} between treatment and control (control rate p₀ = {}, \
-                 treatment rate p₁ = {}) with {} power at a {} of α = {:.2} ({}).",
+                 treatment rate p₁ = {}) with {} power at a {} of α = {:.4} ({}).",
                 format_percent_int(control_rate),
                 format_percent_int(treatment_rate),
                 format_power_percent(target),
@@ -1039,7 +1039,7 @@ fn binary_effect_protocol(
                 "With {fixed_control_n} control and {n_treatment} treatment subjects enrolled \
                  (total N = {total_n}), the study achieves {:.0} % power to detect a \
                  {effect_label} of {effect_value:.2} (control {:.0}%, treatment {:.0}%) at a {} \
-                 of α = {:.2}.",
+                 of α = {:.4}.",
                 achieved_power * 100.0,
                 control_rate * 100.0,
                 treatment_rate * 100.0,
@@ -1077,7 +1077,7 @@ pub fn one_sample_binomial_protocol(
                 "A sample size of {} subjects (single arm) is required to show that the true \
                  response rate {} the benchmark rate of p₀ = {}, assuming an anticipated response \
                  rate of pA = {} (risk difference {:.0}%, Cohen's h = {:.2}) with {} power at a \
-                 {} of α = {:.2} ({}).",
+                 {} of α = {:.4} ({}).",
                 result.n_adjusted,
                 alt_phrase,
                 format_percent_int(input.reference_rate),
@@ -1119,7 +1119,7 @@ pub fn one_sample_binomial_protocol(
             paragraphs.push(format!(
                 "With {n} enrolled subjects (single arm), the study achieves {:.0} % power to \
                  show that the response rate differs from the benchmark p₀ = {} (anticipated \
-                 pA = {}, Cohen's h = {:.2}) at a {} of α = {:.2}.",
+                 pA = {}, Cohen's h = {:.2}) at a {} of α = {:.4}.",
                 result.achieved_power * 100.0,
                 format_percent_int(input.reference_rate),
                 format_percent_int(input.response_rate),
@@ -1155,7 +1155,7 @@ pub fn mann_whitney_protocol(input: &MannWhitneyInput, result: &MannWhitneyResul
             paragraphs.push(format!(
                 "A sample size of {enroll} is required to detect a location shift of Δ = {:.2} \
                  (SD = {:.2}, Cohen's d = {:.2}, P(treatment > control) = {:.2}) with {} power \
-                 at a {} of α = {:.2} ({}).",
+                 at a {} of α = {:.4} ({}).",
                 input.mean_difference,
                 input.standard_deviation,
                 result.effect_size,
@@ -1199,7 +1199,7 @@ pub fn mann_whitney_protocol(input: &MannWhitneyInput, result: &MannWhitneyResul
             paragraphs.push(format!(
                 "With {control_n} control and {} treatment subjects enrolled (total N = {}), \
                  the Mann-Whitney design achieves {:.0} % power (P(treatment > control) = {:.2}) \
-                 at a {} of α = {:.2}.",
+                 at a {} of α = {:.4}.",
                 result.n_treatment,
                 result.total_n,
                 result.achieved_power * 100.0,
@@ -1234,7 +1234,7 @@ pub fn wilcoxon_signed_rank_protocol(
             paragraphs.push(format!(
                 "A sample size of {enroll_pairs} paired subjects is required to detect a \
                  paired difference of Δ = {:.2} (SD = {:.2}, Cohen's d = {:.2}, P(difference > 0) \
-                 = {:.2}) with {} power at a {} of α = {:.2} ({}).",
+                 = {:.2}) with {} power at a {} of α = {:.4} ({}).",
                 input.mean_difference,
                 input.standard_deviation,
                 result.effect_size,
@@ -1264,7 +1264,7 @@ pub fn wilcoxon_signed_rank_protocol(
             let n_pairs = input.n_pairs.expect("validated for power mode");
             paragraphs.push(format!(
                 "With {n_pairs} paired subjects enrolled, the Wilcoxon signed-rank design \
-                 achieves {:.0} % power (P(difference > 0) = {:.2}) at a {} of α = {:.2}.",
+                 achieves {:.0} % power (P(difference > 0) = {:.2}) at a {} of α = {:.4}.",
                 result.achieved_power * 100.0,
                 result.probability_positive_difference,
                 significance_level_phrase(input.alternative),
@@ -1292,7 +1292,7 @@ pub fn log_rank_protocol(input: &LogRankInput, result: &LogRankResult) -> String
             let (z_label, _) = z_alpha_label_and_value(input.alpha, input.alternative);
             paragraphs.push(format!(
                 "A total of {} events is required to detect a hazard ratio (treatment / control) \
-                 of {:.2} with {} power at a {} of α = {:.2} ({}), yielding expected events of \
+                 of {:.2} with {} power at a {} of α = {:.4} ({}), yielding expected events of \
                  {} in control and {} in treatment.",
                 result.required_events,
                 input.hazard_ratio,
@@ -1327,7 +1327,7 @@ pub fn log_rank_protocol(input: &LogRankInput, result: &LogRankResult) -> String
             paragraphs.push(format!(
                 "With {total_events} total events ({} control, {} treatment), the log-rank \
                  design achieves {:.0} % power to detect a hazard ratio of {:.2} at a {} of \
-                 α = {:.2}.",
+                 α = {:.4}.",
                 result.events_control,
                 result.events_treatment,
                 result.achieved_power * 100.0,
@@ -1361,7 +1361,7 @@ pub fn multiplicity_protocol(input: &MultiplicityInput, result: &MultiplicityRes
         format!(
             "A family-wise Type I error rate of α = {:.4} across {} comparisons will be \
              controlled using the {method} procedure, yielding an adjusted per-comparison \
-             significance level of α_adj = {:.6} ({:.1}% of the naive α/m).",
+             significance level of α_adj = {:.4} ({:.1}% of the naive α/m).",
             input.family_wise_alpha,
             input.number_of_comparisons,
             result.adjusted_alpha,
@@ -1369,7 +1369,7 @@ pub fn multiplicity_protocol(input: &MultiplicityInput, result: &MultiplicityRes
         ),
         format!(
             "Endpoint sample size calculations for comparisons within this family should use \
-             α_adj = {:.6} as the Type I error rate. This adjustment addresses multiplicity in \
+             α_adj = {:.4} as the Type I error rate. This adjustment addresses multiplicity in \
              hypothesis testing and does not by itself inflate sample size.",
             result.adjusted_alpha,
         ),
@@ -1401,8 +1401,8 @@ pub fn group_sequential_protocol(
         ),
         format!(
             "At the final analysis (information {:.0}%), the upper efficacy boundary is Z = \
-             {:.3} with cumulative α spent {:.6}. The sample size inflation factor relative to a \
-             fixed design is {:.4}; multiply the fixed-design sample size from the endpoint \
+             {:.2} with cumulative α spent {:.4}. The sample size inflation factor relative to a \
+             fixed design is {:.2}; multiply the fixed-design sample size from the endpoint \
              calculation by this factor to obtain the maximum sample size under this plan.",
             final_look.information_fraction * 100.0,
             final_look.upper_z_boundary,
@@ -1432,7 +1432,7 @@ pub fn blinded_ssre_protocol(input: &BlindedSsreInput, result: &BlindedSsreResul
 
     let cap_sentence = if result.was_capped {
         format!(
-            "Re-estimation inflates the planned per-arm sample size by a factor of {:.4}, but a \
+            "Re-estimation inflates the planned per-arm sample size by a factor of {:.2}, but a \
              pre-specified cap of {:.1}× limits enrollment to {} control and {} treatment \
              subjects (total N = {}). At the capped enrollment the design provides {:.0} % power \
              under the blinded interim standard deviation.",
@@ -1445,7 +1445,7 @@ pub fn blinded_ssre_protocol(input: &BlindedSsreInput, result: &BlindedSsreResul
         )
     } else {
         format!(
-            "Re-estimation inflates the planned per-arm sample size by a factor of {:.4}, \
+            "Re-estimation inflates the planned per-arm sample size by a factor of {:.2}, \
              yielding {} control and {} treatment subjects (total N = {}).",
             result.variance_ratio,
             result.re_estimated_n_control,
@@ -1457,7 +1457,7 @@ pub fn blinded_ssre_protocol(input: &BlindedSsreInput, result: &BlindedSsreResul
 
     paragraphs.push(format!(
         "The initial planned enrollment is {} control and {} treatment subjects (total N = {}) at \
-         target power {:.0} % and α = {:.2}. The blinded SSR rule follows Friede and Kieser (2006); \
+         target power {:.0} % and α = {:.4}. The blinded SSR rule follows Friede and Kieser (2006); \
          operational Type I error control should be confirmed separately in the statistical \
          analysis plan.",
         result.planned_n_control,

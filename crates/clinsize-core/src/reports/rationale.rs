@@ -50,7 +50,7 @@ fn allocation_phrase(ratio: f64) -> String {
     if (ratio - 1.0).abs() < f64::EPSILON {
         "1:1 (equal allocation)".into()
     } else {
-        format!("{ratio:.4} treatment subjects per control subject")
+        format!("{ratio:.2} treatment subjects per control subject")
     }
 }
 
@@ -117,8 +117,8 @@ pub fn two_sample_ttest_rationale(
     paragraphs.push(format!(
         "This calculation addresses a two-group superiority design for a continuous endpoint, \
          comparing treatment and control using an equal-variance two-sample t-test. The assumed \
-         treatment effect is a mean difference of {:.4} (treatment minus control), with a common \
-         within-group standard deviation of {:.4}. The standardized effect size (Cohen's d) is {:.4}.",
+         treatment effect is a mean difference of {:.2} (treatment minus control), with a common \
+         within-group standard deviation of {:.2}. The standardized effect size (Cohen's d) is {:.2}.",
         input.mean_difference,
         input.standard_deviation,
         result.effect_size,
@@ -196,9 +196,9 @@ pub fn one_sample_ttest_rationale(
 
     paragraphs.push(format!(
         "This calculation addresses a single-group continuous endpoint tested against a reference \
-         mean using a one-sample t-test. The assumed mean difference from the reference is {:.4}, \
-         with a within-subject standard deviation of {:.4}. The standardized effect size (Cohen's d) \
-         is {:.4}.",
+         mean using a one-sample t-test. The assumed mean difference from the reference is {:.2}, \
+         with a within-subject standard deviation of {:.2}. The standardized effect size (Cohen's d) \
+         is {:.2}.",
         input.mean_difference,
         input.standard_deviation,
         result.effect_size,
@@ -265,8 +265,8 @@ pub fn paired_ttest_rationale(input: &PairedTTestInput, result: &PairedTTestResu
     paragraphs.push(format!(
         "This calculation addresses a paired or repeated-measures continuous endpoint using a \
          paired t-test on within-subject differences. The assumed mean paired difference is \
-         {:.4}, with a standard deviation of paired differences of {:.4}. The standardized effect \
-         size (Cohen's d) is {:.4}.",
+         {:.2}, with a standard deviation of paired differences of {:.2}. The standardized effect \
+         size (Cohen's d) is {:.2}.",
         input.mean_difference, input.standard_deviation, result.effect_size,
     ));
 
@@ -331,8 +331,8 @@ pub fn one_way_anova_rationale(input: &OneWayAnovaInput, result: &OneWayAnovaRes
     paragraphs.push(format!(
         "This calculation addresses a balanced multi-group continuous endpoint design with {} \
          groups, using a one-way ANOVA F-test. The assumed between-group variance component is \
-         {:.4} and the within-group variance component is {:.4}. The standardized effect size \
-         (Cohen's f) is {:.4}.",
+         {:.2} and the within-group variance component is {:.2}. The standardized effect size \
+         (Cohen's f) is {:.2}.",
         input.n_groups, input.between_variance, input.within_variance, result.effect_size,
     ));
 
@@ -408,8 +408,8 @@ pub fn two_way_anova_rationale(input: &TwoWayAnovaInput, result: &TwoWayAnovaRes
     paragraphs.push(format!(
         "This calculation addresses a balanced two-way ANOVA with factor A at {} levels and \
          factor B at {} levels. The sample size is driven by the {effect_label}, using exact \
-         noncentral-F power. Variance components are σ²_A = {:.4}, σ²_B = {:.4}, σ²_AB = {:.4}, \
-         and within-cell error σ²_error = {:.4}.",
+         noncentral-F power. Variance components are σ²_A = {:.2}, σ²_B = {:.2}, σ²_AB = {:.2}, \
+         and within-cell error σ²_error = {:.2}.",
         input.n_levels_a,
         input.n_levels_b,
         input.variance_a,
@@ -419,7 +419,7 @@ pub fn two_way_anova_rationale(input: &TwoWayAnovaInput, result: &TwoWayAnovaRes
     ));
 
     paragraphs.push(format!(
-        "The Type I error rate is α = {:.4}. Cohen's f for the primary effect is {:.4}.",
+        "The Type I error rate is α = {:.4}. Cohen's f for the primary effect is {:.2}.",
         input.alpha, result.effect_size,
     ));
 
@@ -485,10 +485,10 @@ pub fn ancova_two_sample_rationale(
     paragraphs.push(format!(
         "This calculation addresses a two-group parallel continuous endpoint with one baseline \
          covariate, using an approximate ANCOVA variance reduction. The assumed treatment effect is \
-         a mean difference of {:.4} (treatment minus control). The unadjusted outcome standard \
-         deviation is {:.4}; with baseline-outcome correlation ρ = {:.4}, the adjusted standard \
-         deviation is {:.4} (variance reduction factor 1 − ρ² = {:.4}). Cohen's d using the \
-         unadjusted SD is {:.4}.",
+         a mean difference of {:.2} (treatment minus control). The unadjusted outcome standard \
+         deviation is {:.2}; with baseline-outcome correlation ρ = {:.2}, the adjusted standard \
+         deviation is {:.2} (variance reduction factor 1 − ρ² = {:.2}). Cohen's d using the \
+         unadjusted SD is {:.2}.",
         input.mean_difference,
         input.standard_deviation,
         input.baseline_outcome_correlation,
@@ -570,9 +570,9 @@ pub fn change_from_baseline_rationale(
     paragraphs.push(format!(
         "This calculation addresses a two-group parallel continuous endpoint analyzed on \
          change-from-baseline (CFB) scores. The assumed treatment effect is a mean CFB difference \
-         of {:.4} (treatment minus control). The common outcome standard deviation is {:.4}; with \
-         baseline-outcome correlation ρ = {:.4}, the change-score standard deviation is {:.4} \
-         (σ_cfb = σ × √(2(1 − ρ))). Cohen's d using the unadjusted SD is {:.4}.",
+         of {:.2} (treatment minus control). The common outcome standard deviation is {:.2}; with \
+         baseline-outcome correlation ρ = {:.2}, the change-score standard deviation is {:.2} \
+         (σ_cfb = σ × √(2(1 − ρ))). Cohen's d using the unadjusted SD is {:.2}.",
         input.mean_difference,
         input.standard_deviation,
         input.baseline_outcome_correlation,
@@ -658,10 +658,10 @@ pub fn mmrm_rationale(input: &MmrmInput, result: &MmrmResult) -> String {
     paragraphs.push(format!(
         "This calculation addresses a two-group parallel longitudinal continuous endpoint analyzed \
          with a mixed model for repeated measures (MMRM). The assumed treatment effect at the \
-         final post-baseline visit is δ = {:.4} (treatment minus control). The final-visit \
-         standard deviation is σ = {:.4}, with {} correlation structure (ρ = {:.4}) across k = {} \
+         final post-baseline visit is δ = {:.2} (treatment minus control). The final-visit \
+         standard deviation is σ = {:.2}, with {} correlation structure (ρ = {:.2}) across k = {} \
          post-baseline visits. Under the Lu, Luo & Chen (2008) method the variance factor for the \
-         final-visit contrast is φ = {:.4} (φ = 1 with complete data).",
+         final-visit contrast is φ = {:.2} (φ = 1 with complete data).",
         input.treatment_effect,
         input.residual_standard_deviation,
         correlation_structure_label(input.correlation_structure),
@@ -748,8 +748,8 @@ pub fn negative_binomial_rationale(
     paragraphs.push(format!(
         "This calculation addresses a two-group comparison of recurrent event counts using a \
          negative binomial model with NB2 variance Var(Y) = μ + kμ². The control event rate is \
-         λ₁ = {:.4} and the treatment rate is λ₂ = {:.4} (rate ratio {:.4}) over exposure time \
-         {:.4}. The common dispersion parameter is k = {:.4}.",
+         λ₁ = {:.2} and the treatment rate is λ₂ = {:.2} (rate ratio {:.2}) over exposure time \
+         {:.2}. The common dispersion parameter is k = {:.2}.",
         input.control_rate,
         input.treatment_rate,
         result.rate_ratio,
@@ -815,8 +815,8 @@ pub fn poisson_rationale(input: &PoissonInput, result: &PoissonResult) -> String
 
     paragraphs.push(format!(
         "This calculation addresses a two-group comparison of event counts using a Poisson model \
-         with variance Var(Y) = μ (no overdispersion). The control event rate is λ₁ = {:.4} and \
-         the treatment rate is λ₂ = {:.4} (rate ratio {:.4}) over exposure time {:.4}.",
+         with variance Var(Y) = μ (no overdispersion). The control event rate is λ₁ = {:.2} and \
+         the treatment rate is λ₂ = {:.2} (rate ratio {:.2}) over exposure time {:.2}.",
         input.control_rate, input.treatment_rate, result.rate_ratio, input.exposure_time,
     ));
 
@@ -879,14 +879,14 @@ pub fn proportional_odds_rationale(
     let probs: Vec<String> = input
         .category_probabilities
         .iter()
-        .map(|p| format!("{p:.4}"))
+        .map(|p| format!("{p:.2}"))
         .collect();
 
     paragraphs.push(format!(
         "This calculation addresses a two-group ordinal endpoint under the proportional odds \
          model (Whitehead 1993). Control-group category probabilities (best to worst) are [{}]. \
-         The target odds ratio is {:.4} with treatment fraction {:.4}. The efficiency factor \
-         ps = 1 − Σpᵢ³ = {:.4}.",
+         The target odds ratio is {:.2} with treatment fraction {:.2}. The efficiency factor \
+         ps = 1 − Σpᵢ³ = {:.2}.",
         probs.join(", "),
         input.odds_ratio,
         input.treatment_fraction,
@@ -895,7 +895,7 @@ pub fn proportional_odds_rationale(
 
     paragraphs.push(format!(
         "Sample size uses the Hmisc `posamsize` formula with a two-sided Type I error rate α = \
-         {:.4}. Power is evaluated via the Hmisc `popower` variance approximation.",
+         {:.2}. Power is evaluated via the Hmisc `popower` variance approximation.",
         input.alpha,
     ));
 
@@ -919,7 +919,7 @@ pub fn proportional_odds_rationale(
         SolveMode::Power => {
             let control_n = input.control_n.expect("validated for power mode");
             paragraphs.push(format!(
-                "For a fixed control-group size of {} (treatment fraction {:.4}), the treatment \
+                "For a fixed control-group size of {} (treatment fraction {:.2}), the treatment \
                  group size is {} (total N = {}). The achieved power is {:.2}%.",
                 control_n,
                 input.treatment_fraction,
@@ -953,8 +953,8 @@ pub fn two_proportion_difference_rationale(
     paragraphs.push(format!(
         "This calculation addresses a two-group {} design for a binary endpoint, comparing event \
          rates between treatment and control using a normal approximation to the difference in \
-         proportions. The assumed control event rate is {:.4} and the treatment event rate is {:.4} \
-         (rate difference {:.4}).",
+         proportions. The assumed control event rate is {:.2} and the treatment event rate is {:.2} \
+         (rate difference {:.2}).",
         objective,
         input.control_rate,
         input.treatment_rate,
@@ -966,7 +966,7 @@ pub fn two_proportion_difference_rationale(
             .noninferiority_margin
             .expect("validated for non-inferiority");
         paragraphs.push(format!(
-            "The non-inferiority margin is {:.4} (treatment rate may be up to this amount below \
+            "The non-inferiority margin is {:.2} (treatment rate may be up to this amount below \
              control). The Type I error rate is α = {}. The alternative hypothesis is {}.",
             margin,
             alpha_phrase(input.alpha, input.alternative),
@@ -1112,8 +1112,8 @@ fn binary_effect_rationale(
     paragraphs.push(format!(
         "This calculation addresses a two-group superiority design for a binary endpoint, testing \
          the {effect_label} using a normal approximation to the {test_statistic}. The assumed \
-         control event rate is {control_rate:.4} and the treatment event rate is {treatment_rate:.4}. \
-         The resulting {effect_label} is {effect_value:.4}."
+         control event rate is {control_rate:.2} and the treatment event rate is {treatment_rate:.2}. \
+         The resulting {effect_label} is {effect_value:.2}."
     ));
 
     paragraphs.push(format!(
@@ -1180,7 +1180,7 @@ pub fn log_rank_rationale(input: &LogRankInput, result: &LogRankResult) -> Strin
 
     paragraphs.push(format!(
         "This calculation addresses a two-arm superiority survival design using the log-rank test \
-         (Schoenfeld approximation). The assumed hazard ratio (treatment / control) is {:.4}. \
+         (Schoenfeld approximation). The assumed hazard ratio (treatment / control) is {:.2}. \
          Statistical power depends on the total number of events, not enrolled subjects alone.",
         input.hazard_ratio,
     ));
@@ -1239,7 +1239,7 @@ pub fn log_rank_rationale(input: &LogRankInput, result: &LogRankResult) -> Strin
             result.probability_event_treatment,
         ) {
             paragraphs.push(format!(
-                "The implied event probabilities are {:.4} in control and {:.4} in treatment.",
+                "The implied event probabilities are {:.2} in control and {:.2} in treatment.",
                 p_control, p_treatment
             ));
         }
@@ -1262,7 +1262,7 @@ pub fn multiplicity_rationale(input: &MultiplicityInput, result: &MultiplicityRe
 
     paragraphs.push(format!(
         "This calculation converts a family-wise Type I error rate into a per-comparison alpha for \
-         sample size planning across {} comparisons. The family-wise α is {:.6}. The selected \
+         sample size planning across {} comparisons. The family-wise α is {:.4}. The selected \
          adjustment is {}.",
         input.number_of_comparisons,
         input.family_wise_alpha,
@@ -1302,7 +1302,7 @@ pub fn multiplicity_rationale(input: &MultiplicityInput, result: &MultiplicityRe
             if input.adjustment_method == MultiplicityMethod::Graphical {
                 if let Some(weight) = result.comparison_weight {
                     paragraphs.push(format!(
-                        "The normalized alpha weight at this gate position is {:.6}.",
+                        "The normalized alpha weight at this gate position is {:.4}.",
                         weight
                     ));
                 }
@@ -1311,7 +1311,7 @@ pub fn multiplicity_rationale(input: &MultiplicityInput, result: &MultiplicityRe
     }
 
     paragraphs.push(format!(
-        "The adjusted per-comparison alpha is {:.6}, representing {:.2}% of the naive \
+        "The adjusted per-comparison alpha is {:.4}, representing {:.2}% of the naive \
          per-comparison rate (family-wise α / m). Use this value as the `alpha` input in endpoint \
          sample size calculations for the comparison at the gate position.",
         result.adjusted_alpha,
@@ -1338,7 +1338,7 @@ pub fn group_sequential_rationale(
     paragraphs.push(format!(
         "This calculation plans a group sequential design with {} equally spaced interim looks \
          (including the final analysis) using the {} spending function. The one-sided family-wise \
-         Type I error rate spent on the efficacy boundary is {:.6} and the target power is {:.0}%.",
+         Type I error rate spent on the efficacy boundary is {:.4} and the target power is {:.0}%.",
         input.number_of_looks,
         spending_function_phrase(input.spending_function),
         input.alpha,
@@ -1347,15 +1347,15 @@ pub fn group_sequential_rationale(
 
     paragraphs.push(format!(
         "Interim efficacy boundaries are derived from the alpha spending increments at each \
-         information fraction. The fixed-design drift at the nominal alpha is {:.4}; the group \
-         sequential design requires drift {:.4} to achieve the target power.",
+         information fraction. The fixed-design drift at the nominal alpha is {:.2}; the group \
+         sequential design requires drift {:.2} to achieve the target power.",
         result.fixed_design_drift, result.required_drift,
     ));
 
     let final_look = result.looks.last().expect("at least one look");
     paragraphs.push(format!(
-        "At the final look (information {:.0}%), the upper Z boundary is {:.4} and cumulative α \
-         spent is {:.6}. The achieved power under this boundary set is {:.2}%.",
+        "At the final look (information {:.0}%), the upper Z boundary is {:.2} and cumulative α \
+         spent is {:.4}. The achieved power under this boundary set is {:.2}%.",
         final_look.information_fraction * 100.0,
         final_look.upper_z_boundary,
         final_look.cumulative_alpha_spent,
@@ -1363,7 +1363,7 @@ pub fn group_sequential_rationale(
     ));
 
     paragraphs.push(format!(
-        "The sample size inflation factor is {:.4}. Multiply a fixed-design sample size by this \
+        "The sample size inflation factor is {:.2}. Multiply a fixed-design sample size by this \
          factor to obtain the maximum sample size under this group sequential plan.",
         result.sample_size_inflation_factor,
     ));
@@ -1389,8 +1389,8 @@ pub fn blinded_ssre_rationale(input: &BlindedSsreInput, result: &BlindedSsreResu
     paragraphs.push(format!(
         "This calculation plans blinded sample size re-estimation (SSR) for a continuous two-group \
          superiority design using an equal-variance two-sample t-test. The planned treatment effect \
-         is a mean difference of {:.4} with assumed common SD σ₀ = {:.4}. The blinded interim \
-         pooled SD is s_b = {:.4}.",
+         is a mean difference of {:.2} with assumed common SD σ₀ = {:.2}. The blinded interim \
+         pooled SD is s_b = {:.2}.",
         input.mean_difference,
         input.planned_standard_deviation,
         blinded_sd,
@@ -1417,7 +1417,7 @@ pub fn blinded_ssre_rationale(input: &BlindedSsreInput, result: &BlindedSsreResu
     ));
 
     paragraphs.push(format!(
-        "The variance ratio (s_b/σ₀)² is {:.4}. Re-estimation inflates the planned per-arm sample \
+        "The variance ratio (s_b/σ₀)² is {:.2}. Re-estimation inflates the planned per-arm sample \
          size by this factor, yielding {} control and {} treatment subjects (total N = {}).",
         result.variance_ratio,
         result.re_estimated_n_control,
@@ -1429,7 +1429,7 @@ pub fn blinded_ssre_rationale(input: &BlindedSsreInput, result: &BlindedSsreResu
         paragraphs.push(format!(
             "A pre-specified cap of {:.1}× the planned per-arm size was applied. The capped \
              enrollment is {} control and {} treatment subjects (total N = {}), with inflation \
-             factor {:.4}. Achieved power at the capped allocation is {:.2}% under the planned \
+             factor {:.2}. Achieved power at the capped allocation is {:.2}% under the planned \
              SD, but only {:.2}% under the blinded interim SD — the realistic estimate given \
              that the interim data motivated the re-estimation. The cap therefore leaves the \
              design underpowered if the interim SD reflects the true variability.",
@@ -1522,8 +1522,8 @@ pub fn one_sample_binomial_rationale(
 pub fn mann_whitney_rationale(input: &MannWhitneyInput, result: &MannWhitneyResult) -> String {
     let mut paragraphs = vec![format!(
         "This calculation addresses a two-group nonparametric comparison using the Mann-Whitney U \
-         (Wilcoxon rank-sum) test. The assumed location shift is {:.4} on the continuous scale \
-         with common SD {:.4} (Cohen's d = {:.4}), corresponding to P(treatment > control) = {:.4} \
+         (Wilcoxon rank-sum) test. The assumed location shift is {:.2} on the continuous scale \
+         with common SD {:.2} (Cohen's d = {:.2}), corresponding to P(treatment > control) = {:.2} \
          under equal-variance normality.",
         input.mean_difference,
         input.standard_deviation,
@@ -1582,8 +1582,8 @@ pub fn wilcoxon_signed_rank_rationale(
 ) -> String {
     let mut paragraphs = vec![format!(
         "This calculation addresses a within-subject nonparametric comparison using the Wilcoxon \
-         signed-rank test. The expected paired difference is {:.4} with SD {:.4} (Cohen's d = {:.4}), \
-         giving P(difference > 0) = {:.4} under normality.",
+         signed-rank test. The expected paired difference is {:.2} with SD {:.2} (Cohen's d = {:.2}), \
+         giving P(difference > 0) = {:.2} under normality.",
         input.mean_difference,
         input.standard_deviation,
         result.effect_size,
