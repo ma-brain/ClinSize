@@ -72,7 +72,7 @@ pub fn two_sample_ttest_markdown(
 ) -> String {
     let dropout = input
         .dropout_rate
-        .map(|rate| format!("{rate:.4}"))
+        .map(|rate| format!("{rate:.2}"))
         .unwrap_or_else(|| "none".into());
 
     let mut lines = vec![
@@ -90,7 +90,7 @@ pub fn two_sample_ttest_markdown(
             "- **Target power:** {}",
             input
                 .power
-                .map(|p| format!("{p:.4}"))
+                .map(|p| format!("{p:.2}"))
                 .unwrap_or_else(|| "n/a".into())
         ),
         format!(
@@ -100,9 +100,9 @@ pub fn two_sample_ttest_markdown(
                 .map(|n| n.to_string())
                 .unwrap_or_else(|| "n/a".into())
         ),
-        format!("- **Mean difference:** {:.4}", input.mean_difference),
-        format!("- **Standard deviation:** {:.4}", input.standard_deviation),
-        format!("- **Allocation ratio:** {:.4}", input.allocation_ratio),
+        format!("- **Mean difference:** {:.2}", input.mean_difference),
+        format!("- **Standard deviation:** {:.2}", input.standard_deviation),
+        format!("- **Allocation ratio:** {:.2}", input.allocation_ratio),
         format!("- **Dropout rate:** {dropout}"),
         String::new(),
         "## Results".into(),
@@ -121,8 +121,8 @@ pub fn two_sample_ttest_markdown(
             "- **Dropout-adjusted total N:** {}",
             result.total_n_adjusted
         ),
-        format!("- **Achieved power:** {:.4}", result.achieved_power),
-        format!("- **Effect size (Cohen's d):** {:.4}", result.effect_size),
+        format!("- **Achieved power:** {:.2}", result.achieved_power),
+        format!("- **Effect size (Cohen's d):** {:.2}", result.effect_size),
     ];
 
     append_rationale(
@@ -156,14 +156,14 @@ pub fn one_sample_ttest_markdown(
         String::new(),
         "## Inputs".into(),
         format!("- **Alpha:** {:.4}", input.alpha),
-        format!("- **Mean difference:** {:.4}", input.mean_difference),
-        format!("- **Standard deviation:** {:.4}", input.standard_deviation),
+        format!("- **Mean difference:** {:.2}", input.mean_difference),
+        format!("- **Standard deviation:** {:.2}", input.standard_deviation),
         String::new(),
         "## Results".into(),
         format!("- **N:** {}", result.n),
         format!("- **Dropout-adjusted N:** {}", result.n_adjusted),
-        format!("- **Achieved power:** {:.4}", result.achieved_power),
-        format!("- **Effect size (Cohen's d):** {:.4}", result.effect_size),
+        format!("- **Achieved power:** {:.2}", result.achieved_power),
+        format!("- **Effect size (Cohen's d):** {:.2}", result.effect_size),
     ];
 
     append_rationale(
@@ -197,14 +197,14 @@ pub fn paired_ttest_markdown(
         String::new(),
         "## Inputs".into(),
         format!("- **Alpha:** {:.4}", input.alpha),
-        format!("- **Mean difference:** {:.4}", input.mean_difference),
-        format!("- **Standard deviation:** {:.4}", input.standard_deviation),
+        format!("- **Mean difference:** {:.2}", input.mean_difference),
+        format!("- **Standard deviation:** {:.2}", input.standard_deviation),
         String::new(),
         "## Results".into(),
         format!("- **Pairs:** {}", result.n_pairs),
         format!("- **Dropout-adjusted pairs:** {}", result.n_pairs_adjusted),
-        format!("- **Achieved power:** {:.4}", result.achieved_power),
-        format!("- **Effect size (Cohen's d):** {:.4}", result.effect_size),
+        format!("- **Achieved power:** {:.2}", result.achieved_power),
+        format!("- **Effect size (Cohen's d):** {:.2}", result.effect_size),
     ];
 
     append_rationale(&mut lines, rationale::paired_ttest_rationale(input, result));
@@ -233,10 +233,10 @@ pub fn one_way_anova_markdown(
         format!("- **Alpha:** {:.4}", input.alpha),
         format!("- **Number of groups:** {}", input.n_groups),
         format!(
-            "- **Between-group variance:** {:.4}",
+            "- **Between-group variance:** {:.2}",
             input.between_variance
         ),
-        format!("- **Within-group variance:** {:.4}", input.within_variance),
+        format!("- **Within-group variance:** {:.2}", input.within_variance),
         String::new(),
         "## Results".into(),
         format!("- **N per group:** {}", result.n_per_group),
@@ -249,8 +249,8 @@ pub fn one_way_anova_markdown(
             "- **Dropout-adjusted total N:** {}",
             result.total_n_adjusted
         ),
-        format!("- **Achieved power:** {:.4}", result.achieved_power),
-        format!("- **Effect size (Cohen's f):** {:.4}", result.effect_size),
+        format!("- **Achieved power:** {:.2}", result.achieved_power),
+        format!("- **Effect size (Cohen's f):** {:.2}", result.effect_size),
     ];
 
     append_rationale(
@@ -275,7 +275,7 @@ pub fn two_way_anova_markdown(
 ) -> String {
     let dropout = input
         .dropout_rate
-        .map(|rate| format!("{rate:.4}"))
+        .map(|rate| format!("{rate:.2}"))
         .unwrap_or_else(|| "none".into());
 
     let effect_label = match input.primary_effect {
@@ -297,14 +297,14 @@ pub fn two_way_anova_markdown(
         format!("- **Alpha:** {:.4}", input.alpha),
         format!("- **Levels of factor A:** {}", input.n_levels_a),
         format!("- **Levels of factor B:** {}", input.n_levels_b),
-        format!("- **Variance A (σ²_A):** {:.4}", input.variance_a),
-        format!("- **Variance B (σ²_B):** {:.4}", input.variance_b),
+        format!("- **Variance A (σ²_A):** {:.2}", input.variance_a),
+        format!("- **Variance B (σ²_B):** {:.2}", input.variance_b),
         format!(
-            "- **Variance AB (σ²_AB):** {:.4}",
+            "- **Variance AB (σ²_AB):** {:.2}",
             input.variance_interaction
         ),
         format!(
-            "- **Within-cell variance (σ²_error):** {:.4}",
+            "- **Within-cell variance (σ²_error):** {:.2}",
             input.within_variance
         ),
         format!("- **Dropout rate:** {dropout}"),
@@ -320,9 +320,9 @@ pub fn two_way_anova_markdown(
             "- **Dropout-adjusted total N:** {}",
             result.total_n_adjusted
         ),
-        format!("- **Achieved power:** {:.4}", result.achieved_power),
+        format!("- **Achieved power:** {:.2}", result.achieved_power),
         format!(
-            "- **Effect size (Cohen's f, primary):** {:.4}",
+            "- **Effect size (Cohen's f, primary):** {:.2}",
             result.effect_size
         ),
     ];
@@ -351,7 +351,7 @@ pub fn ancova_two_sample_markdown(
 ) -> String {
     let dropout = input
         .dropout_rate
-        .map(|rate| format!("{rate:.4}"))
+        .map(|rate| format!("{rate:.2}"))
         .unwrap_or_else(|| "none".into());
 
     let mut lines = vec![
@@ -369,7 +369,7 @@ pub fn ancova_two_sample_markdown(
             "- **Target power:** {}",
             input
                 .power
-                .map(|p| format!("{p:.4}"))
+                .map(|p| format!("{p:.2}"))
                 .unwrap_or_else(|| "n/a".into())
         ),
         format!(
@@ -379,16 +379,16 @@ pub fn ancova_two_sample_markdown(
                 .map(|n| n.to_string())
                 .unwrap_or_else(|| "n/a".into())
         ),
-        format!("- **Mean difference:** {:.4}", input.mean_difference),
+        format!("- **Mean difference:** {:.2}", input.mean_difference),
         format!(
-            "- **Unadjusted standard deviation:** {:.4}",
+            "- **Unadjusted standard deviation:** {:.2}",
             input.standard_deviation
         ),
         format!(
-            "- **Baseline-outcome correlation:** {:.4}",
+            "- **Baseline-outcome correlation:** {:.2}",
             input.baseline_outcome_correlation
         ),
-        format!("- **Allocation ratio:** {:.4}", input.allocation_ratio),
+        format!("- **Allocation ratio:** {:.2}", input.allocation_ratio),
         format!("- **Dropout rate:** {dropout}"),
         String::new(),
         "## Results".into(),
@@ -407,17 +407,17 @@ pub fn ancova_two_sample_markdown(
             "- **Dropout-adjusted total N:** {}",
             result.total_n_adjusted
         ),
-        format!("- **Achieved power:** {:.4}", result.achieved_power),
+        format!("- **Achieved power:** {:.2}", result.achieved_power),
         format!(
-            "- **Effect size (Cohen's d, unadjusted SD):** {:.4}",
+            "- **Effect size (Cohen's d, unadjusted SD):** {:.2}",
             result.effect_size
         ),
         format!(
-            "- **Adjusted standard deviation:** {:.4}",
+            "- **Adjusted standard deviation:** {:.2}",
             result.adjusted_standard_deviation
         ),
         format!(
-            "- **Variance reduction factor (1 − ρ²):** {:.4}",
+            "- **Variance reduction factor (1 − ρ²):** {:.2}",
             result.variance_reduction_factor
         ),
     ];
@@ -447,11 +447,11 @@ pub fn two_proportion_difference_markdown(
 ) -> String {
     let dropout = input
         .dropout_rate
-        .map(|rate| format!("{rate:.4}"))
+        .map(|rate| format!("{rate:.2}"))
         .unwrap_or_else(|| "none".into());
     let margin = input
         .noninferiority_margin
-        .map(|m| format!("{m:.4}"))
+        .map(|m| format!("{m:.2}"))
         .unwrap_or_else(|| "n/a".into());
 
     let mut lines = vec![
@@ -466,9 +466,9 @@ pub fn two_proportion_difference_markdown(
         String::new(),
         "## Inputs".into(),
         format!("- **Alpha:** {:.4}", input.alpha),
-        format!("- **Control event rate:** {:.4}", input.control_rate),
-        format!("- **Treatment event rate:** {:.4}", input.treatment_rate),
-        format!("- **Allocation ratio:** {:.4}", input.allocation_ratio),
+        format!("- **Control event rate:** {:.2}", input.control_rate),
+        format!("- **Treatment event rate:** {:.2}", input.treatment_rate),
+        format!("- **Allocation ratio:** {:.2}", input.allocation_ratio),
         format!("- **Non-inferiority margin:** {margin}"),
         format!("- **Dropout rate:** {dropout}"),
         String::new(),
@@ -480,9 +480,9 @@ pub fn two_proportion_difference_markdown(
             "- **Dropout-adjusted total N:** {}",
             result.total_n_adjusted
         ),
-        format!("- **Achieved power:** {:.4}", result.achieved_power),
+        format!("- **Achieved power:** {:.2}", result.achieved_power),
         format!(
-            "- **Rate difference (treatment − control):** {:.4}",
+            "- **Rate difference (treatment − control):** {:.2}",
             result.rate_difference
         ),
     ];
@@ -526,7 +526,7 @@ pub fn odds_ratio_markdown(
             total_n: result.total_n,
             total_n_adjusted: result.total_n_adjusted,
             achieved_power: result.achieved_power,
-            effect_line: format!("- **Odds ratio:** {:.4}", result.odds_ratio),
+            effect_line: format!("- **Odds ratio:** {:.2}", result.odds_ratio),
             warnings: &result.warnings,
             engine_version,
             validation_source:
@@ -557,7 +557,7 @@ pub fn risk_ratio_markdown(
             total_n: result.total_n,
             total_n_adjusted: result.total_n_adjusted,
             achieved_power: result.achieved_power,
-            effect_line: format!("- **Risk ratio:** {:.4}", result.risk_ratio),
+            effect_line: format!("- **Risk ratio:** {:.2}", result.risk_ratio),
             warnings: &result.warnings,
             engine_version,
             validation_source: "Chow et al. 2003 log risk-ratio normal approximation",
@@ -593,7 +593,7 @@ fn binary_effect_markdown(
 ) -> String {
     let dropout = ctx
         .dropout_rate
-        .map(|rate| format!("{rate:.4}"))
+        .map(|rate| format!("{rate:.2}"))
         .unwrap_or_else(|| "none".into());
 
     let mut lines = vec![
@@ -606,9 +606,9 @@ fn binary_effect_markdown(
         String::new(),
         "## Inputs".into(),
         format!("- **Alpha:** {:.4}", ctx.alpha),
-        format!("- **Control event rate:** {:.4}", ctx.control_rate),
-        format!("- **Treatment event rate:** {:.4}", ctx.treatment_rate),
-        format!("- **Allocation ratio:** {:.4}", ctx.allocation_ratio),
+        format!("- **Control event rate:** {:.2}", ctx.control_rate),
+        format!("- **Treatment event rate:** {:.2}", ctx.treatment_rate),
+        format!("- **Allocation ratio:** {:.2}", ctx.allocation_ratio),
         format!("- **Dropout rate:** {dropout}"),
         String::new(),
         "## Results".into(),
@@ -616,7 +616,7 @@ fn binary_effect_markdown(
         format!("- **Treatment N:** {}", ctx.n_treatment),
         format!("- **Total N:** {}", ctx.total_n),
         format!("- **Dropout-adjusted total N:** {}", ctx.total_n_adjusted),
-        format!("- **Achieved power:** {:.4}", ctx.achieved_power),
+        format!("- **Achieved power:** {:.2}", ctx.achieved_power),
         ctx.effect_line.clone(),
     ];
 
@@ -652,10 +652,10 @@ pub fn log_rank_markdown(
         "## Inputs".into(),
         format!("- **Alpha:** {:.4}", input.alpha),
         format!(
-            "- **Hazard ratio (treatment / control):** {:.4}",
+            "- **Hazard ratio (treatment / control):** {:.2}",
             input.hazard_ratio
         ),
-        format!("- **Allocation ratio:** {:.4}", input.allocation_ratio),
+        format!("- **Allocation ratio:** {:.2}", input.allocation_ratio),
         String::new(),
         "## Results".into(),
         format!("- **Required total events:** {}", result.required_events),
@@ -664,8 +664,8 @@ pub fn log_rank_markdown(
             "- **Expected treatment events:** {}",
             result.events_treatment
         ),
-        format!("- **Achieved power:** {:.4}", result.achieved_power),
-        format!("- **Hazard ratio:** {:.4}", result.hazard_ratio),
+        format!("- **Achieved power:** {:.2}", result.achieved_power),
+        format!("- **Hazard ratio:** {:.2}", result.hazard_ratio),
     ];
 
     if let (Some(control_hazard), Some(accrual), Some(follow_up)) = (
@@ -675,12 +675,12 @@ pub fn log_rank_markdown(
     ) {
         lines.push(String::new());
         lines.push("## Accrual assumptions".into());
-        lines.push(format!("- **Control hazard rate:** {control_hazard:.4}"));
-        lines.push(format!("- **Accrual duration:** {accrual:.4}"));
-        lines.push(format!("- **Minimum follow-up:** {follow_up:.4}"));
+        lines.push(format!("- **Control hazard rate:** {control_hazard:.2}"));
+        lines.push(format!("- **Accrual duration:** {accrual:.2}"));
+        lines.push(format!("- **Minimum follow-up:** {follow_up:.2}"));
         let dropout = input
             .dropout_hazard_rate
-            .map(|rate| format!("{rate:.4}"))
+            .map(|rate| format!("{rate:.2}"))
             .unwrap_or_else(|| "0".into());
         lines.push(format!("- **Dropout hazard rate:** {dropout}"));
     }
@@ -697,9 +697,9 @@ pub fn log_rank_markdown(
             result.probability_event_control,
             result.probability_event_treatment,
         ) {
-            lines.push(format!("- **Control event probability:** {p_control:.4}"));
+            lines.push(format!("- **Control event probability:** {p_control:.2}"));
             lines.push(format!(
-                "- **Treatment event probability:** {p_treatment:.4}"
+                "- **Treatment event probability:** {p_treatment:.2}"
             ));
         }
     }
@@ -732,7 +732,7 @@ pub fn multiplicity_markdown(
         format!("- **Adjustment method:** {:?}", input.adjustment_method),
         String::new(),
         "## Inputs".into(),
-        format!("- **Family-wise alpha:** {:.6}", input.family_wise_alpha),
+        format!("- **Family-wise alpha:** {:.4}", input.family_wise_alpha),
         format!(
             "- **Number of comparisons:** {}",
             input.number_of_comparisons
@@ -744,18 +744,18 @@ pub fn multiplicity_markdown(
     }
 
     if let Some(comparison_weight) = result.comparison_weight {
-        lines.push(format!("- **Comparison weight:** {comparison_weight:.6}"));
+        lines.push(format!("- **Comparison weight:** {comparison_weight:.2}"));
     }
 
     lines.extend([
         String::new(),
         "## Results".into(),
         format!(
-            "- **Adjusted per-comparison alpha:** {:.6}",
+            "- **Adjusted per-comparison alpha:** {:.4}",
             result.adjusted_alpha
         ),
         format!(
-            "- **Alpha reduction factor:** {:.6}",
+            "- **Alpha reduction factor:** {:.4}",
             result.alpha_reduction_factor
         ),
         String::new(),
@@ -792,26 +792,26 @@ pub fn group_sequential_markdown(
         String::new(),
         "## Inputs".into(),
         format!(
-            "- **One-sided alpha (efficacy boundary):** {:.6}",
+            "- **One-sided alpha (efficacy boundary):** {:.4}",
             input.alpha
         ),
-        format!("- **Target power:** {:.6}", input.target_power),
+        format!("- **Target power:** {:.2}", input.target_power),
         format!("- **Number of looks:** {}", input.number_of_looks),
         String::new(),
         "## Results".into(),
         format!(
-            "- **Sample size inflation factor:** {:.6}",
+            "- **Sample size inflation factor:** {:.2}",
             result.sample_size_inflation_factor
         ),
-        format!("- **Achieved power:** {:.6}", result.achieved_power),
-        format!("- **Fixed-design drift:** {:.6}", result.fixed_design_drift),
+        format!("- **Achieved power:** {:.2}", result.achieved_power),
+        format!("- **Fixed-design drift:** {:.2}", result.fixed_design_drift),
         String::new(),
         "### Interim boundaries".into(),
     ];
 
     for look in &result.looks {
         lines.push(format!(
-            "- **Look {}:** info {:.0}%, upper Z {:.4}, cumulative α {:.6}",
+            "- **Look {}:** info {:.0}%, upper Z {:.2}, cumulative α {:.4}",
             look.look,
             look.information_fraction * 100.0,
             look.upper_z_boundary,
@@ -864,20 +864,20 @@ pub fn blinded_ssre_markdown(
         String::new(),
         "## Inputs".into(),
         format!("- **Alpha:** {:.4}", input.alpha),
-        format!("- **Target power:** {:.4}", input.target_power),
-        format!("- **Mean difference:** {:.4}", input.mean_difference),
+        format!("- **Target power:** {:.2}", input.target_power),
+        format!("- **Mean difference:** {:.2}", input.mean_difference),
         format!(
-            "- **Planned standard deviation:** {:.4}",
+            "- **Planned standard deviation:** {:.2}",
             input.planned_standard_deviation
         ),
         format!(
-            "- **Blinded interim standard deviation:** {:.4}",
+            "- **Blinded interim standard deviation:** {:.2}",
             blinded_sd
         ),
-        format!("- **Interim fraction:** {:.4}", input.interim_fraction),
-        format!("- **Allocation ratio:** {:.4}", input.allocation_ratio),
+        format!("- **Interim fraction:** {:.2}", input.interim_fraction),
+        format!("- **Allocation ratio:** {:.2}", input.allocation_ratio),
         format!(
-            "- **Maximum sample size multiplier:** {:.4}",
+            "- **Maximum sample size multiplier:** {:.2}",
             input.max_sample_size_multiplier
         ),
         String::new(),
@@ -893,7 +893,7 @@ pub fn blinded_ssre_markdown(
         String::new(),
         "## Re-estimation".into(),
         format!(
-            "- **Variance ratio (s_b/σ₀)²:** {:.4}",
+            "- **Variance ratio (s_b/σ₀)²:** {:.2}",
             result.variance_ratio
         ),
         format!(
@@ -909,7 +909,7 @@ pub fn blinded_ssre_markdown(
             result.re_estimated_total_n
         ),
         format!(
-            "- **Sample size inflation factor:** {:.4}",
+            "- **Sample size inflation factor:** {:.2}",
             result.sample_size_inflation_factor
         ),
         format!("- **Cap applied:** {}", result.was_capped),
@@ -917,15 +917,15 @@ pub fn blinded_ssre_markdown(
         format!("- **Capped treatment N:** {}", result.capped_n_treatment),
         format!("- **Capped total N:** {}", result.capped_total_n),
         format!(
-            "- **Capped inflation factor:** {:.4}",
+            "- **Capped inflation factor:** {:.2}",
             result.capped_inflation_factor
         ),
         format!(
-            "- **Power at capped N (planned SD):** {:.4}",
+            "- **Power at capped N (planned SD):** {:.2}",
             result.achieved_power_at_capped
         ),
         format!(
-            "- **Power at capped N (blinded interim SD):** {:.4}",
+            "- **Power at capped N (blinded interim SD):** {:.2}",
             result.achieved_power_at_capped_interim_sd
         ),
     ];
@@ -960,14 +960,14 @@ pub fn one_sample_binomial_markdown(
         String::new(),
         "## Inputs".into(),
         format!("- **Alpha:** {:.4}", input.alpha),
-        format!("- **Reference rate:** {:.4}", input.reference_rate),
-        format!("- **Response rate:** {:.4}", input.response_rate),
+        format!("- **Reference rate:** {:.2}", input.reference_rate),
+        format!("- **Response rate:** {:.2}", input.response_rate),
         String::new(),
         "## Results".into(),
         format!("- **N:** {}", result.n),
         format!("- **Dropout-adjusted N:** {}", result.n_adjusted),
-        format!("- **Achieved power:** {:.4}", result.achieved_power),
-        format!("- **Rate difference:** {:.4}", result.rate_difference),
+        format!("- **Achieved power:** {:.2}", result.achieved_power),
+        format!("- **Rate difference:** {:.2}", result.rate_difference),
     ];
     append_rationale(
         &mut lines,
@@ -990,7 +990,7 @@ pub fn change_from_baseline_markdown(
 ) -> String {
     let dropout = input
         .dropout_rate
-        .map(|rate| format!("{rate:.4}"))
+        .map(|rate| format!("{rate:.2}"))
         .unwrap_or_else(|| "none".into());
 
     let mut lines = vec![
@@ -1008,7 +1008,7 @@ pub fn change_from_baseline_markdown(
             "- **Target power:** {}",
             input
                 .power
-                .map(|p| format!("{p:.4}"))
+                .map(|p| format!("{p:.2}"))
                 .unwrap_or_else(|| "n/a".into())
         ),
         format!(
@@ -1018,16 +1018,16 @@ pub fn change_from_baseline_markdown(
                 .map(|n| n.to_string())
                 .unwrap_or_else(|| "n/a".into())
         ),
-        format!("- **Mean CFB difference:** {:.4}", input.mean_difference),
+        format!("- **Mean CFB difference:** {:.2}", input.mean_difference),
         format!(
-            "- **Outcome standard deviation:** {:.4}",
+            "- **Outcome standard deviation:** {:.2}",
             input.standard_deviation
         ),
         format!(
-            "- **Baseline-outcome correlation:** {:.4}",
+            "- **Baseline-outcome correlation:** {:.2}",
             input.baseline_outcome_correlation
         ),
-        format!("- **Allocation ratio:** {:.4}", input.allocation_ratio),
+        format!("- **Allocation ratio:** {:.2}", input.allocation_ratio),
         format!("- **Dropout rate:** {dropout}"),
         String::new(),
         "## Results".into(),
@@ -1046,13 +1046,13 @@ pub fn change_from_baseline_markdown(
             "- **Dropout-adjusted total N:** {}",
             result.total_n_adjusted
         ),
-        format!("- **Achieved power:** {:.4}", result.achieved_power),
+        format!("- **Achieved power:** {:.2}", result.achieved_power),
         format!(
-            "- **Effect size (Cohen's d, unadjusted SD):** {:.4}",
+            "- **Effect size (Cohen's d, unadjusted SD):** {:.2}",
             result.effect_size
         ),
         format!(
-            "- **Change-score standard deviation:** {:.4}",
+            "- **Change-score standard deviation:** {:.2}",
             result.change_score_standard_deviation
         ),
     ];
@@ -1088,7 +1088,7 @@ fn correlation_structure_label(structure: CorrelationStructure) -> &'static str 
 pub fn mmrm_markdown(input: &MmrmInput, result: &MmrmResult, engine_version: &str) -> String {
     let per_visit_dropout = input
         .per_visit_dropout_rate
-        .map(|rate| format!("{rate:.4}"))
+        .map(|rate| format!("{rate:.2}"))
         .unwrap_or_else(|| "none".into());
 
     let mut lines = vec![
@@ -1106,7 +1106,7 @@ pub fn mmrm_markdown(input: &MmrmInput, result: &MmrmResult, engine_version: &st
             "- **Target power:** {}",
             input
                 .power
-                .map(|p| format!("{p:.4}"))
+                .map(|p| format!("{p:.2}"))
                 .unwrap_or_else(|| "n/a".into())
         ),
         format!(
@@ -1116,34 +1116,34 @@ pub fn mmrm_markdown(input: &MmrmInput, result: &MmrmResult, engine_version: &st
                 .map(|n| n.to_string())
                 .unwrap_or_else(|| "n/a".into())
         ),
-        format!("- **Treatment effect (δ):** {:.4}", input.treatment_effect),
+        format!("- **Treatment effect (δ):** {:.2}", input.treatment_effect),
         format!(
-            "- **Residual standard deviation (σ):** {:.4}",
+            "- **Residual standard deviation (σ):** {:.2}",
             input.residual_standard_deviation
         ),
         format!(
             "- **Correlation structure:** {}",
             correlation_structure_label(input.correlation_structure)
         ),
-        format!("- **Correlation (ρ):** {:.4}", input.correlation),
+        format!("- **Correlation (ρ):** {:.2}", input.correlation),
         format!(
             "- **Post-baseline visits (k):** {}",
             input.n_post_baseline_visits
         ),
         format!("- **Per-visit dropout rate:** {per_visit_dropout}"),
-        format!("- **Allocation ratio:** {:.4}", input.allocation_ratio),
+        format!("- **Allocation ratio:** {:.2}", input.allocation_ratio),
         String::new(),
         "## Results".into(),
         format!("- **Control N (randomized):** {}", result.n_control),
         format!("- **Treatment N (randomized):** {}", result.n_treatment),
         format!("- **Total N (randomized):** {}", result.total_n),
-        format!("- **Achieved power:** {:.4}", result.achieved_power),
+        format!("- **Achieved power:** {:.2}", result.achieved_power),
         format!(
-            "- **Variance factor (φ, Lu-Luo-Chen):** {:.4}",
+            "- **Variance factor (φ, Lu-Luo-Chen):** {:.2}",
             result.variance_factor
         ),
-        format!("- **Final-visit retention:** {:.4}", result.final_retention),
-        format!("- **Cumulative dropout:** {:.4}", result.cumulative_dropout),
+        format!("- **Final-visit retention:** {:.2}", result.final_retention),
+        format!("- **Cumulative dropout:** {:.2}", result.cumulative_dropout),
     ];
 
     append_rationale(&mut lines, rationale::mmrm_rationale(input, result));
@@ -1168,7 +1168,7 @@ pub fn negative_binomial_markdown(
 ) -> String {
     let dropout = input
         .dropout_rate
-        .map(|rate| format!("{rate:.4}"))
+        .map(|rate| format!("{rate:.2}"))
         .unwrap_or_else(|| "none".into());
 
     let mut lines = vec![
@@ -1186,14 +1186,14 @@ pub fn negative_binomial_markdown(
             "- **Target power:** {}",
             input
                 .power
-                .map(|p| format!("{p:.4}"))
+                .map(|p| format!("{p:.2}"))
                 .unwrap_or_else(|| "n/a".into())
         ),
-        format!("- **Control rate λ₁:** {:.4}", input.control_rate),
-        format!("- **Treatment rate λ₂:** {:.4}", input.treatment_rate),
-        format!("- **Dispersion k:** {:.4}", input.dispersion),
-        format!("- **Exposure time:** {:.4}", input.exposure_time),
-        format!("- **Allocation ratio:** {:.4}", input.allocation_ratio),
+        format!("- **Control rate λ₁:** {:.2}", input.control_rate),
+        format!("- **Treatment rate λ₂:** {:.2}", input.treatment_rate),
+        format!("- **Dispersion k:** {:.2}", input.dispersion),
+        format!("- **Exposure time:** {:.2}", input.exposure_time),
+        format!("- **Allocation ratio:** {:.2}", input.allocation_ratio),
         format!("- **Dropout rate:** {dropout}"),
         String::new(),
         "## Results".into(),
@@ -1204,8 +1204,8 @@ pub fn negative_binomial_markdown(
             "- **Dropout-adjusted total N:** {}",
             result.total_n_adjusted
         ),
-        format!("- **Achieved power:** {:.4}", result.achieved_power),
-        format!("- **Rate ratio (λ₂/λ₁):** {:.4}", result.rate_ratio),
+        format!("- **Achieved power:** {:.2}", result.achieved_power),
+        format!("- **Rate ratio (λ₂/λ₁):** {:.2}", result.rate_ratio),
     ];
 
     append_rationale(
@@ -1235,7 +1235,7 @@ pub fn poisson_markdown(
 ) -> String {
     let dropout = input
         .dropout_rate
-        .map(|rate| format!("{rate:.4}"))
+        .map(|rate| format!("{rate:.2}"))
         .unwrap_or_else(|| "none".into());
 
     let mut lines = vec![
@@ -1253,13 +1253,13 @@ pub fn poisson_markdown(
             "- **Target power:** {}",
             input
                 .power
-                .map(|p| format!("{p:.4}"))
+                .map(|p| format!("{p:.2}"))
                 .unwrap_or_else(|| "n/a".into())
         ),
-        format!("- **Control rate λ₁:** {:.4}", input.control_rate),
-        format!("- **Treatment rate λ₂:** {:.4}", input.treatment_rate),
-        format!("- **Exposure time:** {:.4}", input.exposure_time),
-        format!("- **Allocation ratio:** {:.4}", input.allocation_ratio),
+        format!("- **Control rate λ₁:** {:.2}", input.control_rate),
+        format!("- **Treatment rate λ₂:** {:.2}", input.treatment_rate),
+        format!("- **Exposure time:** {:.2}", input.exposure_time),
+        format!("- **Allocation ratio:** {:.2}", input.allocation_ratio),
         format!("- **Dropout rate:** {dropout}"),
         String::new(),
         "## Results".into(),
@@ -1270,8 +1270,8 @@ pub fn poisson_markdown(
             "- **Dropout-adjusted total N:** {}",
             result.total_n_adjusted
         ),
-        format!("- **Achieved power:** {:.4}", result.achieved_power),
-        format!("- **Rate ratio (λ₂/λ₁):** {:.4}", result.rate_ratio),
+        format!("- **Achieved power:** {:.2}", result.achieved_power),
+        format!("- **Rate ratio (λ₂/λ₁):** {:.2}", result.rate_ratio),
     ];
 
     append_rationale(&mut lines, rationale::poisson_rationale(input, result));
@@ -1291,12 +1291,12 @@ pub fn proportional_odds_markdown(
 ) -> String {
     let dropout = input
         .dropout_rate
-        .map(|rate| format!("{rate:.4}"))
+        .map(|rate| format!("{rate:.2}"))
         .unwrap_or_else(|| "none".into());
     let probs: Vec<String> = input
         .category_probabilities
         .iter()
-        .map(|p| format!("{p:.4}"))
+        .map(|p| format!("{p:.2}"))
         .collect();
 
     let mut lines = vec![
@@ -1313,15 +1313,15 @@ pub fn proportional_odds_markdown(
             "- **Target power:** {}",
             input
                 .power
-                .map(|p| format!("{p:.4}"))
+                .map(|p| format!("{p:.2}"))
                 .unwrap_or_else(|| "n/a".into())
         ),
         format!(
             "- **Category probabilities (best→worst):** [{}]",
             probs.join(", ")
         ),
-        format!("- **Odds ratio:** {:.4}", input.odds_ratio),
-        format!("- **Treatment fraction:** {:.4}", input.treatment_fraction),
+        format!("- **Odds ratio:** {:.2}", input.odds_ratio),
+        format!("- **Treatment fraction:** {:.2}", input.treatment_fraction),
         format!("- **Dropout rate:** {dropout}"),
         String::new(),
         "## Results".into(),
@@ -1332,8 +1332,8 @@ pub fn proportional_odds_markdown(
             "- **Dropout-adjusted total N:** {}",
             result.total_n_adjusted
         ),
-        format!("- **Achieved power:** {:.4}", result.achieved_power),
-        format!("- **Efficiency (ps):** {:.4}", result.efficiency),
+        format!("- **Achieved power:** {:.2}", result.achieved_power),
+        format!("- **Efficiency (ps):** {:.2}", result.efficiency),
     ];
 
     append_rationale(
@@ -1370,9 +1370,9 @@ pub fn mann_whitney_markdown(
         String::new(),
         "## Inputs".into(),
         format!("- **Alpha:** {:.4}", input.alpha),
-        format!("- **Mean difference:** {:.4}", input.mean_difference),
-        format!("- **Standard deviation:** {:.4}", input.standard_deviation),
-        format!("- **Allocation ratio:** {:.4}", input.allocation_ratio),
+        format!("- **Mean difference:** {:.2}", input.mean_difference),
+        format!("- **Standard deviation:** {:.2}", input.standard_deviation),
+        format!("- **Allocation ratio:** {:.2}", input.allocation_ratio),
         String::new(),
         "## Results".into(),
         format!("- **Control N:** {}", result.n_control),
@@ -1382,12 +1382,12 @@ pub fn mann_whitney_markdown(
             "- **Dropout-adjusted total N:** {}",
             result.total_n_adjusted
         ),
-        format!("- **Achieved power:** {:.4}", result.achieved_power),
+        format!("- **Achieved power:** {:.2}", result.achieved_power),
         format!(
-            "- **P(treatment > control):** {:.4}",
+            "- **P(treatment > control):** {:.2}",
             result.probability_superiority
         ),
-        format!("- **Effect size (Cohen's d):** {:.4}", result.effect_size),
+        format!("- **Effect size (Cohen's d):** {:.2}", result.effect_size),
     ];
     append_rationale(&mut lines, rationale::mann_whitney_rationale(input, result));
     append_protocol_text(&mut lines, protocol::mann_whitney_protocol(input, result));
@@ -1416,18 +1416,18 @@ pub fn wilcoxon_signed_rank_markdown(
         String::new(),
         "## Inputs".into(),
         format!("- **Alpha:** {:.4}", input.alpha),
-        format!("- **Mean difference:** {:.4}", input.mean_difference),
-        format!("- **Standard deviation:** {:.4}", input.standard_deviation),
+        format!("- **Mean difference:** {:.2}", input.mean_difference),
+        format!("- **Standard deviation:** {:.2}", input.standard_deviation),
         String::new(),
         "## Results".into(),
         format!("- **Pairs:** {}", result.n_pairs),
         format!("- **Dropout-adjusted pairs:** {}", result.n_pairs_adjusted),
-        format!("- **Achieved power:** {:.4}", result.achieved_power),
+        format!("- **Achieved power:** {:.2}", result.achieved_power),
         format!(
-            "- **P(difference > 0):** {:.4}",
+            "- **P(difference > 0):** {:.2}",
             result.probability_positive_difference
         ),
-        format!("- **Effect size (Cohen's d):** {:.4}", result.effect_size),
+        format!("- **Effect size (Cohen's d):** {:.2}", result.effect_size),
     ];
     append_rationale(
         &mut lines,

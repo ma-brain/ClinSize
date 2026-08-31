@@ -1,9 +1,10 @@
 <script lang="ts">
-  import ExportMenu from "$lib/components/ExportMenu.svelte";
   import MethodPage from "$lib/components/MethodPage.svelte";
   import AssumptionsCard from "$lib/components/ui/AssumptionsCard.svelte";
+  import CollapsibleSection from "$lib/components/ui/CollapsibleSection.svelte";
   import Field from "$lib/components/ui/Field.svelte";
   import MethodHeader from "$lib/components/ui/MethodHeader.svelte";
+  import NotesCard from "$lib/components/ui/NotesCard.svelte";
   import Panel from "$lib/components/ui/Panel.svelte";
   import PrimaryButton from "$lib/components/ui/PrimaryButton.svelte";
   import RationaleCard from "$lib/components/ui/RationaleCard.svelte";
@@ -11,7 +12,6 @@
   import ResultGrid from "$lib/components/ui/ResultGrid.svelte";
   import ResultHero from "$lib/components/ui/ResultHero.svelte";
   import Section from "$lib/components/ui/Section.svelte";
-  import WarningList from "$lib/components/ui/WarningList.svelte";
   import { persistCalculation } from "$lib/workflow/record";
   import { calculateMethod, exportMethodMarkdown } from "$lib/workflow/methodDispatch";
   import { fetchCalculationRationale, fetchProtocolText } from "$lib/workflow/rationale";
@@ -79,14 +79,14 @@
             label: "Interim per-arm N",
             value: `${result.interimNControl} / ${result.interimNTreatment}`,
           },
-          { label: "Variance ratio (s_b/σ₀)²", value: result.varianceRatio.toFixed(4) },
+          { label: "Variance ratio (s_b/σ₀)²", value: result.varianceRatio.toFixed(2) },
           {
             label: "Re-estimated per-arm N",
             value: `${result.reEstimatedNControl} / ${result.reEstimatedNTreatment}`,
           },
           {
             label: "Inflation factor",
-            value: result.sampleSizeInflationFactor.toFixed(4),
+            value: result.sampleSizeInflationFactor.toFixed(2),
           },
           {
             label: "Capped per-arm N",
@@ -95,15 +95,15 @@
           { label: "Capped total N", value: String(result.cappedTotalN) },
           {
             label: "Capped inflation factor",
-            value: result.cappedInflationFactor.toFixed(4),
+            value: result.cappedInflationFactor.toFixed(2),
           },
           {
             label: "Power at capped N (planned SD)",
-            value: result.achievedPowerAtCapped.toFixed(4),
+            value: result.achievedPowerAtCapped.toFixed(2),
           },
           {
             label: "Power at capped N (interim SD)",
-            value: result.achievedPowerAtCappedInterimSd.toFixed(4),
+            value: result.achievedPowerAtCappedInterimSd.toFixed(2),
             highlight: result.wasCapped,
           },
         ]
@@ -174,6 +174,8 @@
       description="Plan a two-sample t-test with blinded variance re-estimation at an interim look. Uses the Friede-Kieser rule: update sample size from the blinded pooled interim SD while holding the planned treatment effect fixed."
       category="Design"
       badges={[alternativeLabel, "Friede-Kieser"]}
+      exportMarkdown={exportMarkdown}
+      exportDisabled={calculating}
     />
   {/snippet}
 
@@ -258,16 +260,10 @@
   {/snippet}
 
   {#snippet results()}
-    <Panel title="Results">
+    <CollapsibleSection title="Results">
       {#if result}
         <ResultHero label="Capped total N" value={String(result.cappedTotalN)} />
         <ResultGrid items={resultItems} />
-        {#if rationale}
-          <RationaleCard text={rationale} />
-        {/if}
-        {#if protocolText}
-          <ProtocolTextCard text={protocolText} />
-        {/if}
 
         {#if result.wasCapped}
           <p class="hint">
@@ -276,7 +272,31 @@
           </p>
         {/if}
 
-        <WarningList warnings={result.warnings} />
+      {:else}
+        <p class="empty text-muted">Run a calculation to see re-estimated sample sizes.</p>
+      {/if}
+    </CollapsibleSection>
+
+    {#if rationale}
+      <CollapsibleSection title="Sample size calculation rationale" defaultCollapsed={true}>
+        <RationaleCard text={rationale} />
+      </CollapsibleSection>
+    {/if}
+
+    {#if protocolText}
+      <CollapsibleSection title="Protocol text" defaultCollapsed={true}>
+        <ProtocolTextCard text={protocolText} />
+      </CollapsibleSection>
+    {/if}
+
+    {#if result && result.warnings.length > 0}
+      <CollapsibleSection title="Notes" defaultCollapsed={true}>
+        <NotesCard warnings={result.warnings} />
+      </CollapsibleSection>
+    {/if}
+
+    {#if result}
+      <CollapsibleSection title="Assumptions" defaultCollapsed={true}>
         <AssumptionsCard
           items={[
             "Blinded pooled interim SD used for variance re-estimation (Friede-Kieser).",
@@ -284,15 +304,8 @@
             "Two-sample t-test with equal variance and pre-specified maximum inflation cap.",
           ]}
         />
-        <ExportMenu
-          title="Blinded sample size re-estimation"
-          markdown={exportMarkdown}
-          disabled={calculating}
-        />
-      {:else}
-        <p class="empty text-muted">Run a calculation to see re-estimated sample sizes.</p>
-      {/if}
-    </Panel>
+      </CollapsibleSection>
+    {/if}
   {/snippet}
 </MethodPage>
 

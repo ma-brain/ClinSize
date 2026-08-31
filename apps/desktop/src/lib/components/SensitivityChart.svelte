@@ -6,7 +6,7 @@
     points,
     parameterLabel,
     outputLabel,
-    formatParameterValue = (value: number) => value.toFixed(3),
+    formatParameterValue = (value: number) => value.toFixed(2),
     formatOutputValue = (value: number) => value.toFixed(2),
     fileStem = "clinsize-sensitivity-chart",
   }: {

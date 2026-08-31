@@ -1,9 +1,10 @@
 <script lang="ts">
-  import ExportMenu from "$lib/components/ExportMenu.svelte";
   import MethodPage from "$lib/components/MethodPage.svelte";
   import AssumptionsCard from "$lib/components/ui/AssumptionsCard.svelte";
+  import CollapsibleSection from "$lib/components/ui/CollapsibleSection.svelte";
   import Field from "$lib/components/ui/Field.svelte";
   import MethodHeader from "$lib/components/ui/MethodHeader.svelte";
+  import NotesCard from "$lib/components/ui/NotesCard.svelte";
   import Panel from "$lib/components/ui/Panel.svelte";
   import PrimaryButton from "$lib/components/ui/PrimaryButton.svelte";
   import RationaleCard from "$lib/components/ui/RationaleCard.svelte";
@@ -11,7 +12,6 @@
   import ResultGrid from "$lib/components/ui/ResultGrid.svelte";
   import ResultHero from "$lib/components/ui/ResultHero.svelte";
   import Section from "$lib/components/ui/Section.svelte";
-  import WarningList from "$lib/components/ui/WarningList.svelte";
   import { persistCalculation } from "$lib/workflow/record";
   import { calculateMethod, exportMethodMarkdown } from "$lib/workflow/methodDispatch";
   import { fetchCalculationRationale, fetchProtocolText } from "$lib/workflow/rationale";
@@ -84,7 +84,7 @@
       ? [
           {
             label: "Adjusted per-comparison alpha",
-            value: result.adjustedAlpha.toFixed(6),
+            value: result.adjustedAlpha.toFixed(4),
           },
           { label: "Family-wise alpha", value: result.familyWiseAlpha.toFixed(4) },
           { label: "Number of comparisons", value: String(result.numberOfComparisons) },
@@ -92,7 +92,7 @@
             ? [{ label: "Gate position", value: String(result.gatePosition) }]
             : []),
           ...(result.comparisonWeight
-            ? [{ label: "Comparison weight", value: result.comparisonWeight.toFixed(4) }]
+            ? [{ label: "Comparison weight", value: result.comparisonWeight.toFixed(2) }]
             : []),
           {
             label: "Alpha reduction factor",
@@ -176,6 +176,8 @@
       description="Convert a family-wise Type I error rate into a per-comparison alpha for use in endpoint sample size calculations."
       category="Design"
       badges={[methodLabel, `${numberOfComparisons} comparisons`]}
+      exportMarkdown={exportMarkdown}
+      exportDisabled={calculating}
     />
   {/snippet}
 
@@ -239,26 +241,44 @@
   {/snippet}
 
   {#snippet results()}
-    <Panel title="Results">
+    <CollapsibleSection title="Results">
       {#if result}
         <ResultHero
           label="Adjusted per-comparison alpha"
-          value={result.adjustedAlpha.toFixed(6)}
+          value={result.adjustedAlpha.toFixed(4)}
         />
         <ResultGrid items={resultItems} />
-        {#if rationale}
-          <RationaleCard text={rationale} />
-        {/if}
-        {#if protocolText}
-          <ProtocolTextCard text={protocolText} />
-        {/if}
 
         <p class="hint">
           Use the adjusted per-comparison alpha as the Type I error input in your endpoint
           calculation (for example, two-sample t-test).
         </p>
 
-        <WarningList warnings={result.warnings} />
+      {:else}
+        <p class="empty text-muted">Run a calculation to see adjusted alpha.</p>
+      {/if}
+    </CollapsibleSection>
+
+    {#if rationale}
+      <CollapsibleSection title="Sample size calculation rationale" defaultCollapsed={true}>
+        <RationaleCard text={rationale} />
+      </CollapsibleSection>
+    {/if}
+
+    {#if protocolText}
+      <CollapsibleSection title="Protocol text" defaultCollapsed={true}>
+        <ProtocolTextCard text={protocolText} />
+      </CollapsibleSection>
+    {/if}
+
+    {#if result && result.warnings.length > 0}
+      <CollapsibleSection title="Notes" defaultCollapsed={true}>
+        <NotesCard warnings={result.warnings} />
+      </CollapsibleSection>
+    {/if}
+
+    {#if result}
+      <CollapsibleSection title="Assumptions" defaultCollapsed={true}>
         <AssumptionsCard
           items={[
             "Closed testing principle assumed for gatekeeping methods.",
@@ -266,15 +286,8 @@
             "Adjusted alpha feeds endpoint calculations; does not replace them.",
           ]}
         />
-        <ExportMenu
-          title="Multiplicity adjustment"
-          markdown={exportMarkdown}
-          disabled={calculating}
-        />
-      {:else}
-        <p class="empty text-muted">Run a calculation to see adjusted alpha.</p>
-      {/if}
-    </Panel>
+      </CollapsibleSection>
+    {/if}
   {/snippet}
 </MethodPage>
 

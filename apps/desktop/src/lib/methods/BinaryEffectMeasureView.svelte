@@ -1,10 +1,11 @@
 <script lang="ts">
-  import ExportMenu from "$lib/components/ExportMenu.svelte";
   import MethodPage from "$lib/components/MethodPage.svelte";
   import SensitivityPanel from "$lib/components/SensitivityPanel.svelte";
   import AssumptionsCard from "$lib/components/ui/AssumptionsCard.svelte";
+  import CollapsibleSection from "$lib/components/ui/CollapsibleSection.svelte";
   import Field from "$lib/components/ui/Field.svelte";
   import MethodHeader from "$lib/components/ui/MethodHeader.svelte";
+  import NotesCard from "$lib/components/ui/NotesCard.svelte";
   import Panel from "$lib/components/ui/Panel.svelte";
   import PrimaryButton from "$lib/components/ui/PrimaryButton.svelte";
   import RationaleCard from "$lib/components/ui/RationaleCard.svelte";
@@ -12,7 +13,6 @@
   import ResultGrid from "$lib/components/ui/ResultGrid.svelte";
   import ResultHero from "$lib/components/ui/ResultHero.svelte";
   import Section from "$lib/components/ui/Section.svelte";
-  import WarningList from "$lib/components/ui/WarningList.svelte";
   import { binaryEffectSensitivityOptions } from "$lib/sensitivity/configs";
   import { persistCalculation } from "$lib/workflow/record";
   import { calculateMethod, exportMethodMarkdown } from "$lib/workflow/methodDispatch";
@@ -119,7 +119,7 @@
     activeResult
       ? solveMode === "sample_size"
         ? String(activeResult.totalN)
-        : activeResult.achievedPower.toFixed(4)
+        : activeResult.achievedPower.toFixed(2)
       : "—",
   );
 
@@ -129,8 +129,8 @@
           { label: "Control N", value: String(activeResult.nControl) },
           { label: "Treatment N", value: String(activeResult.nTreatment) },
           { label: "Total N", value: String(activeResult.totalN) },
-          { label: "Achieved power", value: activeResult.achievedPower.toFixed(4) },
-          { label: effectLabel, value: effectValue()?.toFixed(4) ?? "—" },
+          { label: "Achieved power", value: activeResult.achievedPower.toFixed(2) },
+          { label: effectLabel, value: effectValue()?.toFixed(2) ?? "—" },
           ...(activeResult.nControlAdjusted !== activeResult.nControl
             ? [
                 {
@@ -251,6 +251,8 @@
       {description}
       category="Binary"
       badges={[solveModeLabel, alternativeLabel, "Superiority"]}
+      exportMarkdown={exportMarkdown}
+      exportDisabled={calculating}
     />
   {/snippet}
 
@@ -334,17 +336,35 @@
   {/snippet}
 
   {#snippet results()}
-    <Panel title="Results">
+    <CollapsibleSection title="Results">
       {#if activeResult}
         <ResultHero label={heroLabel} value={heroValue} />
         <ResultGrid items={resultItems} />
-        {#if rationale}
-          <RationaleCard text={rationale} />
-        {/if}
-        {#if protocolText}
-          <ProtocolTextCard text={protocolText} />
-        {/if}
-        <WarningList warnings={activeResult.warnings} />
+      {:else}
+        <p class="empty text-muted">Enter parameters and calculate to see results.</p>
+      {/if}
+    </CollapsibleSection>
+
+    {#if rationale}
+      <CollapsibleSection title="Sample size calculation rationale" defaultCollapsed={true}>
+        <RationaleCard text={rationale} />
+      </CollapsibleSection>
+    {/if}
+
+    {#if protocolText}
+      <CollapsibleSection title="Protocol text" defaultCollapsed={true}>
+        <ProtocolTextCard text={protocolText} />
+      </CollapsibleSection>
+    {/if}
+
+    {#if activeResult && activeResult.warnings.length > 0}
+      <CollapsibleSection title="Notes" defaultCollapsed={true}>
+        <NotesCard warnings={activeResult.warnings} />
+      </CollapsibleSection>
+    {/if}
+
+    {#if activeResult}
+      <CollapsibleSection title="Assumptions" defaultCollapsed={true}>
         <AssumptionsCard
           items={[
             `Log-${variant === "odds_ratio" ? "odds" : "risk"}-ratio normal approximation.`,
@@ -352,25 +372,26 @@
             "Rates sufficiently away from 0 and 1 for asymptotic validity.",
           ]}
         />
-        <ExportMenu {title} markdown={exportMarkdown} />
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Sensitivity analysis" defaultCollapsed={true}>
         <SensitivityPanel
-          ready={true}
-          defaultExpanded={true}
           chartFileStem={`clinsize-sensitivity-${variant.replace("_", "-")}`}
           inputSignature={lastCalculatedSignature ?? inputSignature}
           methodId={variant === "odds_ratio" ? "binary.odds_ratio" : "binary.risk_ratio"}
           buildInput={buildInput}
           options={sensitivityOptions}
-          getOutputValue={(value) => {
+          getOutputValue={(value, parameterId) => {
             const row = value as OddsRatioResult | RiskRatioResult;
-            return solveMode === "sample_size" ? row.totalN : row.achievedPower;
+            if (solveMode === "sample_size") {
+              return parameterId === "dropoutRate" ? row.totalNAdjusted : row.totalN;
+            }
+            return row.achievedPower;
           }}
           outputLabel={sensitivityOutputLabel}
         />
-      {:else}
-        <p class="empty text-muted">Enter parameters and calculate to see results.</p>
-      {/if}
-    </Panel>
+      </CollapsibleSection>
+    {/if}
   {/snippet}
 </MethodPage>
 

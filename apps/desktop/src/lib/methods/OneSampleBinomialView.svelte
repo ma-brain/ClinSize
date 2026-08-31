@@ -1,10 +1,11 @@
 <script lang="ts">
-  import ExportMenu from "$lib/components/ExportMenu.svelte";
   import MethodPage from "$lib/components/MethodPage.svelte";
   import SensitivityPanel from "$lib/components/SensitivityPanel.svelte";
   import AssumptionsCard from "$lib/components/ui/AssumptionsCard.svelte";
+  import CollapsibleSection from "$lib/components/ui/CollapsibleSection.svelte";
   import Field from "$lib/components/ui/Field.svelte";
   import MethodHeader from "$lib/components/ui/MethodHeader.svelte";
+  import NotesCard from "$lib/components/ui/NotesCard.svelte";
   import Panel from "$lib/components/ui/Panel.svelte";
   import PrimaryButton from "$lib/components/ui/PrimaryButton.svelte";
   import RationaleCard from "$lib/components/ui/RationaleCard.svelte";
@@ -12,7 +13,6 @@
   import ResultGrid from "$lib/components/ui/ResultGrid.svelte";
   import ResultHero from "$lib/components/ui/ResultHero.svelte";
   import Section from "$lib/components/ui/Section.svelte";
-  import WarningList from "$lib/components/ui/WarningList.svelte";
   import { oneSampleBinomialSensitivityOptions } from "$lib/sensitivity/configs";
   import { persistCalculation } from "$lib/workflow/record";
   import { calculateMethod, exportMethodMarkdown } from "$lib/workflow/methodDispatch";
@@ -95,7 +95,7 @@
     result
       ? solveMode === "sample_size"
         ? String(result.n)
-        : result.achievedPower.toFixed(4)
+        : result.achievedPower.toFixed(2)
       : "—",
   );
 
@@ -103,8 +103,8 @@
     result
       ? [
           { label: "Sample size N", value: String(result.n) },
-          { label: "Achieved power", value: result.achievedPower.toFixed(4) },
-          { label: "Rate difference", value: result.rateDifference.toFixed(4) },
+          { label: "Achieved power", value: result.achievedPower.toFixed(2) },
+          { label: "Rate difference", value: result.rateDifference.toFixed(2) },
           ...(result.nAdjusted !== result.n
             ? [
                 {
@@ -192,6 +192,8 @@
       description="Compare a single-arm response rate to a reference proportion."
       category="Binary"
       badges={[solveModeLabel, alternativeLabel, "Superiority"]}
+      exportMarkdown={exportMarkdown}
+      exportDisabled={calculating}
     />
   {/snippet}
 
@@ -269,17 +271,35 @@
   {/snippet}
 
   {#snippet results()}
-    <Panel title="Results">
+    <CollapsibleSection title="Results">
       {#if result}
         <ResultHero label={heroLabel} value={heroValue} />
         <ResultGrid items={resultItems} />
-        {#if rationale}
-          <RationaleCard text={rationale} />
-        {/if}
-        {#if protocolText}
-          <ProtocolTextCard text={protocolText} />
-        {/if}
-        <WarningList warnings={result.warnings} />
+      {:else}
+        <p class="empty text-muted">Enter parameters and calculate to see results.</p>
+      {/if}
+    </CollapsibleSection>
+
+    {#if rationale}
+      <CollapsibleSection title="Sample size calculation rationale" defaultCollapsed={true}>
+        <RationaleCard text={rationale} />
+      </CollapsibleSection>
+    {/if}
+
+    {#if protocolText}
+      <CollapsibleSection title="Protocol text" defaultCollapsed={true}>
+        <ProtocolTextCard text={protocolText} />
+      </CollapsibleSection>
+    {/if}
+
+    {#if result && result.warnings.length > 0}
+      <CollapsibleSection title="Notes" defaultCollapsed={true}>
+        <NotesCard warnings={result.warnings} />
+      </CollapsibleSection>
+    {/if}
+
+    {#if result}
+      <CollapsibleSection title="Assumptions" defaultCollapsed={true}>
         <AssumptionsCard
           items={[
             "Independent Bernoulli outcomes on a single arm.",
@@ -287,25 +307,26 @@
             "Higher response rate is favorable for one-sided greater alternatives.",
           ]}
         />
-        <ExportMenu title="One-sample binomial" markdown={exportMarkdown} />
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Sensitivity analysis" defaultCollapsed={true}>
         <SensitivityPanel
-          ready={true}
-          defaultExpanded={true}
           chartFileStem="clinsize-sensitivity-one-sample-binomial"
           inputSignature={lastCalculatedSignature ?? inputSignature}
           methodId="binary.one_sample_binomial"
           buildInput={buildInput}
           options={sensitivityOptions}
-          getOutputValue={(value) => {
+          getOutputValue={(value, parameterId) => {
             const row = value as OneSampleBinomialResult;
-            return solveMode === "sample_size" ? row.n : row.achievedPower;
+            if (solveMode === "sample_size") {
+              return parameterId === "dropoutRate" ? row.nAdjusted : row.n;
+            }
+            return row.achievedPower;
           }}
           outputLabel={sensitivityOutputLabel}
         />
-      {:else}
-        <p class="empty text-muted">Enter parameters and calculate to see results.</p>
-      {/if}
-    </Panel>
+      </CollapsibleSection>
+    {/if}
   {/snippet}
 </MethodPage>
 
