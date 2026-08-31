@@ -1,6 +1,6 @@
 # Validation report: Two-sample t-test
 
-- Engine version: 0.1.0
+- Engine version: 0.2.0
 - Method: `continuous.two_sample_ttest`
 - Cases: 4 (4 passed, 0 failed)
 

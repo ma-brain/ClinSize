@@ -722,7 +722,7 @@ checksum = "c8d4a3bb8b1e0c1050499d1815f5ab16d04f0959b233085fb31653fbfc9d98f9"
 
 [[package]]
 name = "clinsize-cli"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "clap",
  "clinsize-core",
@@ -731,7 +731,7 @@ dependencies = [
 
 [[package]]
 name = "clinsize-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "approx",
  "docx-rust",
@@ -1017,7 +1017,7 @@ dependencies = [
 
 [[package]]
 name = "desktop"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "clinsize-core",
  "serde",
